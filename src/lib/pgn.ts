@@ -1,3 +1,8 @@
+/**
+ * PGN (Portable Game Notation) Parser
+ * Parses chess games in PGN format with robust error handling
+ */
+
 import { Chess } from 'chess.js';
 
 export interface PGNData {
@@ -15,25 +20,55 @@ export interface PGNData {
   fen: string[];
 }
 
+export class PGNParseError extends Error {
+  constructor(
+    message: string,
+    public readonly details?: string,
+    public readonly suggestion?: string
+  ) {
+    super(message);
+    this.name = 'PGNParseError';
+  }
+}
+
+/**
+ * Clean PGN text by removing comments and variations
+ */
 function cleanPGN(pgnText: string): string {
   let cleaned = pgnText.trim();
+
+  // Normalize line endings
   cleaned = cleaned.replace(/\r\n/g, '\n');
   cleaned = cleaned.replace(/\r/g, '\n');
+
+  // Remove comments in braces
   cleaned = cleaned.replace(/\{[^}]*\}/g, '');
+
+  // Remove comments starting with semicolon
   cleaned = cleaned.replace(/;[^\n]*/g, '');
+
+  // Remove variations in parentheses
   cleaned = cleaned.replace(/\([^)]*\)/g, '');
+
   return cleaned;
 }
 
+/**
+ * Parse PGN text into structured game data
+ * @throws {PGNParseError} If PGN cannot be parsed
+ */
 export function parsePGN(pgnText: string): PGNData {
-  console.log('=== PGN PARSING START ===');
-  console.log('Original length:', pgnText.length);
-  console.log('First 500 chars:', pgnText.substring(0, 500));
+  if (!pgnText || pgnText.trim().length === 0) {
+    throw new PGNParseError(
+      'Empty PGN content',
+      'The provided PGN text is empty',
+      'Please provide a valid PGN file with chess moves'
+    );
+  }
 
   const cleanedPGN = cleanPGN(pgnText);
-  console.log('Cleaned length:', cleanedPGN.length);
-  console.log('Cleaned preview:', cleanedPGN.substring(0, 500));
 
+  // Extract headers
   const headers: PGNData['headers'] = {};
   const headerRegex = /\[(\w+)\s+"([^"]*)"\]/g;
   let match;
@@ -41,69 +76,70 @@ export function parsePGN(pgnText: string): PGNData {
   while ((match = headerRegex.exec(cleanedPGN)) !== null) {
     headers[match[1]] = match[2];
   }
-  console.log('Extracted headers:', headers);
 
+  // Try multiple parsing strategies
   const chess = new Chess();
   let loadSuccess = false;
   let lastError: Error | null = null;
 
-  const attempts = [
+  const strategies = [
     {
-      name: 'Attempt 1: Non-strict mode',
-      fn: () => {
-        chess.loadPgn(cleanedPGN, { strict: false });
-      }
+      name: 'Standard (non-strict)',
+      fn: () => chess.loadPgn(cleanedPGN, { strict: false }),
     },
     {
-      name: 'Attempt 2: Strict mode (default)',
-      fn: () => {
-        chess.loadPgn(cleanedPGN);
-      }
+      name: 'Standard (strict)',
+      fn: () => chess.loadPgn(cleanedPGN),
     },
     {
-      name: 'Attempt 3: Extract and wrap moves only',
+      name: 'Moves-only extraction',
       fn: () => {
         const movesOnly = cleanedPGN
           .split('\n')
-          .filter(line => !line.startsWith('[') && line.trim())
+          .filter((line) => !line.startsWith('[') && line.trim())
           .join(' ')
           .trim();
-        console.log('Extracted moves only:', movesOnly.substring(0, 200));
+
+        if (!movesOnly) {
+          throw new Error('No moves found after header extraction');
+        }
+
         const wrappedPGN = `[Event "Game"]\n[White "White"]\n[Black "Black"]\n\n${movesOnly}`;
         chess.loadPgn(wrappedPGN, { strict: false });
-      }
-    }
+      },
+    },
   ];
 
-  for (const attempt of attempts) {
+  for (const strategy of strategies) {
     try {
-      console.log(attempt.name);
-      attempt.fn();
-      console.log('✓ Success!');
+      strategy.fn();
       loadSuccess = true;
       break;
     } catch (error) {
-      console.error('✗ Failed:', error);
       lastError = error as Error;
     }
   }
 
   if (!loadSuccess) {
-    console.error('=== ALL ATTEMPTS FAILED ===');
-    console.error('Last error:', lastError);
-    throw new Error(
-      `Could not parse PGN. ${lastError?.message || 'Invalid format'}. Please check the console for details.`
+    throw new PGNParseError(
+      'Failed to parse PGN',
+      lastError?.message || 'Invalid PGN format',
+      'Ensure the PGN contains valid chess moves in standard notation (e.g., 1. e4 e5 2. Nf3 Nc6)'
     );
   }
 
+  // Extract moves
   const history = chess.history();
-  console.log('Move history length:', history.length);
-  console.log('Moves:', history);
 
   if (history.length === 0) {
-    throw new Error('No valid moves found in PGN file');
+    throw new PGNParseError(
+      'No valid moves found',
+      'The PGN file was parsed but contains no chess moves',
+      'Verify that your PGN includes the actual game moves, not just headers'
+    );
   }
 
+  // Replay game to get FEN positions
   const moves: string[] = [];
   const fenPositions: string[] = [];
 
@@ -116,31 +152,45 @@ export function parsePGN(pgnText: string): PGNData {
       moves.push(moveSan);
       fenPositions.push(chess.fen());
     } catch (error) {
-      console.error('Error replaying move:', moveSan, error);
+      throw new PGNParseError(
+        'Invalid move in sequence',
+        `Move "${moveSan}" could not be replayed`,
+        'The PGN may be corrupted or contain invalid moves'
+      );
     }
   }
-
-  console.log('Final moves count:', moves.length);
-  console.log('Final FEN positions count:', fenPositions.length);
-  console.log('=== PGN PARSING COMPLETE ===');
 
   return {
     headers,
     moves,
-    fen: fenPositions
+    fen: fenPositions,
   };
 }
 
-export function validatePGN(pgnText: string): boolean {
+/**
+ * Validate if a PGN string is parseable
+ */
+export function validatePGN(pgnText: string): { valid: boolean; error?: string } {
   try {
     parsePGN(pgnText);
-    return true;
+    return { valid: true };
   } catch (error) {
-    console.error('PGN validation error:', error);
-    return false;
+    if (error instanceof PGNParseError) {
+      return {
+        valid: false,
+        error: `${error.message}${error.suggestion ? '. ' + error.suggestion : ''}`,
+      };
+    }
+    return {
+      valid: false,
+      error: error instanceof Error ? error.message : 'Unknown validation error',
+    };
   }
 }
 
+/**
+ * Convert UCI move notation to SAN (Standard Algebraic Notation)
+ */
 export function moveToSAN(from: string, to: string, promotion?: string): string {
   const chess = new Chess();
   try {

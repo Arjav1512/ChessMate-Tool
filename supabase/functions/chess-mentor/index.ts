@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const GEMINI_API_KEY = "AIzaSyBpeEUZ43K8rXVFAPdEzXi8XzdlPIGtXOk";
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -32,55 +32,49 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    if (!GEMINI_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: "GEMINI_API_KEY not configured" }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const systemPrompt = `You are ChessMate, an elite chess coach with FIDE Master credentials and decades of teaching experience. Your expertise spans opening theory, middlegame strategy, endgame technique, and tactical mastery. You analyze games with the precision of a grandmaster while communicating insights in an accessible, professional manner.
+    const contextInfo = [];
+    if (context?.gameInfo) {
+      contextInfo.push(`Game: ${context.gameInfo.white_player} vs ${context.gameInfo.black_player}, Result: ${context.gameInfo.result}`);
+    }
+    if (context?.currentPosition) {
+      contextInfo.push(`Position: ${context.currentPosition}`);
+    }
+    if (context?.evaluation) {
+      contextInfo.push(`Evaluation: ${context.evaluation.evaluation} (${context.evaluation.isMate ? 'Mate' : 'centipawns'})`);
+    }
 
-CRITICAL: You MUST format every response using this EXACT structure with markdown formatting:
+    const systemPrompt = `You are ChessMate, an expert chess coach. Analyze the following question with clear, actionable insights.
 
-## 📋 Analysis Summary
-[1-2 sentences providing a direct answer to the question]
+Format your response with markdown:
+## 📋 Summary
+[Direct answer in 1-2 sentences]
 
-### 🎯 Key Insights
-
-**1. [First Key Point Title]**
-[Detailed explanation with chess notation. Example: "After 15.Nf3, White develops with tempo while attacking the e5 pawn."]
-
-**2. [Second Key Point Title]**
-[Detailed explanation with specific moves and reasoning]
-
-**3. [Third Key Point Title]** (if relevant)
-[Additional tactical or strategic insight]
-
-### 📊 Position Evaluation
-${context?.evaluation ? "- **Material Balance:** [describe]\n- **King Safety:** [assess both sides]\n- **Piece Activity:** [evaluate]\n- **Key Weaknesses:** [identify critical issues]" : "[Provide general evaluation if no engine data available]"}
+### 🎯 Key Points
+1. **[Title]** - [Explanation with chess notation]
+2. **[Title]** - [Tactical/strategic insight]
 
 ### 💡 Recommendations
-1. **[Specific improvement or lesson]**
-2. **[Actionable advice for future games]**
+- [Specific actionable advice]
 
----
-*Remember: [One memorable chess principle or takeaway]*
+${contextInfo.length > 0 ? `\nContext: ${contextInfo.join(' | ')}` : ''}
 
-FORMATTING RULES:
-- ALWAYS use markdown headers (##, ###) and bold (**text**)
-- Use bullet points (•) or numbered lists (1., 2., 3.)
-- Include chess notation in every analysis (e.g., Nf3, Qxd5+, e4)
-- Keep paragraphs short (2-3 lines max)
-- Use line breaks between sections for readability
-- Add emoji icons for visual structure (📋 🎯 📊 💡 ♔ ♕ ⚡ 🏆)
-
-CONTEXT INFORMATION:
-${context?.gameInfo ? `\nGAME DETAILS:\n- Players: ${context.gameInfo.white_player} (White) vs ${context.gameInfo.black_player} (Black)\n- Result: ${context.gameInfo.result}\n- Opening: ${context.gameInfo.opening || "Not specified"}` : ""}
-${context?.currentPosition ? `\nCURRENT POSITION (FEN): ${context.currentPosition}` : ""}
-${context?.moveHistory && context.moveHistory.length > 0 ? `\nMOVE SEQUENCE: ${context.moveHistory.join(" ")}` : ""}
-${context?.evaluation ? `\nENGINE EVALUATION:\n${JSON.stringify(context.evaluation, null, 2)}\n(Positive = White advantage, Negative = Black advantage)` : ""}
-${context?.userHistory && context.userHistory.length > 0 ? `\nPREVIOUS QUESTIONS: ${context.userHistory.slice(-3).map((q: any) => q.question).join(" | ")}` : ""}
-
-USER'S QUESTION: ${question}
-
-Provide your structured, formatted expert analysis now:`;
+Question: ${question}`;
 
     const result = await model.generateContent(systemPrompt);
     const response = await result.response;

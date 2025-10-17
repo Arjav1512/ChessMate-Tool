@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import type { Game } from '../lib/supabase';
-import { parsePGN } from '../lib/pgn';
+import { parsePGN, PGNParseError } from '../lib/pgn';
 
 interface GameListProps {
   onSelectGame: (game: Game) => void;
@@ -59,7 +59,11 @@ export function GameList({ onSelectGame, selectedGameId }: GameListProps) {
         pgnData = parsePGN(pgnText);
       } catch (parseError) {
         console.error('PGN parse error:', parseError);
-        showToast('Invalid PGN file. The file format could not be parsed.', 'error');
+        if (parseError instanceof PGNParseError) {
+          showToast(`${parseError.message}. ${parseError.suggestion || ''}`, 'error');
+        } else {
+          showToast('Invalid PGN file. The file format could not be parsed.', 'error');
+        }
         setUploading(false);
         e.target.value = '';
         return;
@@ -109,7 +113,11 @@ export function GameList({ onSelectGame, selectedGameId }: GameListProps) {
         pgnData = parsePGN(pgnText);
       } catch (parseError) {
         console.error('PGN parse error:', parseError);
-        showToast('Invalid PGN text. The format could not be parsed.', 'error');
+        if (parseError instanceof PGNParseError) {
+          showToast(`${parseError.message}. ${parseError.suggestion || ''}`, 'error');
+        } else {
+          showToast('Invalid PGN text. The format could not be parsed.', 'error');
+        }
         setUploading(false);
         return;
       }
