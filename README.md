@@ -9,24 +9,37 @@ ChessMate is a modern, production-ready web application that helps chess players
 ### Core Functionality
 - **PGN Import** - Upload chess games in standard PGN format (files or paste)
 - **Interactive Board** - Navigate through games move-by-move with keyboard controls
-- **Real-time Analysis** - Stockfish engine integration for position evaluation
+- **Real Stockfish Analysis** - Actual chess engine (not random) via Web Worker with WASM
 - **AI Chess Coach** - Ask questions and get personalized insights powered by Google Gemini
 - **Bulk Analysis** - Analyze multiple games simultaneously with progress tracking
 - **Game Management** - Organize and review your chess game library
+- **OAuth Authentication** - Sign in with Google or GitHub for easy access
+- **User Statistics Dashboard** - Track your progress with detailed analytics
 
 ### Analysis Features
-- **Engine Evaluation** - Accurate position scoring with mate detection
+- **Engine Evaluation** - Accurate position scoring with centipawn precision
+- **Mate Detection** - Identifies forced checkmate sequences
 - **Best Move Arrows** - Visual indicators for optimal moves
-- **Multiple Variations** - See alternative move options with evaluations
+- **Multiple Variations** - See top 3 moves with evaluations (MultiPV)
 - **Evaluation Gauge** - Visual representation of position advantage
 - **Move-by-move Review** - Step through games with detailed analysis
+- **Configurable Depth** - Analysis depth up to 20 ply
+
+### Statistics & Progress
+- **Average Accuracy** - Track your overall performance with trend indicators
+- **Mistakes & Blunders** - See where you're losing points
+- **Win/Loss/Draw Records** - Complete game outcome statistics
+- **Color Distribution** - Performance as White vs Black
+- **Recent Games** - Quick access to latest analyzed games
+- **Historical Tracking** - Monitor improvement over time
 
 ### User Experience
 - **Responsive Design** - Works seamlessly on desktop and mobile devices
 - **Dark/Light Themes** - Comfortable viewing in any environment
 - **Keyboard Navigation** - Arrow keys for quick move traversal
-- **Toast Notifications** - Clear, non-intrusive feedback
-- **Progress Tracking** - Monitor analysis completion in real-time
+- **Toast Notifications** - Clear, non-intrusive feedback messages
+- **Progress Tracking** - Real-time progress bars for bulk analysis
+- **Error Handling** - Helpful error messages with actionable suggestions
 
 ## 🚀 Getting Started
 
@@ -217,20 +230,48 @@ questions (
 
 ## 🧪 Testing
 
-**Run tests:**
+ChessMate includes comprehensive testing infrastructure:
+
+### Unit Tests
 ```bash
+# Run all tests once
 npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with UI
+npm run test:ui
 ```
 
-**Lint code:**
+### Code Quality
 ```bash
+# Run ESLint
 npm run lint
+
+# TypeScript type checking
+npm run typecheck
+
+# Run all quality checks
+npm run lint && npm run typecheck && npm test
 ```
 
-**Type check:**
-```bash
-npm run typecheck
-```
+### Test Coverage
+Tests cover critical functionality:
+- ✅ PGN parsing with various formats
+- ✅ Error handling for invalid PGNs
+- ✅ Edge cases (empty files, missing headers)
+- ✅ Multiple game parsing
+- ✅ Comment and variation handling
+
+### CI/CD Pipeline
+GitHub Actions automatically runs on every push:
+1. **Lint & Type Check** - Validates code quality
+2. **Unit Tests** - Runs test suite with coverage
+3. **Security Audit** - Checks for vulnerabilities
+4. **Build** - Ensures production build succeeds
+
+See `.github/workflows/ci.yml` for full pipeline configuration.
 
 ## 📦 Deployment
 
@@ -254,22 +295,41 @@ Ensure these are set in your hosting platform:
 
 ## 🔒 Security
 
-### API Keys
-- ✅ Never commit API keys to version control
-- ✅ Use environment variables for all secrets
-- ✅ Edge functions read `GEMINI_API_KEY` from Supabase secrets
-- ✅ Client-side keys are prefixed with `VITE_` for Vite exposure
+ChessMate follows security best practices to protect your data:
+
+### API Key Management
+- ✅ **Never commit secrets** - All API keys in `.env` (which is `.gitignore`'d)
+- ✅ **Server-side secrets** - `GEMINI_API_KEY` stored as Supabase Edge Function secret
+- ✅ **Environment variables** - All keys loaded from environment, never hardcoded
+- ✅ **Client-side exposure** - Only `VITE_*` prefixed variables exposed to browser
+- ✅ **Validation** - Edge functions validate API keys before use
 
 ### Row Level Security (RLS)
-All database tables enforce RLS policies:
-- Users can only access their own games
-- Users can only see their own question history
-- Authenticated users required for all operations
+All database tables enforce strict RLS policies:
+- ✅ Users can **only** access their own games
+- ✅ Users can **only** see their own statistics
+- ✅ Users can **only** view their own chat history
+- ✅ Authenticated users required for all operations
+- ✅ No cross-user data leakage possible
 
 ### Data Validation
-- PGN files are validated before database insertion
-- Chess moves are verified by chess.js library
-- User inputs are sanitized in Edge Functions
+- ✅ PGN files validated before database insertion
+- ✅ Chess moves verified by chess.js library
+- ✅ User inputs sanitized in Edge Functions
+- ✅ SQL injection prevented by Supabase client
+- ✅ XSS protection via React's built-in escaping
+
+### OAuth Security
+- ✅ OAuth flows handled by Supabase (industry standard)
+- ✅ PKCE (Proof Key for Code Exchange) enabled
+- ✅ State parameter validation
+- ✅ Secure redirect URLs
+
+### Continuous Security
+- ✅ `npm audit` runs in CI/CD pipeline
+- ✅ Automated secret scanning in GitHub Actions
+- ✅ Dependencies kept up-to-date
+- ✅ TypeScript strict mode for type safety
 
 ## 🤝 Contributing
 

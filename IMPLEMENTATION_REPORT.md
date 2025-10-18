@@ -51,7 +51,7 @@ ChessMate has been successfully transformed from a prototype with critical secur
 **Solution:**
 ```diff
 --- supabase/functions/chess-mentor/index.ts
--const GEMINI_API_KEY = "AIzaSyBpeEUZ43K8rXVFAPdEzXi8XzdlPIGtXOk";
+-const GEMINI_API_KEY = "REDACTED_FOR_SECURITY";
 +const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 +
 +if (!GEMINI_API_KEY) {

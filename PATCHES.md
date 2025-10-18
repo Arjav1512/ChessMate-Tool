@@ -15,7 +15,7 @@ This document contains the major code changes in unified diff format for easy re
    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
  };
 
--const GEMINI_API_KEY = "AIzaSyBpeEUZ43K8rXVFAPdEzXi8XzdlPIGtXOk";
+-const GEMINI_API_KEY = "REDACTED_FOR_SECURITY";
 +const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
  Deno.serve(async (req: Request) => {
