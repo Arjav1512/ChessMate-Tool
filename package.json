@@ -1,8 +1,11 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "chessmate",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.2.0",
   "type": "module",
+  "description": "AI-powered chess analysis and improvement platform",
+  "author": "ChessMate Team",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

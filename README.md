@@ -1,20 +1,26 @@
 # ChessMate - AI-Powered Chess Analysis Tool
 
-ChessMate is a modern, production-ready web application that helps chess players improve their game through AI-powered analysis, interactive board visualization, and personalized coaching insights.
+ChessMate is a modern web application that helps chess players improve their game through AI-powered analysis, interactive board visualization, and personalized coaching insights.
+
+**⚠️ IMPORTANT:** This application requires proper configuration to work. See [Setup Requirements](#-setup-requirements) below.
+
+**📊 Feature Status:** See [FEATURES_STATUS.md](./FEATURES_STATUS.md) for accurate list of what's implemented vs planned.
 
 ![ChessMate Banner](https://via.placeholder.com/1200x300/1e293b/22c55e?text=ChessMate+-+Your+Personal+Chess+Mentor)
 
 ## 🎯 Features
 
+**Legend:** ✅ = Fully Implemented | ⚙️ = Requires Configuration | 🚧 = Planned
+
 ### Core Functionality
-- **PGN Import** - Upload chess games in standard PGN format (files or paste)
-- **Interactive Board** - Navigate through games move-by-move with keyboard controls
-- **Real Stockfish Analysis** - Actual chess engine (not random) via Web Worker with WASM
-- **AI Chess Coach** - Ask questions and get personalized insights powered by Google Gemini
-- **Bulk Analysis** - Analyze multiple games simultaneously with progress tracking
-- **Game Management** - Organize and review your chess game library
-- **OAuth Authentication** - Sign in with Google or GitHub for easy access
-- **User Statistics Dashboard** - Track your progress with detailed analytics
+- ✅ **PGN Import** - Upload chess games in standard PGN format (files or paste)
+- ✅ **Interactive Board** - Navigate through games move-by-move with keyboard controls
+- ✅ **Real Stockfish Analysis** - Actual chess engine (not random) via Web Worker
+- ⚙️ **AI Chess Coach** - Ask questions powered by Google Gemini (requires API key + edge function)
+- ✅ **Bulk Analysis** - Analyze multiple games simultaneously with progress tracking
+- ✅ **Game Management** - Organize and review your chess game library
+- ⚙️ **OAuth Authentication** - Sign in with Google or GitHub (requires OAuth config)
+- ⚙️ **User Statistics Dashboard** - Track your progress with detailed analytics (requires DB migration)
 
 ### Analysis Features
 - **Engine Evaluation** - Accurate position scoring with centipawn precision
@@ -41,43 +47,66 @@ ChessMate is a modern, production-ready web application that helps chess players
 - **Progress Tracking** - Real-time progress bars for bulk analysis
 - **Error Handling** - Helpful error messages with actionable suggestions
 
-## 🚀 Getting Started
+## 🚀 Setup Requirements
+
+**⚠️ CRITICAL:** ChessMate will NOT work without proper setup. Follow ALL steps below.
 
 ### Prerequisites
-- Node.js 18+ and npm
-- Supabase account for database and authentication
-- Google Gemini API key for AI features
+- ✅ Node.js 18+ and npm
+- ✅ Supabase account (https://supabase.com) - **REQUIRED**
+- ✅ Google Gemini API key (https://makersuite.google.com/app/apikey) - **REQUIRED for AI features**
 
-### Environment Setup
+### Quick Start
 
-1. **Clone the repository:**
+1. **Clone and install:**
 ```bash
 git clone https://github.com/yourusername/chessmate.git
 cd chessmate
-```
-
-2. **Install dependencies:**
-```bash
 npm install
 ```
 
-3. **Create a `.env` file in the project root:**
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_GEMINI_API_KEY=your_gemini_api_key
+2. **Configure environment:**
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env and fill in YOUR actual values:
+# - VITE_SUPABASE_URL (from Supabase dashboard)
+# - VITE_SUPABASE_ANON_KEY (from Supabase dashboard)
+# - VITE_GEMINI_API_KEY (from Google AI Studio)
 ```
 
-4. **Set up the database:**
-
-Apply the migration found in `supabase/migrations/` to create the required tables with RLS policies.
-
-5. **Deploy Edge Functions:**
-
-Set the `GEMINI_API_KEY` secret in your Supabase dashboard, then deploy:
+3. **Setup database (REQUIRED):**
 ```bash
+# This creates all required tables with RLS policies
+npx supabase db push
+```
+
+4. **Deploy AI edge function (REQUIRED for chat):**
+```bash
+# Set the API key as a secret (NOT in .env)
+npx supabase secrets set GEMINI_API_KEY=your_actual_gemini_key
+
+# Deploy the function
 npx supabase functions deploy chess-mentor
 ```
+
+5. **Optional: Configure OAuth:**
+   - Go to Supabase Dashboard → Authentication → Providers
+   - Enable Google and/or GitHub
+   - Add Client IDs and Secrets
+   - Configure redirect URLs
+
+### What Won't Work Without Setup
+
+| Missing | Impact |
+|---------|--------|
+| ❌ Supabase | Nothing works - no auth, no data |
+| ❌ Database migration | Can't save games or statistics |
+| ❌ Gemini API + Edge function | AI chat won't respond |
+| ❌ OAuth config | Google/GitHub login won't work |
+
+**See `.env.example` for detailed setup checklist.**
 
 ### Running Locally
 

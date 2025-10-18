@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthForm } from './components/AuthForm';
 import { GameList } from './components/GameList';
 import { ChatInterface } from './components/ChatInterface';
@@ -247,11 +248,15 @@ function MainApp() {
 
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <MainApp />
-      </ToastProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <ToastProvider>
+          <ErrorBoundary>
+            <MainApp />
+          </ErrorBoundary>
+        </ToastProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
