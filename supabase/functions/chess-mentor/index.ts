@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "npm:@google/generative-ai@0.24.1";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,6 +8,52 @@ const corsHeaders = {
 };
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
+function getRateLimitKey(req: Request): string {
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader) {
+    return authHeader.split(" ")[1] || "anonymous";
+  }
+  return "anonymous";
+}
+
+function checkRateLimit(key: string, maxRequests: number = 10, windowMs: number = 60000): boolean {
+  const now = Date.now();
+  const userLimit = rateLimitStore.get(key);
+
+  if (!userLimit || now > userLimit.resetAt) {
+    rateLimitStore.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+
+  if (userLimit.count >= maxRequests) {
+    return false;
+  }
+
+  userLimit.count++;
+  return true;
+}
+
+async function logRequest(userId: string | null, question: string, success: boolean, error?: string) {
+  try {
+    await supabase.from("api_logs").insert({
+      user_id: userId,
+      endpoint: "chess-mentor",
+      question: question.substring(0, 500),
+      success,
+      error_message: error,
+      created_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error("Failed to log request:", err);
+  }
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -17,9 +64,26 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const rateLimitKey = getRateLimitKey(req);
+
+    if (!checkRateLimit(rateLimitKey, 10, 60000)) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": "60",
+          },
+        }
+      );
+    }
+
     const { question, context } = await req.json();
 
     if (!question) {
+      await logRequest(null, "", false, "Question missing");
       return new Response(
         JSON.stringify({ error: "Question is required" }),
         {
@@ -80,6 +144,16 @@ Question: ${question}`;
     const response = await result.response;
     const answer = response.text();
 
+    await logRequest(rateLimitKey !== "anonymous" ? rateLimitKey : null, question, true);
+
+    console.log({
+      timestamp: new Date().toISOString(),
+      user: rateLimitKey,
+      action: "chess_mentor_query",
+      question_length: question.length,
+      response_length: answer.length,
+    });
+
     return new Response(
       JSON.stringify({ answer }),
       {
@@ -91,6 +165,14 @@ Question: ${question}`;
     );
   } catch (error: any) {
     console.error("Error:", error);
+
+    await logRequest(null, "", false, error.message);
+
+    console.error({
+      timestamp: new Date().toISOString(),
+      error: error.message,
+      stack: error.stack,
+    });
 
     return new Response(
       JSON.stringify({
