@@ -6,10 +6,11 @@ import { GameList } from './components/GameList';
 import { ChatInterface } from './components/ChatInterface';
 import { ProgressBar } from './components/ProgressBar';
 import { AnalyzeGamesPage } from './components/AnalyzeGamesPage';
-import { LogOut, TrendingUp, Upload, Brain } from 'lucide-react';
+import { StatsDashboard } from './components/StatsDashboard';
+import { LogOut, TrendingUp, Upload, Brain, BarChart3 } from 'lucide-react';
 import type { Game } from './lib/supabase';
 
-type ModalType = 'import' | 'progress' | 'analyze' | null;
+type ModalType = 'import' | 'progress' | 'analyze' | 'stats' | null;
 
 function MainApp() {
   const { user, signOut } = useAuth();
@@ -38,6 +39,10 @@ function MainApp() {
             <button onClick={() => setOpenModal('analyze')} className="btn btn--secondary">
               <Brain style={{ width: '16px', height: '16px' }} />
               <span style={{ marginLeft: 'var(--space-8)' }}>Analyze Games</span>
+            </button>
+            <button onClick={() => setOpenModal('stats')} className="btn btn--secondary">
+              <BarChart3 style={{ width: '16px', height: '16px' }} />
+              <span style={{ marginLeft: 'var(--space-8)' }}>Statistics</span>
             </button>
             <button onClick={() => setOpenModal('progress')} className="btn btn--secondary">
               <TrendingUp style={{ width: '16px', height: '16px' }} />
@@ -185,6 +190,8 @@ function MainApp() {
           </div>
         </div>
       )}
+
+      {openModal === 'stats' && <StatsDashboard onClose={() => setOpenModal(null)} />}
 
       {openModal === 'progress' && (
         <div

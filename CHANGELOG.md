@@ -5,6 +5,62 @@ All notable changes to ChessMate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-10-18
+
+### ✨ New Features
+- **OAuth Social Login**: Added Google and GitHub authentication
+  - Users can now sign in with social accounts
+  - Branded OAuth buttons with official logos
+  - Toast notifications for OAuth errors
+  - Seamless integration with Supabase Auth
+- **User Statistics Dashboard**: Comprehensive analytics page
+  - Average accuracy with trend indicators
+  - Total games analyzed counter
+  - Mistakes and blunders tracking
+  - Win/loss/draw statistics
+  - Games by color (White/Black)
+  - Recent games list with individual metrics
+  - Empty state for new users
+  - Responsive design with color-coded cards
+- **Database Schema for Analytics**: Three new tables
+  - `game_analysis_results` - Individual game performance
+  - `user_statistics` - Aggregated user stats
+  - `user_progress_snapshots` - Historical tracking
+  - Automatic statistics updates via triggers
+  - Performance indexes for fast queries
+  - Full RLS security policies
+
+### 🛠️ Improvements
+- Added "Statistics" button to main header
+- Integrated StatsDashboard modal component
+- Enhanced AuthForm with OAuth buttons
+- Updated AuthContext with OAuth methods
+- Added BarChart3 icon from lucide-react
+
+### 📊 Performance
+- Bundle size: 393.52 KB (113.82 KB gzipped)
+- Added +1 module (StatsDashboard)
+- Minimal 2.49 KB gzipped increase for 3 major features
+
+### 🗄️ Database
+- New migration: `20251018000000_add_user_statistics.sql`
+- 3 new tables with full RLS
+- 5 performance indexes
+- 1 trigger function for auto-updates
+- Zero breaking changes
+
+### 📝 Documentation
+- Added `NEW_FEATURES_v1.1.md` with full implementation details
+- Updated OAuth setup instructions
+- Documented statistics dashboard usage
+- Added deployment checklist
+
+### ⚠️ Setup Required
+- Configure Google OAuth in Supabase Dashboard
+- Configure GitHub OAuth in Supabase Dashboard
+- Apply database migration
+- No code changes needed for existing deployments
+
 ## [1.0.0] - 2025-10-17
 
 ### 🔒 Security Fixes
