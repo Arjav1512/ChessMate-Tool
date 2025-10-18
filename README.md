@@ -1,411 +1,327 @@
 # ChessMate - AI-Powered Chess Analysis Tool
 
-ChessMate is a modern web application that helps chess players improve their game through AI-powered analysis, interactive board visualization, and personalized coaching insights.
+> **⚠️ CRITICAL NOTICE:** This application **REQUIRES** extensive third-party setup (Supabase + Google Gemini API + Edge Function deployment) and **WILL NOT WORK** without it. See [Setup Requirements](#-setup-requirements) for details.
 
-**⚠️ IMPORTANT:** This application requires proper configuration to work. See [Setup Requirements](#-setup-requirements) below.
+A web application for analyzing chess games using Stockfish engine and AI-powered coaching.
 
-**📊 Feature Status:** See [FEATURES_STATUS.md](./FEATURES_STATUS.md) for accurate list of what's implemented vs planned.
+---
 
-![ChessMate Banner](https://via.placeholder.com/1200x300/1e293b/22c55e?text=ChessMate+-+Your+Personal+Chess+Mentor)
+## 🚨 Before You Start
 
-## 🎯 Features
+### What Works Out of the Box
+**NOTHING.** This is not a plug-and-play application.
 
-**Legend:** ✅ = Fully Implemented | ⚙️ = Requires Configuration | 🚧 = Planned
+### What You Need to Make It Work
+1. **Supabase Account** (Free tier available) - Database & authentication
+2. **Google Gemini API Key** (Paid service) - AI chat functionality
+3. **Edge Function Deployment** - Complex setup via Supabase CLI
+4. **Database Migrations** - PostgreSQL schema setup
+5. **OAuth Configuration** (Optional) - For Google/GitHub login
 
-### Core Functionality
-- ✅ **PGN Import** - Upload chess games in standard PGN format (files or paste)
-- ✅ **Interactive Board** - Navigate through games move-by-move with keyboard controls
-- ✅ **Real Stockfish Analysis** - Actual chess engine (not random) via Web Worker
-- ⚙️ **AI Chess Coach** - Ask questions powered by Google Gemini (requires API key + edge function)
-- ✅ **Bulk Analysis** - Analyze multiple games simultaneously with progress tracking
-- ✅ **Game Management** - Organize and review your chess game library
-- ⚙️ **OAuth Authentication** - Sign in with Google or GitHub (requires OAuth config)
-- ⚙️ **User Statistics Dashboard** - Track your progress with detailed analytics (requires DB migration)
+**Estimated setup time:** 1-2 hours for experienced developers
 
-### Analysis Features
-- **Engine Evaluation** - Accurate position scoring with centipawn precision
-- **Mate Detection** - Identifies forced checkmate sequences
-- **Best Move Arrows** - Visual indicators for optimal moves
-- **Multiple Variations** - See top 3 moves with evaluations (MultiPV)
-- **Evaluation Gauge** - Visual representation of position advantage
-- **Move-by-move Review** - Step through games with detailed analysis
-- **Configurable Depth** - Analysis depth up to 20 ply
+---
 
-### Statistics & Progress
-- **Average Accuracy** - Track your overall performance with trend indicators
-- **Mistakes & Blunders** - See where you're losing points
-- **Win/Loss/Draw Records** - Complete game outcome statistics
-- **Color Distribution** - Performance as White vs Black
-- **Recent Games** - Quick access to latest analyzed games
-- **Historical Tracking** - Monitor improvement over time
+## ✅ What Actually Works Right Now
 
-### User Experience
-- **Responsive Design** - Works seamlessly on desktop and mobile devices
-- **Dark/Light Themes** - Comfortable viewing in any environment
-- **Keyboard Navigation** - Arrow keys for quick move traversal
-- **Toast Notifications** - Clear, non-intrusive feedback messages
-- **Progress Tracking** - Real-time progress bars for bulk analysis
-- **Error Handling** - Helpful error messages with actionable suggestions
+| Feature | Status | Requirements |
+|---------|--------|--------------|
+| **PGN Import (Upload/Paste)** | ✅ Working | Supabase setup |
+| **Interactive Chess Board** | ✅ Working | Supabase setup |
+| **Stockfish Analysis** | ✅ Working | Browser only (no config) |
+| **Move Navigation** | ✅ Working | Browser only |
+| **Bulk Game Analysis** | ✅ Working | Supabase setup |
+| **Email/Password Auth** | ⚙️ Config Required | Supabase + DB migration |
+| **AI Chess Coach** | ⚙️ Config Required | Gemini API + Edge function |
+| **Statistics Dashboard** | ⚙️ Config Required | Supabase + DB migration |
+| **OAuth Login** | ⚙️ Config Required | OAuth provider setup |
+| **Responsive Design** | ✅ Working | Browser only |
+| **PWA Support** | ✅ Working | Browser only |
+
+**Legend:**
+- ✅ = Works (may still need Supabase for data persistence)
+- ⚙️ = Requires complex third-party configuration
+- ❌ = Not implemented
+
+---
+
+## 🚧 What's NOT Implemented (Roadmap)
+
+See [ROADMAP.md](./ROADMAP.md) for planned features:
+- Opening repertoire builder
+- Puzzle training mode
+- Tournament import APIs
+- Mobile native apps
+- Multiplayer analysis
+- Video lessons
+- Dark/Light theme toggle (only dark exists)
+- Opening book integration
+- Endgame tablebase
+
+---
 
 ## 🚀 Setup Requirements
 
-**⚠️ CRITICAL:** ChessMate will NOT work without proper setup. Follow ALL steps below.
+### Step 1: Prerequisites
+```bash
+# Required software
+- Node.js 18+ and npm
+- Git
 
-### Prerequisites
-- ✅ Node.js 18+ and npm
-- ✅ Supabase account (https://supabase.com) - **REQUIRED**
-- ✅ Google Gemini API key (https://makersuite.google.com/app/apikey) - **REQUIRED for AI features**
+# Required accounts (must sign up)
+- Supabase account (https://supabase.com)
+- Google AI Studio account (https://makersuite.google.com)
+```
 
-### Quick Start
-
-1. **Clone and install:**
+### Step 2: Clone and Install
 ```bash
 git clone https://github.com/yourusername/chessmate.git
 cd chessmate
 npm install
 ```
 
-2. **Configure environment:**
-```bash
-# Copy the example file
-cp .env.example .env
+### Step 3: Configure Supabase (MANDATORY)
 
-# Edit .env and fill in YOUR actual values:
-# - VITE_SUPABASE_URL (from Supabase dashboard)
-# - VITE_SUPABASE_ANON_KEY (from Supabase dashboard)
-# - VITE_GEMINI_API_KEY (from Google AI Studio)
+1. Create new project at https://supabase.com/dashboard
+2. Get credentials from: Settings → API
+3. Copy `.env.example` to `.env`
+4. Fill in Supabase URL and anon key:
+```env
+VITE_SUPABASE_URL=https://xxxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+VITE_GEMINI_API_KEY=your_key_here
 ```
 
-3. **Setup database (REQUIRED):**
+### Step 4: Setup Database (MANDATORY)
 ```bash
-# This creates all required tables with RLS policies
+# Install Supabase CLI
+npm install -g supabase
+
+# Login to Supabase
+npx supabase login
+
+# Link to your project
+npx supabase link --project-ref your_project_ref
+
+# Apply database migrations
 npx supabase db push
 ```
 
-4. **Deploy AI edge function (REQUIRED for chat):**
-```bash
-# Set the API key as a secret (NOT in .env)
-npx supabase secrets set GEMINI_API_KEY=your_actual_gemini_key
+This creates 5 tables:
+- `games` - Chess game storage
+- `questions` - AI chat history
+- `game_analysis_results` - Analysis data
+- `user_statistics` - Aggregated stats
+- `api_logs` - Request logging
 
-# Deploy the function
+### Step 5: Deploy Edge Function (REQUIRED for AI Chat)
+```bash
+# Set Gemini API key as Supabase secret (NOT in .env)
+npx supabase secrets set GEMINI_API_KEY=your_actual_gemini_api_key
+
+# Deploy the edge function
 npx supabase functions deploy chess-mentor
 ```
 
-5. **Optional: Configure OAuth:**
-   - Go to Supabase Dashboard → Authentication → Providers
-   - Enable Google and/or GitHub
-   - Add Client IDs and Secrets
-   - Configure redirect URLs
-
-### What Won't Work Without Setup
-
-| Missing | Impact |
-|---------|--------|
-| ❌ Supabase | Nothing works - no auth, no data |
-| ❌ Database migration | Can't save games or statistics |
-| ❌ Gemini API + Edge function | AI chat won't respond |
-| ❌ OAuth config | Google/GitHub login won't work |
-
-**See `.env.example` for detailed setup checklist.**
-
-### Running Locally
-
-**Development server:**
+### Step 6: Run the App
 ```bash
 npm run dev
 ```
 
-**Build for production:**
-```bash
-npm run build
-```
-
-**Preview production build:**
-```bash
-npm run preview
-```
-
-## 📚 Usage Guide
-
-### Importing Games
-
-**File Upload:**
-1. Click the "Upload" button in the game list
-2. Select a `.pgn` file from your computer
-3. The game will be automatically parsed and added to your library
-
-**Paste PGN:**
-1. Click the "Paste" button
-2. Copy-paste PGN text directly into the modal
-3. Click "Add Game" to import
-
-**Sample PGN:**
-```
-[Event "Casual Game"]
-[Site "Online"]
-[Date "2024.01.15"]
-[White "Player1"]
-[Black "Player2"]
-[Result "1-0"]
-
-1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7
-6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 1-0
-```
-
-### Analyzing Games
-
-**Single Game Analysis:**
-1. Select a game from your library
-2. Click "Analyze Games" in the header
-3. Choose "Board Analysis" mode
-4. Enable "Show Fishnet Analysis" for real-time evaluation
-5. Use arrow keys (←→) to navigate moves
-6. Use Home/End keys to jump to start/end
-
-**Bulk Analysis:**
-1. Click "Analyze Games"
-2. Switch to "Bulk Analysis" mode
-3. Click "Start Analysis" to analyze all games
-4. View accuracy, mistakes, and blunders for each game
-
-### Asking Questions
-
-1. Select a game from your library
-2. Type your question in the chat interface
-3. Get AI-powered insights about:
-   - Opening choices and theory
-   - Tactical opportunities
-   - Strategic plans
-   - Endgame technique
-   - Specific positions or moves
-
-**Example Questions:**
-- "What should I have done differently in the opening?"
-- "Did I miss any tactical opportunities?"
-- "How can I improve my endgame technique?"
-- "Explain the strategy in move 15"
-
-## 🏗️ Architecture
-
-### Technology Stack
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS + Custom Design System
-- **Chess Logic**: chess.js for move validation
-- **Engine**: Stockfish.js (WebAssembly) in Web Worker
-- **Backend**: Supabase (PostgreSQL + Auth + Edge Functions)
-- **AI**: Google Gemini 2.0 Flash
-- **State Management**: React Context API
-
-### Project Structure
-```
-chessmate/
-├── src/
-│   ├── components/          # React components
-│   │   ├── AnalyzeGamesPage.tsx  # Analysis interface
-│   │   ├── AuthForm.tsx          # Login/signup
-│   │   ├── BulkAnalysis.tsx      # Batch analysis
-│   │   ├── ChatInterface.tsx     # AI Q&A
-│   │   ├── ChessBoard.tsx        # Interactive board
-│   │   ├── GameList.tsx          # Game library
-│   │   ├── GameViewer.tsx        # Move navigator
-│   │   └── ...
-│   ├── contexts/            # React contexts
-│   │   ├── AuthContext.tsx       # User auth state
-│   │   └── ToastContext.tsx      # Notifications
-│   ├── lib/                 # Core libraries
-│   │   ├── gemini.ts            # AI integration
-│   │   ├── pgn.ts               # PGN parser
-│   │   ├── stockfish.ts         # Engine wrapper
-│   │   └── supabase.ts          # Database client
-│   ├── App.tsx              # Main app component
-│   ├── main.tsx             # Entry point
-│   └── style.css            # Global styles
-├── supabase/
-│   ├── functions/           # Edge functions
-│   │   └── chess-mentor/    # AI chess coach
-│   └── migrations/          # Database migrations
-├── package.json
-├── vite.config.ts
-└── tsconfig.json
-```
-
-### Database Schema
-
-```sql
--- Games table
-games (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES auth.users,
-  pgn TEXT NOT NULL,
-  white_player TEXT,
-  black_player TEXT,
-  result TEXT,
-  date TEXT,
-  event TEXT,
-  uploaded_at TIMESTAMPTZ DEFAULT now()
-)
-
--- Questions table (chat history)
-questions (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES auth.users,
-  game_id UUID REFERENCES games,
-  question TEXT NOT NULL,
-  answer TEXT NOT NULL,
-  context JSONB,
-  created_at TIMESTAMPTZ DEFAULT now()
-)
-```
-
-## 🧪 Testing
-
-ChessMate includes comprehensive testing infrastructure:
-
-### Unit Tests
-```bash
-# Run all tests once
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with UI
-npm run test:ui
-```
-
-### Code Quality
-```bash
-# Run ESLint
-npm run lint
-
-# TypeScript type checking
-npm run typecheck
-
-# Run all quality checks
-npm run lint && npm run typecheck && npm test
-```
-
-### Test Coverage
-Tests cover critical functionality:
-- ✅ PGN parsing with various formats
-- ✅ Error handling for invalid PGNs
-- ✅ Edge cases (empty files, missing headers)
-- ✅ Multiple game parsing
-- ✅ Comment and variation handling
-
-### CI/CD Pipeline
-GitHub Actions automatically runs on every push:
-1. **Lint & Type Check** - Validates code quality
-2. **Unit Tests** - Runs test suite with coverage
-3. **Security Audit** - Checks for vulnerabilities
-4. **Build** - Ensures production build succeeds
-
-See `.github/workflows/ci.yml` for full pipeline configuration.
-
-## 📦 Deployment
-
-### Production Build
-```bash
-npm run build
-```
-
-The build output is in the `dist/` directory, ready to deploy to:
-- Vercel
-- Netlify
-- AWS S3 + CloudFront
-- Any static hosting service
-
-### Environment Variables for Production
-Ensure these are set in your hosting platform:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-
-**Note:** `GEMINI_API_KEY` should be set as a Supabase secret for the edge function, not exposed to the client.
-
-## 🔒 Security
-
-ChessMate follows security best practices to protect your data:
-
-### API Key Management
-- ✅ **Never commit secrets** - All API keys in `.env` (which is `.gitignore`'d)
-- ✅ **Server-side secrets** - `GEMINI_API_KEY` stored as Supabase Edge Function secret
-- ✅ **Environment variables** - All keys loaded from environment, never hardcoded
-- ✅ **Client-side exposure** - Only `VITE_*` prefixed variables exposed to browser
-- ✅ **Validation** - Edge functions validate API keys before use
-
-### Row Level Security (RLS)
-All database tables enforce strict RLS policies:
-- ✅ Users can **only** access their own games
-- ✅ Users can **only** see their own statistics
-- ✅ Users can **only** view their own chat history
-- ✅ Authenticated users required for all operations
-- ✅ No cross-user data leakage possible
-
-### Data Validation
-- ✅ PGN files validated before database insertion
-- ✅ Chess moves verified by chess.js library
-- ✅ User inputs sanitized in Edge Functions
-- ✅ SQL injection prevented by Supabase client
-- ✅ XSS protection via React's built-in escaping
-
-### OAuth Security
-- ✅ OAuth flows handled by Supabase (industry standard)
-- ✅ PKCE (Proof Key for Code Exchange) enabled
-- ✅ State parameter validation
-- ✅ Secure redirect URLs
-
-### Continuous Security
-- ✅ `npm audit` runs in CI/CD pipeline
-- ✅ Automated secret scanning in GitHub Actions
-- ✅ Dependencies kept up-to-date
-- ✅ TypeScript strict mode for type safety
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-### Development Guidelines
-- Write TypeScript with strict mode enabled
-- Follow the existing code style and conventions
-- Add comments for complex logic
-- Update documentation for new features
-- Ensure all tests pass before submitting PR
-- Keep commits focused and descriptive
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Stockfish** - Open-source chess engine
-- **chess.js** - JavaScript chess library
-- **Google Gemini** - AI model for coaching insights
-- **Supabase** - Backend infrastructure
-- **Lichess** - PGN format inspiration and standards
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/chessmate/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/chessmate/discussions)
-
-## 🗺️ Roadmap
-
-- [ ] OAuth integration (Google, GitHub)
-- [ ] User statistics dashboard
-- [ ] Opening repertoire builder
-- [ ] Puzzle training mode
-- [ ] Tournament import (chess.com/lichess APIs)
-- [ ] Mobile native apps
-- [ ] Multiplayer analysis sessions
-- [ ] Video lesson integration
+### Step 7: Optional OAuth Setup
+Go to Supabase Dashboard → Authentication → Providers:
+- Enable Google and/or GitHub
+- Add Client ID and Secret from OAuth apps
+- Configure redirect URLs
 
 ---
 
-Made with ♟️ by the ChessMate Team
+## 🔴 What Breaks Without Proper Setup
+
+| Missing | What Breaks | Error You'll See |
+|---------|-------------|------------------|
+| No Supabase config | Everything | "Failed to initialize Supabase client" |
+| No DB migration | Auth, games, stats | "relation does not exist" |
+| No Gemini API | AI chat | "Failed to get response from chess mentor" |
+| No edge function | AI chat | "Failed to invoke function" |
+| No OAuth config | Social login | "Provider not configured" |
+
+**Bottom line:** Without full setup, you can only view the UI. Nothing will save or work properly.
+
+---
+
+## 📊 Testing Status
+
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-11%20passing-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-basic-yellow)
+
+### Current Test Coverage
+- ✅ **11 Unit Tests** - PGN parser (passing)
+- ✅ **21 E2E Tests** - Auth, import, accessibility (Playwright)
+- ⚠️ **Manual QA** - 200+ test cases documented (not automated)
+- ❌ **No integration tests** for AI chat or statistics
+
+### Run Tests
+```bash
+npm test                    # Unit tests
+npm run test:e2e           # E2E tests (requires config)
+npm run lint               # Code quality
+npm run typecheck          # TypeScript validation
+```
+
+---
+
+## 🏗️ Architecture
+
+### Tech Stack
+- **Frontend:** React 18 + TypeScript + Vite
+- **Styling:** Tailwind CSS
+- **Chess:** chess.js + Stockfish.js (Web Worker)
+- **Backend:** Supabase (PostgreSQL + Auth + Functions)
+- **AI:** Google Gemini 2.0 Flash
+- **Testing:** Vitest + Playwright
+
+### Key Files
+```
+src/
+├── components/
+│   ├── AuthForm.tsx          # Login/signup
+│   ├── ChessBoard.tsx        # Interactive board
+│   ├── GameList.tsx          # Game library
+│   ├── ChatInterface.tsx     # AI Q&A
+│   ├── BulkAnalysis.tsx      # Batch analysis
+│   └── StatsDashboard.tsx    # Progress tracking
+├── lib/
+│   ├── stockfish.ts          # Engine integration
+│   ├── pgn.ts                # PGN parser
+│   ├── gemini.ts             # AI integration
+│   └── supabase.ts           # Database client
+└── App.tsx
+
+supabase/
+├── functions/
+│   └── chess-mentor/         # AI edge function
+└── migrations/               # Database schema
+```
+
+---
+
+## 📦 Deployment
+
+### Build for Production
+```bash
+npm run build
+# Output: dist/ directory
+```
+
+### Deploy To
+- **Vercel** (Recommended for React)
+- **Netlify**
+- **AWS S3 + CloudFront**
+- Any static hosting
+
+### Environment Variables (Production)
+Set these in your hosting platform:
+```
+VITE_SUPABASE_URL=your_url
+VITE_SUPABASE_ANON_KEY=your_key
+VITE_GEMINI_API_KEY=your_key
+VITE_SENTRY_DSN=optional
+```
+
+**IMPORTANT:** Deploy edge function to Supabase separately.
+
+---
+
+## 🔒 Security
+
+- ✅ Row Level Security (RLS) policies on all tables
+- ✅ API keys in environment variables (not hardcoded)
+- ✅ Gemini API key stored as Supabase secret
+- ✅ No secrets committed to repo (.env in .gitignore)
+- ✅ User data isolated (can only access own games)
+- ✅ API rate limiting (10 requests/minute)
+
+---
+
+## 📝 Usage
+
+### Import a Game
+1. Click "Upload" or "Paste PGN"
+2. Select .pgn file or paste text
+3. Game appears in library
+
+### Analyze with Stockfish
+1. Select game from library
+2. Click "Analyze Games"
+3. Enable "Show Fishnet Analysis"
+4. Navigate with arrow keys
+
+### Ask AI Questions
+1. Select game
+2. Type question in chat
+3. Examples:
+   - "What should I have done in the opening?"
+   - "Did I miss any tactics?"
+   - "How can I improve?"
+
+### View Statistics
+1. Analyze multiple games first
+2. Click "Statistics" button
+3. View accuracy, mistakes, win rate
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repo
+2. Create feature branch: `git checkout -b feature/name`
+3. Make changes
+4. Run tests: `npm test && npm run lint`
+5. Submit PR
+
+**Please:**
+- Don't promise features that aren't implemented
+- Update FEATURES_STATUS.md when adding features
+- Follow existing code style
+- Add tests for new functionality
+
+---
+
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) file
+
+---
+
+## 🙏 Acknowledgments
+
+- **Stockfish** - Chess engine
+- **chess.js** - Chess logic library
+- **Google Gemini** - AI model
+- **Supabase** - Backend infrastructure
+
+---
+
+## 📞 Support
+
+- **Issues:** [GitHub Issues](https://github.com/yourusername/chessmate/issues)
+- **Docs:** See [FEATURES_STATUS.md](./FEATURES_STATUS.md) for detailed feature status
+
+---
+
+## 📋 Quick Links
+
+- [Features Status](./FEATURES_STATUS.md) - What's implemented vs planned
+- [Roadmap](./ROADMAP.md) - Future features
+- [Setup Guide](./.env.example) - Detailed configuration
+- [Manual QA Checklist](./MANUAL_QA_CHECKLIST.md) - Testing guide
+
+---
+
+**Made with ♟️ by ChessMate Team**
+
+**Current Version:** 1.2.0
+**Status:** Requires extensive setup - not beginner-friendly
+**Best For:** Developers comfortable with Supabase, edge functions, and PostgreSQL
