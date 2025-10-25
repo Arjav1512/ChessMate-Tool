@@ -7,6 +7,7 @@
   "author": "ChessMate Team",
   "license": "MIT",
   "scripts": {
+    "setup": "node -e \"require('fs').copyFileSync('.env.example', '.env'); console.log('✅ Created .env from .env.example\\n⚠️  Please edit .env and add your Supabase credentials')\"",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
