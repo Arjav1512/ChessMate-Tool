@@ -1,0 +1,80 @@
+{
+  "app": {
+    "title": "ChessMate",
+    "subtitle": "Tu Mentor Personal de Ajedrez"
+  },
+  "auth": {
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "signOut": "Cerrar Sesión",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "name": "Nombre",
+    "createAccount": "Crear Cuenta",
+    "continueWithGoogle": "Continuar con Google",
+    "continueWithGitHub": "Continuar con GitHub",
+    "processing": "Procesando..."
+  },
+  "nav": {
+    "import": "Importar",
+    "analyze": "Analizar Partidas",
+    "statistics": "Estadísticas",
+    "progress": "Progreso"
+  },
+  "import": {
+    "title": "Importar Partidas",
+    "upload": "Subir",
+    "paste": "Pegar",
+    "addGame": "Agregar Partida",
+    "uploadPrompt": "Haz clic o arrastra el archivo PGN aquí",
+    "pastePrompt": "Pega tu texto PGN aquí..."
+  },
+  "game": {
+    "whitePlayer": "Blancas",
+    "blackPlayer": "Negras",
+    "result": "Resultado",
+    "event": "Evento",
+    "date": "Fecha"
+  },
+  "analysis": {
+    "analyzing": "Analizando...",
+    "accuracy": "Precisión",
+    "mistakes": "Errores",
+    "blunders": "Graves Errores",
+    "bestMove": "Mejor Jugada",
+    "evaluation": "Evaluación"
+  },
+  "statistics": {
+    "title": "Tus Estadísticas de Ajedrez",
+    "averageAccuracy": "Precisión Promedio",
+    "gamesAnalyzed": "Partidas Analizadas",
+    "totalMistakes": "Total de Errores",
+    "totalBlunders": "Total de Graves Errores",
+    "gameResults": "Resultados de Partidas",
+    "wins": "Victorias",
+    "losses": "Derrotas",
+    "draws": "Empates",
+    "colorDistribution": "Distribución por Color",
+    "asWhite": "Como Blancas",
+    "asBlack": "Como Negras",
+    "recentGames": "Partidas Recientes",
+    "noData": "Sin Datos Aún",
+    "noDataMessage": "¡Analiza algunas partidas para ver tus estadísticas y seguir tu progreso!"
+  },
+  "errors": {
+    "generic": "Ocurrió un error",
+    "network": "Error de red. Por favor verifica tu conexión.",
+    "auth": "Autenticación fallida. Por favor intenta de nuevo.",
+    "parse": "Error al analizar PGN. Por favor verifica el formato.",
+    "empty": "Contenido PGN vacío o inválido"
+  },
+  "common": {
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "loading": "Cargando...",
+    "success": "¡Éxito!",
+    "error": "Error"
+  }
+}

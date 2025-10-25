@@ -1,0 +1,1712 @@
+<testsuites id="" name="" tests="105" failures="105" skipped="0" errors="0" time="27.130121">
+<testsuite name="accessibility.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="chromium" tests="7" failures="7" skipped="0" time="0.248" errors="0">
+<testcase name="Accessibility Tests › should not have any automatically detectable accessibility issues" classname="accessibility.spec.ts" time="0.011">
+<failure message="accessibility.spec.ts:5:3 should not have any automatically detectable accessibility issues" type="FAILURE">
+<![CDATA[  [chromium] › accessibility.spec.ts:5:3 › Accessibility Tests › should not have any automatically detectable accessibility issues 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have proper heading hierarchy" classname="accessibility.spec.ts" time="0.026">
+<failure message="accessibility.spec.ts:13:3 should have proper heading hierarchy" type="FAILURE">
+<![CDATA[  [chromium] › accessibility.spec.ts:13:3 › Accessibility Tests › should have proper heading hierarchy 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have keyboard navigable buttons" classname="accessibility.spec.ts" time="0.011">
+<failure message="accessibility.spec.ts:21:3 should have keyboard navigable buttons" type="FAILURE">
+<![CDATA[  [chromium] › accessibility.spec.ts:21:3 › Accessibility Tests › should have keyboard navigable buttons 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have proper ARIA labels" classname="accessibility.spec.ts" time="0.12">
+<failure message="accessibility.spec.ts:35:3 should have proper ARIA labels" type="FAILURE">
+<![CDATA[  [chromium] › accessibility.spec.ts:35:3 › Accessibility Tests › should have proper ARIA labels ───
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should support screen reader navigation" classname="accessibility.spec.ts" time="0.03">
+<failure message="accessibility.spec.ts:43:3 should support screen reader navigation" type="FAILURE">
+<![CDATA[  [chromium] › accessibility.spec.ts:43:3 › Accessibility Tests › should support screen reader navigation 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have sufficient color contrast" classname="accessibility.spec.ts" time="0.037">
+<failure message="accessibility.spec.ts:50:3 should have sufficient color contrast" type="FAILURE">
+<![CDATA[  [chromium] › accessibility.spec.ts:50:3 › Accessibility Tests › should have sufficient color contrast 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have alt text for images" classname="accessibility.spec.ts" time="0.013">
+<failure message="accessibility.spec.ts:64:3 should have alt text for images" type="FAILURE">
+<![CDATA[  [chromium] › accessibility.spec.ts:64:3 › Accessibility Tests › should have alt text for images ──
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="chromium" tests="7" failures="7" skipped="0" time="0.05" errors="0">
+<testcase name="Authentication Flow › should display login page for unauthenticated users" classname="auth.spec.ts" time="0.022">
+<failure message="auth.spec.ts:4:3 should display login page for unauthenticated users" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:4:3 › Authentication Flow › should display login page for unauthenticated users 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should show email and password inputs" classname="auth.spec.ts" time="0.003">
+<failure message="auth.spec.ts:13:3 should show email and password inputs" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:13:3 › Authentication Flow › should show email and password inputs ─────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should display OAuth buttons" classname="auth.spec.ts" time="0.004">
+<failure message="auth.spec.ts:20:3 should display OAuth buttons" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:20:3 › Authentication Flow › should display OAuth buttons ──────────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should toggle between sign in and sign up" classname="auth.spec.ts" time="0.007">
+<failure message="auth.spec.ts:27:3 should toggle between sign in and sign up" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:27:3 › Authentication Flow › should toggle between sign in and sign up ─
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should show validation error for empty form" classname="auth.spec.ts" time="0.006">
+<failure message="auth.spec.ts:38:3 should show validation error for empty form" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:38:3 › Authentication Flow › should show validation error for empty form 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should have accessible form labels" classname="auth.spec.ts" time="0.003">
+<failure message="auth.spec.ts:47:3 should have accessible form labels" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:47:3 › Authentication Flow › should have accessible form labels ────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should have keyboard navigation" classname="auth.spec.ts" time="0.005">
+<failure message="auth.spec.ts:59:3 should have keyboard navigation" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:59:3 › Authentication Flow › should have keyboard navigation ───────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="game-import.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="chromium" tests="7" failures="7" skipped="0" time="0.024" errors="0">
+<testcase name="Game Import Flow › should show import modal when import button is clicked" classname="game-import.spec.ts" time="0.004">
+<failure message="game-import.spec.ts:18:3 should show import modal when import button is clicked" type="FAILURE">
+<![CDATA[  [chromium] › game-import.spec.ts:18:3 › Game Import Flow › should show import modal when import button is clicked 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should have upload and paste tabs" classname="game-import.spec.ts" time="0.003">
+<failure message="game-import.spec.ts:24:3 should have upload and paste tabs" type="FAILURE">
+<![CDATA[  [chromium] › game-import.spec.ts:24:3 › Game Import Flow › should have upload and paste tabs ─────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should accept PGN text input" classname="game-import.spec.ts" time="0.005">
+<failure message="game-import.spec.ts:31:3 should accept PGN text input" type="FAILURE">
+<![CDATA[  [chromium] › game-import.spec.ts:31:3 › Game Import Flow › should accept PGN text input ──────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should show validation for empty PGN" classname="game-import.spec.ts" time="0.003">
+<failure message="game-import.spec.ts:42:3 should show validation for empty PGN" type="FAILURE">
+<![CDATA[  [chromium] › game-import.spec.ts:42:3 › Game Import Flow › should show validation for empty PGN ──
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should close modal on cancel" classname="game-import.spec.ts" time="0.003">
+<failure message="game-import.spec.ts:52:3 should close modal on cancel" type="FAILURE">
+<![CDATA[  [chromium] › game-import.spec.ts:52:3 › Game Import Flow › should close modal on cancel ──────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should have accessible file input" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:63:3 should have accessible file input" type="FAILURE">
+<![CDATA[  [chromium] › game-import.spec.ts:63:3 › Game Import Flow › should have accessible file input ─────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should handle keyboard shortcuts" classname="game-import.spec.ts" time="0.004">
+<failure message="game-import.spec.ts:70:3 should handle keyboard shortcuts" type="FAILURE">
+<![CDATA[  [chromium] › game-import.spec.ts:70:3 › Game Import Flow › should handle keyboard shortcuts ──────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="accessibility.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="firefox" tests="7" failures="7" skipped="0" time="0.24" errors="0">
+<testcase name="Accessibility Tests › should not have any automatically detectable accessibility issues" classname="accessibility.spec.ts" time="0.004">
+<failure message="accessibility.spec.ts:5:3 should not have any automatically detectable accessibility issues" type="FAILURE">
+<![CDATA[  [firefox] › accessibility.spec.ts:5:3 › Accessibility Tests › should not have any automatically detectable accessibility issues 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have proper heading hierarchy" classname="accessibility.spec.ts" time="0.007">
+<failure message="accessibility.spec.ts:13:3 should have proper heading hierarchy" type="FAILURE">
+<![CDATA[  [firefox] › accessibility.spec.ts:13:3 › Accessibility Tests › should have proper heading hierarchy 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have keyboard navigable buttons" classname="accessibility.spec.ts" time="0.031">
+<failure message="accessibility.spec.ts:21:3 should have keyboard navigable buttons" type="FAILURE">
+<![CDATA[  [firefox] › accessibility.spec.ts:21:3 › Accessibility Tests › should have keyboard navigable buttons 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have proper ARIA labels" classname="accessibility.spec.ts" time="0.009">
+<failure message="accessibility.spec.ts:35:3 should have proper ARIA labels" type="FAILURE">
+<![CDATA[  [firefox] › accessibility.spec.ts:35:3 › Accessibility Tests › should have proper ARIA labels ────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should support screen reader navigation" classname="accessibility.spec.ts" time="0.084">
+<failure message="accessibility.spec.ts:43:3 should support screen reader navigation" type="FAILURE">
+<![CDATA[  [firefox] › accessibility.spec.ts:43:3 › Accessibility Tests › should support screen reader navigation 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have sufficient color contrast" classname="accessibility.spec.ts" time="0.098">
+<failure message="accessibility.spec.ts:50:3 should have sufficient color contrast" type="FAILURE">
+<![CDATA[  [firefox] › accessibility.spec.ts:50:3 › Accessibility Tests › should have sufficient color contrast 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have alt text for images" classname="accessibility.spec.ts" time="0.007">
+<failure message="accessibility.spec.ts:64:3 should have alt text for images" type="FAILURE">
+<![CDATA[  [firefox] › accessibility.spec.ts:64:3 › Accessibility Tests › should have alt text for images ───
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="firefox" tests="7" failures="7" skipped="0" time="0.03" errors="0">
+<testcase name="Authentication Flow › should display login page for unauthenticated users" classname="auth.spec.ts" time="0.006">
+<failure message="auth.spec.ts:4:3 should display login page for unauthenticated users" type="FAILURE">
+<![CDATA[  [firefox] › auth.spec.ts:4:3 › Authentication Flow › should display login page for unauthenticated users 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should show email and password inputs" classname="auth.spec.ts" time="0.009">
+<failure message="auth.spec.ts:13:3 should show email and password inputs" type="FAILURE">
+<![CDATA[  [firefox] › auth.spec.ts:13:3 › Authentication Flow › should show email and password inputs ──────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should display OAuth buttons" classname="auth.spec.ts" time="0.003">
+<failure message="auth.spec.ts:20:3 should display OAuth buttons" type="FAILURE">
+<![CDATA[  [firefox] › auth.spec.ts:20:3 › Authentication Flow › should display OAuth buttons ───────────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should toggle between sign in and sign up" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:27:3 should toggle between sign in and sign up" type="FAILURE">
+<![CDATA[  [firefox] › auth.spec.ts:27:3 › Authentication Flow › should toggle between sign in and sign up ──
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should show validation error for empty form" classname="auth.spec.ts" time="0.003">
+<failure message="auth.spec.ts:38:3 should show validation error for empty form" type="FAILURE">
+<![CDATA[  [firefox] › auth.spec.ts:38:3 › Authentication Flow › should show validation error for empty form 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should have accessible form labels" classname="auth.spec.ts" time="0.003">
+<failure message="auth.spec.ts:47:3 should have accessible form labels" type="FAILURE">
+<![CDATA[  [firefox] › auth.spec.ts:47:3 › Authentication Flow › should have accessible form labels ─────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should have keyboard navigation" classname="auth.spec.ts" time="0.004">
+<failure message="auth.spec.ts:59:3 should have keyboard navigation" type="FAILURE">
+<![CDATA[  [firefox] › auth.spec.ts:59:3 › Authentication Flow › should have keyboard navigation ────────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="game-import.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="firefox" tests="7" failures="7" skipped="0" time="0.024" errors="0">
+<testcase name="Game Import Flow › should show import modal when import button is clicked" classname="game-import.spec.ts" time="0.003">
+<failure message="game-import.spec.ts:18:3 should show import modal when import button is clicked" type="FAILURE">
+<![CDATA[  [firefox] › game-import.spec.ts:18:3 › Game Import Flow › should show import modal when import button is clicked 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should have upload and paste tabs" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:24:3 should have upload and paste tabs" type="FAILURE">
+<![CDATA[  [firefox] › game-import.spec.ts:24:3 › Game Import Flow › should have upload and paste tabs ──────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should accept PGN text input" classname="game-import.spec.ts" time="0.001">
+<failure message="game-import.spec.ts:31:3 should accept PGN text input" type="FAILURE">
+<![CDATA[  [firefox] › game-import.spec.ts:31:3 › Game Import Flow › should accept PGN text input ───────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should show validation for empty PGN" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:42:3 should show validation for empty PGN" type="FAILURE">
+<![CDATA[  [firefox] › game-import.spec.ts:42:3 › Game Import Flow › should show validation for empty PGN ───
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should close modal on cancel" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:52:3 should close modal on cancel" type="FAILURE">
+<![CDATA[  [firefox] › game-import.spec.ts:52:3 › Game Import Flow › should close modal on cancel ───────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should have accessible file input" classname="game-import.spec.ts" time="0.01">
+<failure message="game-import.spec.ts:63:3 should have accessible file input" type="FAILURE">
+<![CDATA[  [firefox] › game-import.spec.ts:63:3 › Game Import Flow › should have accessible file input ──────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should handle keyboard shortcuts" classname="game-import.spec.ts" time="0.004">
+<failure message="game-import.spec.ts:70:3 should handle keyboard shortcuts" type="FAILURE">
+<![CDATA[  [firefox] › game-import.spec.ts:70:3 › Game Import Flow › should handle keyboard shortcuts ───────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/firefox-1495/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="accessibility.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="webkit" tests="7" failures="7" skipped="0" time="0.039" errors="0">
+<testcase name="Accessibility Tests › should not have any automatically detectable accessibility issues" classname="accessibility.spec.ts" time="0.01">
+<failure message="accessibility.spec.ts:5:3 should not have any automatically detectable accessibility issues" type="FAILURE">
+<![CDATA[  [webkit] › accessibility.spec.ts:5:3 › Accessibility Tests › should not have any automatically detectable accessibility issues 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have proper heading hierarchy" classname="accessibility.spec.ts" time="0.009">
+<failure message="accessibility.spec.ts:13:3 should have proper heading hierarchy" type="FAILURE">
+<![CDATA[  [webkit] › accessibility.spec.ts:13:3 › Accessibility Tests › should have proper heading hierarchy 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have keyboard navigable buttons" classname="accessibility.spec.ts" time="0.006">
+<failure message="accessibility.spec.ts:21:3 should have keyboard navigable buttons" type="FAILURE">
+<![CDATA[  [webkit] › accessibility.spec.ts:21:3 › Accessibility Tests › should have keyboard navigable buttons 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have proper ARIA labels" classname="accessibility.spec.ts" time="0.003">
+<failure message="accessibility.spec.ts:35:3 should have proper ARIA labels" type="FAILURE">
+<![CDATA[  [webkit] › accessibility.spec.ts:35:3 › Accessibility Tests › should have proper ARIA labels ─────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should support screen reader navigation" classname="accessibility.spec.ts" time="0.003">
+<failure message="accessibility.spec.ts:43:3 should support screen reader navigation" type="FAILURE">
+<![CDATA[  [webkit] › accessibility.spec.ts:43:3 › Accessibility Tests › should support screen reader navigation 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have sufficient color contrast" classname="accessibility.spec.ts" time="0.004">
+<failure message="accessibility.spec.ts:50:3 should have sufficient color contrast" type="FAILURE">
+<![CDATA[  [webkit] › accessibility.spec.ts:50:3 › Accessibility Tests › should have sufficient color contrast 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have alt text for images" classname="accessibility.spec.ts" time="0.004">
+<failure message="accessibility.spec.ts:64:3 should have alt text for images" type="FAILURE">
+<![CDATA[  [webkit] › accessibility.spec.ts:64:3 › Accessibility Tests › should have alt text for images ────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="webkit" tests="7" failures="7" skipped="0" time="0.028" errors="0">
+<testcase name="Authentication Flow › should display login page for unauthenticated users" classname="auth.spec.ts" time="0.006">
+<failure message="auth.spec.ts:4:3 should display login page for unauthenticated users" type="FAILURE">
+<![CDATA[  [webkit] › auth.spec.ts:4:3 › Authentication Flow › should display login page for unauthenticated users 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should show email and password inputs" classname="auth.spec.ts" time="0.006">
+<failure message="auth.spec.ts:13:3 should show email and password inputs" type="FAILURE">
+<![CDATA[  [webkit] › auth.spec.ts:13:3 › Authentication Flow › should show email and password inputs ───────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should display OAuth buttons" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:20:3 should display OAuth buttons" type="FAILURE">
+<![CDATA[  [webkit] › auth.spec.ts:20:3 › Authentication Flow › should display OAuth buttons ────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should toggle between sign in and sign up" classname="auth.spec.ts" time="0.006">
+<failure message="auth.spec.ts:27:3 should toggle between sign in and sign up" type="FAILURE">
+<![CDATA[  [webkit] › auth.spec.ts:27:3 › Authentication Flow › should toggle between sign in and sign up ───
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should show validation error for empty form" classname="auth.spec.ts" time="0.003">
+<failure message="auth.spec.ts:38:3 should show validation error for empty form" type="FAILURE">
+<![CDATA[  [webkit] › auth.spec.ts:38:3 › Authentication Flow › should show validation error for empty form ─
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should have accessible form labels" classname="auth.spec.ts" time="0.003">
+<failure message="auth.spec.ts:47:3 should have accessible form labels" type="FAILURE">
+<![CDATA[  [webkit] › auth.spec.ts:47:3 › Authentication Flow › should have accessible form labels ──────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should have keyboard navigation" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:59:3 should have keyboard navigation" type="FAILURE">
+<![CDATA[  [webkit] › auth.spec.ts:59:3 › Authentication Flow › should have keyboard navigation ─────────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="game-import.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="webkit" tests="7" failures="7" skipped="0" time="0.027" errors="0">
+<testcase name="Game Import Flow › should show import modal when import button is clicked" classname="game-import.spec.ts" time="0.005">
+<failure message="game-import.spec.ts:18:3 should show import modal when import button is clicked" type="FAILURE">
+<![CDATA[  [webkit] › game-import.spec.ts:18:3 › Game Import Flow › should show import modal when import button is clicked 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should have upload and paste tabs" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:24:3 should have upload and paste tabs" type="FAILURE">
+<![CDATA[  [webkit] › game-import.spec.ts:24:3 › Game Import Flow › should have upload and paste tabs ───────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should accept PGN text input" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:31:3 should accept PGN text input" type="FAILURE">
+<![CDATA[  [webkit] › game-import.spec.ts:31:3 › Game Import Flow › should accept PGN text input ────────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should show validation for empty PGN" classname="game-import.spec.ts" time="0.008">
+<failure message="game-import.spec.ts:42:3 should show validation for empty PGN" type="FAILURE">
+<![CDATA[  [webkit] › game-import.spec.ts:42:3 › Game Import Flow › should show validation for empty PGN ────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should close modal on cancel" classname="game-import.spec.ts" time="0.004">
+<failure message="game-import.spec.ts:52:3 should close modal on cancel" type="FAILURE">
+<![CDATA[  [webkit] › game-import.spec.ts:52:3 › Game Import Flow › should close modal on cancel ────────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should have accessible file input" classname="game-import.spec.ts" time="0.003">
+<failure message="game-import.spec.ts:63:3 should have accessible file input" type="FAILURE">
+<![CDATA[  [webkit] › game-import.spec.ts:63:3 › Game Import Flow › should have accessible file input ───────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should handle keyboard shortcuts" classname="game-import.spec.ts" time="0.003">
+<failure message="game-import.spec.ts:70:3 should handle keyboard shortcuts" type="FAILURE">
+<![CDATA[  [webkit] › game-import.spec.ts:70:3 › Game Import Flow › should handle keyboard shortcuts ────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="accessibility.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="Mobile Chrome" tests="7" failures="7" skipped="0" time="0.025" errors="0">
+<testcase name="Accessibility Tests › should not have any automatically detectable accessibility issues" classname="accessibility.spec.ts" time="0.002">
+<failure message="accessibility.spec.ts:5:3 should not have any automatically detectable accessibility issues" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › accessibility.spec.ts:5:3 › Accessibility Tests › should not have any automatically detectable accessibility issues 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have proper heading hierarchy" classname="accessibility.spec.ts" time="0.005">
+<failure message="accessibility.spec.ts:13:3 should have proper heading hierarchy" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › accessibility.spec.ts:13:3 › Accessibility Tests › should have proper heading hierarchy 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have keyboard navigable buttons" classname="accessibility.spec.ts" time="0.005">
+<failure message="accessibility.spec.ts:21:3 should have keyboard navigable buttons" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › accessibility.spec.ts:21:3 › Accessibility Tests › should have keyboard navigable buttons 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have proper ARIA labels" classname="accessibility.spec.ts" time="0.002">
+<failure message="accessibility.spec.ts:35:3 should have proper ARIA labels" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › accessibility.spec.ts:35:3 › Accessibility Tests › should have proper ARIA labels 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should support screen reader navigation" classname="accessibility.spec.ts" time="0.001">
+<failure message="accessibility.spec.ts:43:3 should support screen reader navigation" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › accessibility.spec.ts:43:3 › Accessibility Tests › should support screen reader navigation 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have sufficient color contrast" classname="accessibility.spec.ts" time="0.007">
+<failure message="accessibility.spec.ts:50:3 should have sufficient color contrast" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › accessibility.spec.ts:50:3 › Accessibility Tests › should have sufficient color contrast 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have alt text for images" classname="accessibility.spec.ts" time="0.003">
+<failure message="accessibility.spec.ts:64:3 should have alt text for images" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › accessibility.spec.ts:64:3 › Accessibility Tests › should have alt text for images 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="Mobile Chrome" tests="7" failures="7" skipped="0" time="0.022" errors="0">
+<testcase name="Authentication Flow › should display login page for unauthenticated users" classname="auth.spec.ts" time="0.008">
+<failure message="auth.spec.ts:4:3 should display login page for unauthenticated users" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › auth.spec.ts:4:3 › Authentication Flow › should display login page for unauthenticated users 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should show email and password inputs" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:13:3 should show email and password inputs" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › auth.spec.ts:13:3 › Authentication Flow › should show email and password inputs 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should display OAuth buttons" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:20:3 should display OAuth buttons" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › auth.spec.ts:20:3 › Authentication Flow › should display OAuth buttons ─────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should toggle between sign in and sign up" classname="auth.spec.ts" time="0.004">
+<failure message="auth.spec.ts:27:3 should toggle between sign in and sign up" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › auth.spec.ts:27:3 › Authentication Flow › should toggle between sign in and sign up 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should show validation error for empty form" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:38:3 should show validation error for empty form" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › auth.spec.ts:38:3 › Authentication Flow › should show validation error for empty form 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should have accessible form labels" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:47:3 should have accessible form labels" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › auth.spec.ts:47:3 › Authentication Flow › should have accessible form labels ───
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should have keyboard navigation" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:59:3 should have keyboard navigation" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › auth.spec.ts:59:3 › Authentication Flow › should have keyboard navigation ──────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="game-import.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="Mobile Chrome" tests="7" failures="7" skipped="0" time="0.035" errors="0">
+<testcase name="Game Import Flow › should show import modal when import button is clicked" classname="game-import.spec.ts" time="0.006">
+<failure message="game-import.spec.ts:18:3 should show import modal when import button is clicked" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › game-import.spec.ts:18:3 › Game Import Flow › should show import modal when import button is clicked 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should have upload and paste tabs" classname="game-import.spec.ts" time="0.003">
+<failure message="game-import.spec.ts:24:3 should have upload and paste tabs" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › game-import.spec.ts:24:3 › Game Import Flow › should have upload and paste tabs 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should accept PGN text input" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:31:3 should accept PGN text input" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › game-import.spec.ts:31:3 › Game Import Flow › should accept PGN text input ─────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should show validation for empty PGN" classname="game-import.spec.ts" time="0.011">
+<failure message="game-import.spec.ts:42:3 should show validation for empty PGN" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › game-import.spec.ts:42:3 › Game Import Flow › should show validation for empty PGN 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should close modal on cancel" classname="game-import.spec.ts" time="0.006">
+<failure message="game-import.spec.ts:52:3 should close modal on cancel" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › game-import.spec.ts:52:3 › Game Import Flow › should close modal on cancel ─────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should have accessible file input" classname="game-import.spec.ts" time="0.005">
+<failure message="game-import.spec.ts:63:3 should have accessible file input" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › game-import.spec.ts:63:3 › Game Import Flow › should have accessible file input 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should handle keyboard shortcuts" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:70:3 should handle keyboard shortcuts" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › game-import.spec.ts:70:3 › Game Import Flow › should handle keyboard shortcuts ─
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/chromium_headless_shell-1194/chrome-mac/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="accessibility.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="Mobile Safari" tests="7" failures="7" skipped="0" time="0.023" errors="0">
+<testcase name="Accessibility Tests › should not have any automatically detectable accessibility issues" classname="accessibility.spec.ts" time="0.004">
+<failure message="accessibility.spec.ts:5:3 should not have any automatically detectable accessibility issues" type="FAILURE">
+<![CDATA[  [Mobile Safari] › accessibility.spec.ts:5:3 › Accessibility Tests › should not have any automatically detectable accessibility issues 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have proper heading hierarchy" classname="accessibility.spec.ts" time="0.002">
+<failure message="accessibility.spec.ts:13:3 should have proper heading hierarchy" type="FAILURE">
+<![CDATA[  [Mobile Safari] › accessibility.spec.ts:13:3 › Accessibility Tests › should have proper heading hierarchy 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have keyboard navigable buttons" classname="accessibility.spec.ts" time="0.003">
+<failure message="accessibility.spec.ts:21:3 should have keyboard navigable buttons" type="FAILURE">
+<![CDATA[  [Mobile Safari] › accessibility.spec.ts:21:3 › Accessibility Tests › should have keyboard navigable buttons 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have proper ARIA labels" classname="accessibility.spec.ts" time="0.011">
+<failure message="accessibility.spec.ts:35:3 should have proper ARIA labels" type="FAILURE">
+<![CDATA[  [Mobile Safari] › accessibility.spec.ts:35:3 › Accessibility Tests › should have proper ARIA labels 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should support screen reader navigation" classname="accessibility.spec.ts" time="0.001">
+<failure message="accessibility.spec.ts:43:3 should support screen reader navigation" type="FAILURE">
+<![CDATA[  [Mobile Safari] › accessibility.spec.ts:43:3 › Accessibility Tests › should support screen reader navigation 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have sufficient color contrast" classname="accessibility.spec.ts" time="0.001">
+<failure message="accessibility.spec.ts:50:3 should have sufficient color contrast" type="FAILURE">
+<![CDATA[  [Mobile Safari] › accessibility.spec.ts:50:3 › Accessibility Tests › should have sufficient color contrast 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Accessibility Tests › should have alt text for images" classname="accessibility.spec.ts" time="0.001">
+<failure message="accessibility.spec.ts:64:3 should have alt text for images" type="FAILURE">
+<![CDATA[  [Mobile Safari] › accessibility.spec.ts:64:3 › Accessibility Tests › should have alt text for images 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="Mobile Safari" tests="7" failures="7" skipped="0" time="0.017" errors="0">
+<testcase name="Authentication Flow › should display login page for unauthenticated users" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:4:3 should display login page for unauthenticated users" type="FAILURE">
+<![CDATA[  [Mobile Safari] › auth.spec.ts:4:3 › Authentication Flow › should display login page for unauthenticated users 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should show email and password inputs" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:13:3 should show email and password inputs" type="FAILURE">
+<![CDATA[  [Mobile Safari] › auth.spec.ts:13:3 › Authentication Flow › should show email and password inputs 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should display OAuth buttons" classname="auth.spec.ts" time="0.003">
+<failure message="auth.spec.ts:20:3 should display OAuth buttons" type="FAILURE">
+<![CDATA[  [Mobile Safari] › auth.spec.ts:20:3 › Authentication Flow › should display OAuth buttons ─────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should toggle between sign in and sign up" classname="auth.spec.ts" time="0.003">
+<failure message="auth.spec.ts:27:3 should toggle between sign in and sign up" type="FAILURE">
+<![CDATA[  [Mobile Safari] › auth.spec.ts:27:3 › Authentication Flow › should toggle between sign in and sign up 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should show validation error for empty form" classname="auth.spec.ts" time="0.003">
+<failure message="auth.spec.ts:38:3 should show validation error for empty form" type="FAILURE">
+<![CDATA[  [Mobile Safari] › auth.spec.ts:38:3 › Authentication Flow › should show validation error for empty form 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should have accessible form labels" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:47:3 should have accessible form labels" type="FAILURE">
+<![CDATA[  [Mobile Safari] › auth.spec.ts:47:3 › Authentication Flow › should have accessible form labels ───
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Authentication Flow › should have keyboard navigation" classname="auth.spec.ts" time="0.002">
+<failure message="auth.spec.ts:59:3 should have keyboard navigation" type="FAILURE">
+<![CDATA[  [Mobile Safari] › auth.spec.ts:59:3 › Authentication Flow › should have keyboard navigation ──────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="game-import.spec.ts" timestamp="2025-10-20T15:46:31.459Z" hostname="Mobile Safari" tests="7" failures="7" skipped="0" time="0.013" errors="0">
+<testcase name="Game Import Flow › should show import modal when import button is clicked" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:18:3 should show import modal when import button is clicked" type="FAILURE">
+<![CDATA[  [Mobile Safari] › game-import.spec.ts:18:3 › Game Import Flow › should show import modal when import button is clicked 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should have upload and paste tabs" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:24:3 should have upload and paste tabs" type="FAILURE">
+<![CDATA[  [Mobile Safari] › game-import.spec.ts:24:3 › Game Import Flow › should have upload and paste tabs 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should accept PGN text input" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:31:3 should accept PGN text input" type="FAILURE">
+<![CDATA[  [Mobile Safari] › game-import.spec.ts:31:3 › Game Import Flow › should accept PGN text input ─────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should show validation for empty PGN" classname="game-import.spec.ts" time="0.003">
+<failure message="game-import.spec.ts:42:3 should show validation for empty PGN" type="FAILURE">
+<![CDATA[  [Mobile Safari] › game-import.spec.ts:42:3 › Game Import Flow › should show validation for empty PGN 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should close modal on cancel" classname="game-import.spec.ts" time="0.002">
+<failure message="game-import.spec.ts:52:3 should close modal on cancel" type="FAILURE">
+<![CDATA[  [Mobile Safari] › game-import.spec.ts:52:3 › Game Import Flow › should close modal on cancel ─────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should have accessible file input" classname="game-import.spec.ts" time="0.001">
+<failure message="game-import.spec.ts:63:3 should have accessible file input" type="FAILURE">
+<![CDATA[  [Mobile Safari] › game-import.spec.ts:63:3 › Game Import Flow › should have accessible file input 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Game Import Flow › should handle keyboard shortcuts" classname="game-import.spec.ts" time="0.001">
+<failure message="game-import.spec.ts:70:3 should handle keyboard shortcuts" type="FAILURE">
+<![CDATA[  [Mobile Safari] › game-import.spec.ts:70:3 › Game Import Flow › should handle keyboard shortcuts ─
+
+    Error: browserType.launch: Executable doesn't exist at /Users/arjavjain/Library/Caches/ms-playwright/webkit-2215/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+</testsuites>

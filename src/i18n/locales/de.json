@@ -1,0 +1,35 @@
+{
+  "app": {
+    "title": "ChessMate",
+    "subtitle": "Ihr Persönlicher Schach-Mentor"
+  },
+  "auth": {
+    "signIn": "Anmelden",
+    "signUp": "Registrieren",
+    "signOut": "Abmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "name": "Name",
+    "createAccount": "Konto Erstellen",
+    "continueWithGoogle": "Mit Google Fortfahren",
+    "continueWithGitHub": "Mit GitHub Fortfahren",
+    "processing": "Wird Verarbeitet..."
+  },
+  "nav": {
+    "import": "Importieren",
+    "analyze": "Partien Analysieren",
+    "statistics": "Statistiken",
+    "progress": "Fortschritt"
+  },
+  "statistics": {
+    "title": "Ihre Schachstatistiken",
+    "averageAccuracy": "Durchschnittliche Genauigkeit",
+    "gamesAnalyzed": "Analysierte Partien",
+    "noData": "Noch Keine Daten"
+  },
+  "common": {
+    "close": "Schließen",
+    "loading": "Laden...",
+    "error": "Fehler"
+  }
+}

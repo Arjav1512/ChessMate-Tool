@@ -1,0 +1,46 @@
+{
+  "generated_at": "2025-10-20T00:00:00Z",
+  "root": {
+    "entry": "src/main.tsx",
+    "app": "src/App.tsx"
+  },
+  "components": {
+    "ChessBoard": "src/components/ChessBoard.tsx",
+    "GameList": "src/components/GameList.tsx",
+    "GameViewer": "src/components/GameViewer.tsx",
+    "ChatInterface": "src/components/ChatInterface.tsx",
+    "BulkAnalysis": "src/components/BulkAnalysis.tsx",
+    "AnalyzeGamesPage": "src/components/AnalyzeGamesPage.tsx",
+    "AuthForm": "src/components/AuthForm.tsx",
+    "Toast": "src/components/Toast.tsx",
+    "ErrorBoundary": "src/components/ErrorBoundary.tsx",
+    "ProgressBar": "src/components/ProgressBar.tsx",
+    "BoardArrows": "src/components/BoardArrows.tsx",
+    "DisplaySettings": "src/components/DisplaySettings.tsx",
+    "EvaluationGauge": "src/components/EvaluationGauge.tsx",
+    "MarkdownRenderer": "src/components/MarkdownRenderer.tsx",
+    "StatsDashboard": "src/components/StatsDashboard.tsx",
+    "Toggle": "src/components/Toggle.tsx"
+  },
+  "contexts": {
+    "AuthProvider": "src/contexts/AuthContext.tsx",
+    "ToastProvider": "src/contexts/ToastContext.tsx"
+  },
+  "lib": {
+    "supabase": "src/lib/supabase.ts",
+    "pgn": "src/lib/pgn.ts",
+    "stockfish": "src/lib/stockfish.ts",
+    "sentry": "src/lib/sentry.ts",
+    "gemini": "src/lib/gemini.ts",
+    "pgn_exports": ["parsePGN","validatePGN","PGNParseError","moveToSAN"],
+    "stockfish_exports": ["StockfishEngine","stockfish"],
+    "sentry_exports": ["initSentry","logError","logMessage","setUserContext","clearUserContext","addBreadcrumb"]
+  },
+  "supabase_function": {
+    "chess-mentor": "supabase/functions/chess-mentor/index.ts"
+  },
+  "tests": {
+    "e2e": "e2e/*.spec.ts",
+    "setup": "src/test/setup.ts"
+  }
+}
