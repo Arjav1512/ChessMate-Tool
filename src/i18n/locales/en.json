@@ -1,0 +1,80 @@
+{
+  "app": {
+    "title": "ChessMate",
+    "subtitle": "Your Personal Chess Mentor"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "createAccount": "Create Account",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithGitHub": "Continue with GitHub",
+    "processing": "Processing..."
+  },
+  "nav": {
+    "import": "Import",
+    "analyze": "Analyze Games",
+    "statistics": "Statistics",
+    "progress": "Progress"
+  },
+  "import": {
+    "title": "Import Games",
+    "upload": "Upload",
+    "paste": "Paste",
+    "addGame": "Add Game",
+    "uploadPrompt": "Click or drag PGN file here",
+    "pastePrompt": "Paste your PGN text here..."
+  },
+  "game": {
+    "whitePlayer": "White",
+    "blackPlayer": "Black",
+    "result": "Result",
+    "event": "Event",
+    "date": "Date"
+  },
+  "analysis": {
+    "analyzing": "Analyzing...",
+    "accuracy": "Accuracy",
+    "mistakes": "Mistakes",
+    "blunders": "Blunders",
+    "bestMove": "Best Move",
+    "evaluation": "Evaluation"
+  },
+  "statistics": {
+    "title": "Your Chess Statistics",
+    "averageAccuracy": "Average Accuracy",
+    "gamesAnalyzed": "Games Analyzed",
+    "totalMistakes": "Total Mistakes",
+    "totalBlunders": "Total Blunders",
+    "gameResults": "Game Results",
+    "wins": "Wins",
+    "losses": "Losses",
+    "draws": "Draws",
+    "colorDistribution": "Color Distribution",
+    "asWhite": "As White",
+    "asBlack": "As Black",
+    "recentGames": "Recent Games",
+    "noData": "No Data Yet",
+    "noDataMessage": "Analyze some games to see your statistics and track your progress!"
+  },
+  "errors": {
+    "generic": "An error occurred",
+    "network": "Network error. Please check your connection.",
+    "auth": "Authentication failed. Please try again.",
+    "parse": "Failed to parse PGN. Please check the format.",
+    "empty": "Empty or invalid PGN content"
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "loading": "Loading...",
+    "success": "Success!",
+    "error": "Error"
+  }
+}
