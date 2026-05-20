@@ -33,20 +33,22 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
 
     return await measureAsync('loadGames', async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('games')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('uploaded_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('games')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('uploaded_at', { ascending: false });
 
-      if (error) {
-        console.error('Error loading games:', error);
-        return [];
-      } else {
+        if (error) {
+          console.error('Error loading games:', error);
+          return [];
+        }
         setGames(data || []);
         return data || [];
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
   }, [user, measureAsync]);
 

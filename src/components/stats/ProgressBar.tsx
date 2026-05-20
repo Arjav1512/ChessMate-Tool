@@ -1,6 +1,26 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase, Game } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { parsePGN } from '../../lib/pgn';
+
+interface AnalysisResult {
+  game_id: string;
+  accuracy: number;
+  mistakes: number;
+  blunders: number;
+  good_moves: number;
+  best_moves: number;
+}
+
+interface GameRow {
+  id: string;
+  result: string;
+  date: string;
+  uploaded_at: string;
+  pgn: string;
+  white_player: string;
+  black_player: string;
+}
 
 interface GameStats {
   totalGames: number;
@@ -28,27 +48,98 @@ export function ProgressBar() {
   const loadStats = useCallback(async () => {
     if (!user) return;
 
-    const { data: games } = await supabase
-      .from('games')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('date', { ascending: true });
+    const [gamesRes, analysisRes] = await Promise.allSettled([
+      supabase
+        .from('games')
+        .select('id, result, date, uploaded_at, pgn, white_player, black_player')
+        .eq('user_id', user.id)
+        .order('uploaded_at', { ascending: true }),
+      supabase
+        .from('game_analysis_results')
+        .select('game_id, accuracy, mistakes, blunders, good_moves, best_moves')
+        .eq('user_id', user.id),
+    ]);
 
-    if (!games || games.length === 0) {
-      return;
+    const games: GameRow[] = gamesRes.status === 'fulfilled' ? (gamesRes.value.data || []) : [];
+    const analyses: AnalysisResult[] = analysisRes.status === 'fulfilled' ? (analysisRes.value.data || []) : [];
+
+    if (games.length === 0) return;
+
+    // Score trend: cumulative score over time (+1 win, 0 draw, -1 loss)
+    let cumulative = 0;
+    const ratingData = games.map((game, idx) => {
+      if (game.result === '1-0') cumulative += 1;
+      else if (game.result === '0-1') cumulative -= 1;
+      const label = game.date && game.date !== '??'
+        ? game.date.replace(/\.\d+$/, '')
+        : `#${idx + 1}`;
+      return { date: label, rating: cumulative };
+    });
+
+    // Mistake breakdown from real analysis data
+    const totalMistakes = analyses.reduce((s, a) => s + (a.mistakes || 0), 0);
+    const totalBlunders = analyses.reduce((s, a) => s + (a.blunders || 0), 0);
+    const totalGood = analyses.reduce((s, a) => s + (a.good_moves || 0), 0);
+    const totalBest = analyses.reduce((s, a) => s + (a.best_moves || 0), 0);
+    const mistakeBreakdown = analyses.length > 0
+      ? {
+          tactical: totalBlunders,
+          positional: totalMistakes,
+          timeManagement: Math.max(0, totalGood - totalBest),
+          endgame: 0,
+        }
+      : { tactical: 0, positional: 0, timeManagement: 0, endgame: 0 };
+
+    // Opening performance from PGN first-move extraction
+    const openingMap = new Map<string, { wins: number; total: number }>();
+    for (const game of games) {
+      let firstMove = '';
+      try {
+        const pgn = parsePGN(game.pgn);
+        firstMove = pgn.moves[0] || '';
+      } catch {
+        continue;
+      }
+      const openingName = classifyOpening(firstMove);
+      const existing = openingMap.get(openingName) || { wins: 0, total: 0 };
+      existing.total += 1;
+      if (game.result === '1-0') existing.wins += 1;
+      openingMap.set(openingName, existing);
     }
+    const openingPerformance = Array.from(openingMap.entries())
+      .filter(([, v]) => v.total > 0)
+      .map(([opening, v]) => ({
+        opening,
+        winRate: Math.round((v.wins / v.total) * 100),
+        games: v.total,
+      }))
+      .sort((a, b) => b.games - a.games)
+      .slice(0, 5);
 
-    const ratingData = generateRatingData(games);
-    const mistakeBreakdown = analyzeMistakes(games);
-    const openingPerformance = analyzeOpenings(games);
-    const areasForImprovement = calculateImprovement();
+    // Areas for improvement from analysis accuracy
+    const avgAccuracy = analyses.length > 0
+      ? analyses.reduce((s, a) => s + (a.accuracy || 0), 0) / analyses.length
+      : 0;
+    const avgMistakesPerGame = analyses.length > 0 ? totalMistakes / analyses.length : 0;
+    const avgBlundersPerGame = analyses.length > 0 ? totalBlunders / analyses.length : 0;
+    const areasForImprovement = analyses.length > 0
+      ? [
+          { area: 'Move Accuracy', score: Math.round(avgAccuracy) },
+          { area: 'Avoiding Mistakes', score: Math.max(0, Math.round(100 - avgMistakesPerGame * 10)) },
+          { area: 'Avoiding Blunders', score: Math.max(0, Math.round(100 - avgBlundersPerGame * 20)) },
+        ]
+      : [
+          { area: 'Move Accuracy', score: 0 },
+          { area: 'Avoiding Mistakes', score: 0 },
+          { area: 'Avoiding Blunders', score: 0 },
+        ];
 
     setStats({
       totalGames: games.length,
       ratingData,
       mistakeBreakdown,
       openingPerformance,
-      areasForImprovement
+      areasForImprovement,
     });
   }, [user]);
 
@@ -58,48 +149,18 @@ export function ProgressBar() {
     }
   }, [user, loadStats]);
 
-  const generateRatingData = (games: Game[]) => {
-    const baseRating = 1685;
-    return games.slice(0, 4).map((game, idx) => {
-      const result = game.result;
-      let change = 0;
-      if (result === '1-0') change = 15;
-      else if (result === '0-1') change = -10;
-      else if (result === '1/2-1/2') change = 5;
-
-      return {
-        date: game.date || `Game ${idx + 1}`,
-        rating: baseRating + (idx * 15) + change
-      };
-    });
-  };
-
-  const analyzeMistakes = (games: Game[]) => {
-    const total = games.length * 10;
-    return {
-      tactical: Math.floor(total * 0.35),
-      positional: Math.floor(total * 0.25),
-      timeManagement: Math.floor(total * 0.15),
-      endgame: Math.floor(total * 0.25)
-    };
-  };
-
-  const analyzeOpenings = (games: Game[]) => {
-    const openings = [
-      { opening: 'Sicilian Defense', winRate: 65, games: Math.floor(games.length * 0.3) },
-      { opening: "Queen's Gambit Declined", winRate: 45, games: Math.floor(games.length * 0.25) },
-      { opening: 'Italian Game', winRate: 58, games: Math.floor(games.length * 0.20) }
-    ];
-    return openings.filter(o => o.games > 0);
-  };
-
-  const calculateImprovement = () => {
-    return [
-      { area: 'Endgame Technique', score: 40 },
-      { area: 'Tactical Vision', score: 75 },
-      { area: 'Time Management', score: 60 }
-    ];
-  };
+  // Map first move SAN to opening family name
+  function classifyOpening(firstMove: string): string {
+    if (!firstMove) return 'Unknown';
+    const m = firstMove.toLowerCase();
+    if (m === 'e4') return "King's Pawn (1.e4)";
+    if (m === 'd4') return "Queen's Pawn (1.d4)";
+    if (m === 'c4') return 'English Opening (1.c4)';
+    if (m === 'nf3') return "Réti / Nf3 Systems";
+    if (m === 'g3') return 'King\'s Fianchetto (1.g3)';
+    if (m === 'f4') return 'Bird\'s Opening (1.f4)';
+    return `Other (1.${firstMove})`;
+  }
 
   if (stats.totalGames === 0) {
     return (
@@ -137,29 +198,39 @@ export function ProgressBar() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Rating Progress */}
+      {/* Score Trend */}
       <div style={sectionStyle}>
-        <h3 style={sectionTitleStyle}>Rating Progress</h3>
+        <h3 style={sectionTitleStyle}>Score Trend (cumulative W/L)</h3>
         <div style={{ position: 'relative', height: '220px' }}>
-          <svg width="100%" height="100%" viewBox="0 0 600 220" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style={{ stopColor: 'var(--cm-accent)', stopOpacity: 0.25 }} />
-                <stop offset="100%" style={{ stopColor: 'var(--cm-accent)', stopOpacity: 0 }} />
-              </linearGradient>
-            </defs>
+          {stats.ratingData.length > 1 ? (() => {
+            const values = stats.ratingData.map(d => d.rating);
+            const minVal = Math.min(...values) - 1;
+            const maxVal = Math.max(...values) + 1;
+            const range = maxVal - minVal || 1;
+            const toY = (v: number) => 180 - ((v - minVal) / range) * 140;
+            const toX = (i: number) => stats.ratingData.length === 1
+              ? 300
+              : (i / (stats.ratingData.length - 1)) * 560 + 20;
+            const zeroY = toY(0);
 
-            {stats.ratingData.length > 0 && (
-              <>
+            return (
+              <svg width="100%" height="100%" viewBox="0 0 600 220" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style={{ stopColor: 'var(--cm-accent)', stopOpacity: 0.25 }} />
+                    <stop offset="100%" style={{ stopColor: 'var(--cm-accent)', stopOpacity: 0 }} />
+                  </linearGradient>
+                </defs>
+
+                {/* Zero baseline */}
+                <line x1="20" y1={zeroY} x2="580" y2={zeroY} stroke="var(--cm-border-default)" strokeWidth="1" strokeDasharray="4,4" />
+
                 <polyline
                   fill="url(#areaGradient)"
                   stroke="none"
                   points={
-                    stats.ratingData.map((d, i) => {
-                      const x = (i / (stats.ratingData.length - 1)) * 560 + 20;
-                      const y = 180 - ((d.rating - 1650) / 150) * 140;
-                      return `${x},${y}`;
-                    }).join(' ') + ` 580,180 20,180`
+                    stats.ratingData.map((d, i) => `${toX(i)},${toY(d.rating)}`).join(' ')
+                    + ` ${toX(stats.ratingData.length - 1)},180 20,180`
                   }
                 />
                 <polyline
@@ -168,74 +239,66 @@ export function ProgressBar() {
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  points={
-                    stats.ratingData.map((d, i) => {
-                      const x = (i / (stats.ratingData.length - 1)) * 560 + 20;
-                      const y = 180 - ((d.rating - 1650) / 150) * 140;
-                      return `${x},${y}`;
-                    }).join(' ')
-                  }
+                  points={stats.ratingData.map((d, i) => `${toX(i)},${toY(d.rating)}`).join(' ')}
                 />
+                {stats.ratingData.map((d, i) => (
+                  <circle key={i} cx={toX(i)} cy={toY(d.rating)} r="4"
+                    fill={d.rating > 0 ? 'var(--cm-success)' : d.rating < 0 ? 'var(--cm-error)' : 'var(--cm-accent)'}
+                    stroke="var(--cm-bg-elevated)" strokeWidth="2" />
+                ))}
+
+                <line x1="20" y1="20" x2="20" y2="180" stroke="var(--cm-border-subtle)" strokeWidth="1" />
+                <line x1="20" y1="180" x2="580" y2="180" stroke="var(--cm-border-subtle)" strokeWidth="1" />
+
                 {stats.ratingData.map((d, i) => {
-                  const x = (i / (stats.ratingData.length - 1)) * 560 + 20;
-                  const y = 180 - ((d.rating - 1650) / 150) * 140;
+                  const label = d.date.length > 7 ? d.date.slice(0, 7) : d.date;
                   return (
-                    <circle key={i} cx={x} cy={y} r="4" fill="var(--cm-accent)" stroke="var(--cm-bg-elevated)" strokeWidth="2" />
+                    <text key={i} x={toX(i)} y="198" fill="var(--cm-text-muted)" fontSize="10" textAnchor="middle">
+                      {label}
+                    </text>
                   );
                 })}
-              </>
-            )}
-
-            <line x1="20" y1="20" x2="20" y2="180" stroke="var(--cm-border-subtle)" strokeWidth="1" />
-            <line x1="20" y1="180" x2="580" y2="180" stroke="var(--cm-border-subtle)" strokeWidth="1" />
-
-            {[1800, 1760, 1720, 1680].map((rating) => {
-              const y = 180 - ((rating - 1650) / 150) * 140;
-              return (
-                <g key={rating}>
-                  <line x1="16" y1={y} x2="20" y2={y} stroke="var(--cm-border-default)" strokeWidth="1" />
-                  <text x="12" y={y + 4} fill="var(--cm-text-muted)" fontSize="10" textAnchor="end">{rating}</text>
-                </g>
-              );
-            })}
-
-            {stats.ratingData.map((d, i) => {
-              const x = (i / (stats.ratingData.length - 1)) * 560 + 20;
-              const label = d.date.split(' ').slice(0, 2).join(' ');
-              return (
-                <text key={i} x={x} y="198" fill="var(--cm-text-muted)" fontSize="10" textAnchor="middle">
-                  {label}
-                </text>
-              );
-            })}
-          </svg>
+              </svg>
+            );
+          })() : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--cm-text-muted)', fontSize: '13px' }}>
+              Need at least 2 games to show trend
+            </div>
+          )}
         </div>
       </div>
 
       {/* Mistake Analysis */}
       <div style={sectionStyle}>
         <h3 style={sectionTitleStyle}>Mistake Analysis</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-          <div style={{ position: 'relative', width: '160px', height: '160px', flexShrink: 0 }}>
-            <svg width="160" height="160" viewBox="0 0 180 180">
-              <DonutChart
-                data={[
-                  { value: stats.mistakeBreakdown.tactical, color: 'var(--cm-accent)', label: 'Tactical Blunders' },
-                  { value: stats.mistakeBreakdown.positional, color: 'var(--cm-info)', label: 'Positional Mistakes' },
-                  { value: stats.mistakeBreakdown.timeManagement, color: 'var(--cm-error)', label: 'Time Management' },
-                  { value: stats.mistakeBreakdown.endgame, color: 'var(--cm-border-strong)', label: 'Endgame Errors' }
-                ]}
-                total={totalMistakes}
-              />
-            </svg>
+        {totalMistakes === 0 ? (
+          <p style={{ color: 'var(--cm-text-muted)', fontSize: '13px', margin: 0 }}>
+            Run <strong style={{ color: 'var(--cm-text-secondary)' }}>Bulk Analysis</strong> to see your mistake breakdown.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
+            <div style={{ position: 'relative', width: '160px', height: '160px', flexShrink: 0 }}>
+              <svg width="160" height="160" viewBox="0 0 180 180">
+                <DonutChart
+                  data={[
+                    { value: stats.mistakeBreakdown.tactical, color: 'var(--cm-accent)', label: 'Blunders' },
+                    { value: stats.mistakeBreakdown.positional, color: 'var(--cm-info)', label: 'Mistakes' },
+                    { value: stats.mistakeBreakdown.timeManagement, color: 'var(--cm-error)', label: 'Inaccuracies' },
+                    { value: stats.mistakeBreakdown.endgame, color: 'var(--cm-border-strong)', label: 'Other' }
+                  ]}
+                  total={totalMistakes}
+                />
+              </svg>
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <LegendItem color="var(--cm-accent)" label={`Blunders (${stats.mistakeBreakdown.tactical})`} />
+              <LegendItem color="var(--cm-info)" label={`Mistakes (${stats.mistakeBreakdown.positional})`} />
+              {stats.mistakeBreakdown.timeManagement > 0 && (
+                <LegendItem color="var(--cm-error)" label={`Inaccuracies (${stats.mistakeBreakdown.timeManagement})`} />
+              )}
+            </div>
           </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <LegendItem color="var(--cm-accent)" label="Tactical Blunders" />
-            <LegendItem color="var(--cm-info)" label="Positional Mistakes" />
-            <LegendItem color="var(--cm-error)" label="Time Management" />
-            <LegendItem color="var(--cm-border-strong)" label="Endgame Errors" />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Opening Performance */}
@@ -270,32 +333,38 @@ export function ProgressBar() {
       {/* Areas for Improvement */}
       <div style={sectionStyle}>
         <h3 style={sectionTitleStyle}>Areas for Improvement</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {stats.areasForImprovement.map((area) => (
-            <div key={area.area}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--cm-text-secondary)' }}>{area.area}</span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--cm-accent)' }}>{area.score}%</span>
-              </div>
-              <div style={{
-                width: '100%',
-                height: '6px',
-                background: 'var(--cm-bg-hover)',
-                borderRadius: '3px',
-                overflow: 'hidden',
-                border: '1px solid var(--cm-border-subtle)',
-              }}>
+        {stats.areasForImprovement.every(a => a.score === 0) ? (
+          <p style={{ color: 'var(--cm-text-muted)', fontSize: '13px', margin: 0 }}>
+            Run <strong style={{ color: 'var(--cm-text-secondary)' }}>Bulk Analysis</strong> to see accuracy-based improvement scores.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {stats.areasForImprovement.map((area) => (
+              <div key={area.area}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--cm-text-secondary)' }}>{area.area}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--cm-accent)' }}>{area.score}%</span>
+                </div>
                 <div style={{
-                  width: `${area.score}%`,
-                  height: '100%',
-                  background: 'var(--cm-accent)',
+                  width: '100%',
+                  height: '6px',
+                  background: 'var(--cm-bg-hover)',
                   borderRadius: '3px',
-                  transition: 'width 0.4s ease',
-                }} />
+                  overflow: 'hidden',
+                  border: '1px solid var(--cm-border-subtle)',
+                }}>
+                  <div style={{
+                    width: `${area.score}%`,
+                    height: '100%',
+                    background: 'var(--cm-accent)',
+                    borderRadius: '3px',
+                    transition: 'width 0.4s ease',
+                  }} />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

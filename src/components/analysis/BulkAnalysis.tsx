@@ -38,19 +38,25 @@ export function BulkAnalysis() {
         .from('games')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
       setGames(data || []);
 
       const initialAnalyses = new Map<string, GameAnalysis>();
       data?.forEach(game => {
-        const pgnData = parsePGN(game.pgn);
+        let positions = 0;
+        try {
+          const pgnData = parsePGN(game.pgn);
+          positions = pgnData.moves.length;
+        } catch {
+          // keep positions = 0 for unparseable PGN
+        }
         initialAnalyses.set(game.id, {
           gameId: game.id,
           gameName: `${game.white_player} vs ${game.black_player}`,
           status: 'pending',
-          positions: pgnData.moves.length,
+          positions,
           analyzed: 0,
           insights: null,
         });
@@ -113,9 +119,24 @@ export function BulkAnalysis() {
         }
       }
 
-      const avgEval = evaluations.reduce((a, b) => a + b, 0) / evaluations.length;
+      const avgEval = evaluations.length > 0
+        ? evaluations.reduce((a, b) => a + b, 0) / evaluations.length
+        : 0;
       const totalMoves = pgnData.moves.length;
       const accuracy = totalMoves > 0 ? (bestMoves / totalMoves) * 100 : 0;
+
+      // Persist analysis results so StatsDashboard and trigger can use them
+      await supabase.from('game_analysis_results').upsert({
+        game_id: gameId,
+        user_id: user!.id,
+        accuracy: Math.round(accuracy * 100) / 100,
+        total_moves: totalMoves,
+        mistakes,
+        blunders,
+        good_moves: bestMoves,
+        best_moves: bestMoves,
+        average_centipawn_loss: 0,
+      }, { onConflict: 'game_id' });
 
       setAnalyses(prev => {
         const updated = new Map(prev);

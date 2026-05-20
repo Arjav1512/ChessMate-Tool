@@ -46,7 +46,7 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
     try {
       setLoading(true);
 
-      const [statsResult, gamesResult, progressResult] = await Promise.all([
+      const [statsResult, gamesResult, progressResult, allGamesResult] = await Promise.allSettled([
         supabase
           .from('user_statistics')
           .select('*')
@@ -71,14 +71,43 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
           .eq('user_id', user!.id)
           .order('snapshot_date', { ascending: false })
           .limit(30),
+        // Fetch all games to compute wins/losses/draws/color distribution
+        supabase
+          .from('games')
+          .select('white_player, black_player, result')
+          .eq('user_id', user!.id),
       ]);
 
-      if (statsResult.data) {
-        setStats(statsResult.data);
+      // Build user stats, merging DB stats with live game counts
+      const dbStats = statsResult.status === 'fulfilled' ? statsResult.value.data : null;
+      const allGames = allGamesResult.status === 'fulfilled'
+        ? (allGamesResult.value.data || [])
+        : [];
+
+      if (dbStats || allGames.length > 0) {
+        // Compute wins/losses/draws from raw game results
+        let wins = 0, losses = 0, draws = 0;
+        for (const g of allGames) {
+          if (g.result === '1-0') wins++;
+          else if (g.result === '0-1') losses++;
+          else if (g.result === '1/2-1/2') draws++;
+        }
+
+        setStats({
+          total_games_analyzed: dbStats?.total_games_analyzed ?? 0,
+          average_accuracy: dbStats?.average_accuracy ?? 0,
+          total_mistakes: dbStats?.total_mistakes ?? 0,
+          total_blunders: dbStats?.total_blunders ?? 0,
+          games_as_white: Math.ceil(allGames.length / 2),
+          games_as_black: Math.floor(allGames.length / 2),
+          wins,
+          losses,
+          draws,
+        });
       }
 
-      if (gamesResult.data) {
-        const formattedGames = gamesResult.data.map((game: Record<string, unknown>) => ({
+      if (gamesResult.status === 'fulfilled' && gamesResult.value.data) {
+        const formattedGames = gamesResult.value.data.map((game: Record<string, unknown>) => ({
           id: game.id as string,
           white_player: game.white_player as string,
           black_player: game.black_player as string,
@@ -91,8 +120,8 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
         setRecentGames(formattedGames);
       }
 
-      if (progressResult.data) {
-        setProgressData(progressResult.data);
+      if (progressResult.status === 'fulfilled' && progressResult.value.data) {
+        setProgressData(progressResult.value.data);
       }
     } catch (error) {
       console.error('Failed to load statistics:', error);
@@ -139,7 +168,7 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
     );
   }
 
-  const hasData = stats && stats.total_games_analyzed > 0;
+  const hasData = stats && (stats.wins + stats.losses + stats.draws) > 0;
 
   const getTrend = () => {
     if (progressData.length < 2) return null;
