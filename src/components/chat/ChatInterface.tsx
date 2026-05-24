@@ -4,7 +4,6 @@ import { supabase } from '../../lib/supabase';
 import { askChessMentor } from '../../lib/gemini';
 import { useAuth } from '../../contexts/AuthContext';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
 import type { Question } from '../../lib/supabase';
 
 interface GameContext {
@@ -181,15 +180,16 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
             padding: '40px 20px',
           }}>
             <div style={{
-              width: '56px',
-              height: '56px',
-              background: 'var(--cm-bg-elevated)',
-              border: '1px solid var(--cm-border-default)',
-              borderRadius: '50%',
+              width: '48px',
+              height: '48px',
+              background: 'var(--cm-accent-dim)',
+              border: '1px solid var(--cm-accent-ring)',
+              borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '24px',
+              color: 'var(--cm-accent)',
             }}>♟</div>
             <div>
               <h4 style={{ fontWeight: 600, marginBottom: '6px', color: 'var(--cm-text-primary)', fontSize: '15px' }}>
@@ -234,7 +234,7 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
           questions.map(q => {
             const isError = q.answer.startsWith('⚠️ Error:');
             return (
-              <div key={q.id}>
+              <div key={q.id} className="fade-up">
                 {/* User message - right aligned */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                   <div style={{
@@ -243,7 +243,7 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
                     background: 'var(--cm-accent)',
                     borderRadius: '12px 12px 2px 12px',
                     color: 'var(--cm-text-inverse)',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     lineHeight: 1.5,
                     wordBreak: 'break-word',
                   }}>
@@ -254,17 +254,18 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
                 {/* AI response - left aligned */}
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                   <div style={{
-                    width: '28px',
-                    height: '28px',
-                    background: 'var(--cm-bg-elevated)',
-                    border: '1px solid var(--cm-border-default)',
-                    borderRadius: '50%',
+                    width: '26px',
+                    height: '26px',
+                    background: 'var(--cm-accent-dim)',
+                    border: '1px solid var(--cm-accent-ring)',
+                    borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     flexShrink: 0,
-                    marginTop: '2px',
+                    marginTop: '3px',
+                    color: 'var(--cm-accent)',
                   }}>♟</div>
                   <div style={{
                     maxWidth: '80%',
@@ -273,8 +274,8 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
                     border: `1px solid ${isError ? 'rgba(232,85,74,0.25)' : 'var(--cm-border-subtle)'}`,
                     borderRadius: '2px 12px 12px 12px',
                     color: isError ? 'var(--cm-error)' : 'var(--cm-text-primary)',
-                    fontSize: '14px',
-                    lineHeight: 1.6,
+                    fontSize: '13px',
+                    lineHeight: 1.65,
                     wordBreak: 'break-word',
                   }}>
                     {isError ? (
@@ -287,6 +288,28 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
               </div>
             );
           })
+        )}
+        {loading && (
+          <div className="fade-up" style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+            <div style={{
+              width: '26px',
+              height: '26px',
+              background: 'var(--cm-accent-dim)',
+              border: '1px solid var(--cm-accent-ring)',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '13px',
+              flexShrink: 0,
+              color: 'var(--cm-accent)',
+            }}>♟</div>
+            <div className="typing-indicator">
+              <div className="typing-dot" />
+              <div className="typing-dot" />
+              <div className="typing-dot" />
+            </div>
+          </div>
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -338,8 +361,8 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
               flexShrink: 0,
             }}
           >
-            {loading ? <LoadingSpinner size="sm" /> : <Send size={15} />}
-            {loading ? 'Thinking...' : 'Send'}
+            <Send size={15} />
+            {loading ? 'Sending...' : 'Send'}
           </button>
         </form>
       </div>

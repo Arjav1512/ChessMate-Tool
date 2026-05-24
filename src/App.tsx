@@ -12,7 +12,7 @@ import { StatsDashboard } from './components/stats/StatsDashboard';
 import { ThemeToggle } from './components/layout/ThemeToggle';
 import { CompatibilityWarning } from './components/layout/CompatibilityWarning';
 import { useResponsive } from './hooks/useResponsive';
-import { LogOut, TrendingUp, Upload, Brain, BarChart3 } from 'lucide-react';
+import { LogOut, TrendingUp, Upload, Brain, BarChart3, Search, Zap, BookOpen } from 'lucide-react';
 import type { Game } from './lib/supabase';
 
 type ModalType = 'import' | 'progress' | 'analyze' | 'stats' | null;
@@ -51,6 +51,7 @@ function ModalHeader({ title, onClose }: { title: string; onClose: () => void })
       <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--cm-text-primary)' }}>{title}</span>
       <button
         onClick={onClose}
+        aria-label="Close"
         style={{
           background: 'none',
           border: 'none',
@@ -121,23 +122,12 @@ function MainApp() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cm-bg-base)', color: 'var(--cm-text-primary)' }}>
       {/* Header */}
-      <header style={{
-        height: '56px',
-        background: 'var(--cm-bg-surface)',
-        borderBottom: '1px solid var(--cm-border-subtle)',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 20px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        gap: '8px',
-      }}>
+      <header className="app-header">
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 'auto' }}>
-          <span style={{ fontSize: '22px', lineHeight: 1 }}>♟</span>
-          <span style={{ fontWeight: 700, fontSize: '17px', color: 'var(--cm-text-primary)', letterSpacing: '-0.3px' }}>
-            ChessMate
+          <span style={{ fontSize: '20px', lineHeight: 1, color: 'var(--cm-accent)', filter: 'drop-shadow(0 1px 4px rgba(240,168,64,0.35))' }}>♟</span>
+          <span style={{ fontWeight: 600, fontSize: '16px', color: 'var(--cm-text-primary)', letterSpacing: '-0.2px' }}>
+            Chess<span style={{ color: 'var(--cm-accent)' }}>Mate</span>
           </span>
         </div>
 
@@ -171,6 +161,7 @@ function MainApp() {
 
         <button
           onClick={signOut}
+          aria-label="Sign out"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -254,49 +245,67 @@ function MainApp() {
               />
             ) : (
               /* Welcome screen */
-              <div style={{
+              <div className="fade-up" style={{
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
-                gap: '24px',
+                gap: '32px',
                 padding: '40px 20px',
               }}>
-                <div style={{ fontSize: '64px', lineHeight: 1 }}>♟</div>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  background: 'var(--cm-accent-dim)',
+                  border: '1px solid var(--cm-accent-ring)',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <span style={{ fontSize: '32px', lineHeight: 1, filter: 'drop-shadow(0 2px 4px rgba(240,168,64,0.4))' }}>♟</span>
+                </div>
                 <div>
                   <h2 style={{
-                    fontSize: '28px',
-                    fontWeight: 700,
-                    marginBottom: '8px',
+                    fontSize: '24px',
+                    fontWeight: 600,
+                    marginBottom: '10px',
                     color: 'var(--cm-text-primary)',
+                    letterSpacing: '-0.3px',
                   }}>
-                    Welcome to ChessMate
+                    Select a game to begin
                   </h2>
-                  <p style={{ color: 'var(--cm-text-secondary)', fontSize: '15px', maxWidth: '420px', margin: '0 auto' }}>
-                    Import a game from the sidebar to start analyzing with Stockfish and getting AI-powered coaching.
+                  <p style={{ color: 'var(--cm-text-secondary)', fontSize: '14px', maxWidth: '380px', margin: '0 auto', lineHeight: 1.6 }}>
+                    Import a PGN from the sidebar, then navigate moves to get deep Stockfish analysis and AI-powered coaching.
                   </p>
                 </div>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '4px' }}>
-                  {[
-                    { icon: '🔍', label: 'Deep Analysis' },
-                    { icon: '🤖', label: 'AI Coaching' },
-                    { icon: '📊', label: 'Statistics' },
-                    { icon: '⚡', label: 'Stockfish' },
-                  ].map(f => (
-                    <div key={f.label} style={{
-                      padding: '10px 16px',
-                      background: 'var(--cm-bg-elevated)',
-                      border: '1px solid var(--cm-border-subtle)',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      color: 'var(--cm-text-secondary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}>
-                      <span>{f.icon}</span> {f.label}
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {([
+                    { icon: <Search size={13} />, label: 'Move Analysis' },
+                    { icon: <Brain size={13} />, label: 'AI Coach' },
+                    { icon: <BarChart3 size={13} />, label: 'Statistics' },
+                    { icon: <Zap size={13} />, label: 'Stockfish 16' },
+                    { icon: <BookOpen size={13} />, label: 'Opening Theory' },
+                  ] as const).map((f, i) => (
+                    <div
+                      key={f.label}
+                      className={`fade-up fade-up-delay-${Math.min(i + 1, 4) as 1 | 2 | 3 | 4}`}
+                      style={{
+                        padding: '8px 14px',
+                        background: 'var(--cm-bg-elevated)',
+                        border: '1px solid var(--cm-border-subtle)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: 'var(--cm-text-secondary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span style={{ color: 'var(--cm-accent)', opacity: 0.8, display: 'flex' }}>{f.icon}</span>
+                      {f.label}
                     </div>
                   ))}
                 </div>
@@ -379,22 +388,35 @@ function MissingConfigScreen() {
       justifyContent: 'center',
       padding: '24px',
     }}>
-      <div style={{
+      <div className="fade-up" style={{
         background: 'var(--cm-bg-surface)',
         border: '1px solid var(--cm-border-default)',
-        borderRadius: '12px',
+        borderRadius: '16px',
         padding: '40px',
         maxWidth: '520px',
         width: '100%',
         textAlign: 'center',
+        boxShadow: '0 24px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)',
       }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>♟</div>
-        <h2 style={{ color: 'var(--cm-text-primary)', fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>
-          ChessMate needs configuration
+        <div style={{
+          width: '56px',
+          height: '56px',
+          background: 'var(--cm-accent-dim)',
+          border: '1px solid var(--cm-accent-ring)',
+          borderRadius: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 20px',
+        }}>
+          <span style={{ fontSize: '28px', lineHeight: 1, color: 'var(--cm-accent)' }}>♟</span>
+        </div>
+        <h2 style={{ color: 'var(--cm-text-primary)', fontSize: '19px', fontWeight: 600, marginBottom: '8px', letterSpacing: '-0.2px' }}>
+          Configuration required
         </h2>
         <p style={{ color: 'var(--cm-text-secondary)', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
-          Missing <code style={{ color: 'var(--cm-accent)', background: 'var(--cm-accent-dim)', padding: '2px 6px', borderRadius: '4px' }}>.env.local</code> file.
-          Create it in the project root with your Supabase credentials.
+          Create a <code style={{ color: 'var(--cm-accent)', background: 'var(--cm-accent-dim)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'var(--font-family-mono)' }}>.env.local</code> file
+          in the project root with your Supabase credentials.
         </p>
         <div style={{
           background: 'var(--cm-bg-elevated)',
@@ -402,10 +424,10 @@ function MissingConfigScreen() {
           borderRadius: '8px',
           padding: '16px',
           textAlign: 'left',
-          fontFamily: 'monospace',
+          fontFamily: 'var(--font-family-mono)',
           fontSize: '12px',
           color: 'var(--cm-text-secondary)',
-          lineHeight: '1.8',
+          lineHeight: '1.9',
         }}>
           <div style={{ color: 'var(--cm-text-muted)' }}># .env.local</div>
           <div><span style={{ color: 'var(--cm-accent)' }}>VITE_SUPABASE_URL</span>=https://your-project.supabase.co</div>
@@ -413,7 +435,7 @@ function MissingConfigScreen() {
           <div><span style={{ color: 'var(--cm-accent)' }}>VITE_GEMINI_API_KEY</span>=your_gemini_key</div>
         </div>
         <p style={{ color: 'var(--cm-text-muted)', fontSize: '12px', marginTop: '16px' }}>
-          Get credentials from your Supabase dashboard → Settings → API
+          Supabase dashboard → Project Settings → API
         </p>
       </div>
     </div>

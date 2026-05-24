@@ -94,25 +94,33 @@ export function AuthForm() {
       justifyContent: 'center',
       padding: '24px',
     }}>
-      <div style={{ width: '100%', maxWidth: '400px' }}>
+      <div className="fade-up" style={{ width: '100%', maxWidth: '400px' }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
-            fontSize: '52px',
-            lineHeight: 1,
-            marginBottom: '12px',
-            filter: 'drop-shadow(0 2px 8px rgba(240,168,64,0.3))',
-          }}>♟</div>
+            width: '60px',
+            height: '60px',
+            background: 'var(--cm-accent-dim)',
+            border: '1px solid var(--cm-accent-ring)',
+            borderRadius: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 16px',
+          }}>
+            <span style={{ fontSize: '30px', lineHeight: 1, color: 'var(--cm-accent)', filter: 'drop-shadow(0 2px 6px rgba(240,168,64,0.4))' }}>♟</span>
+          </div>
           <h1 style={{
-            fontSize: '26px',
-            fontWeight: 700,
+            fontSize: '24px',
+            fontWeight: 600,
             color: 'var(--cm-text-primary)',
             marginBottom: '6px',
+            letterSpacing: '-0.3px',
           }}>
-            ChessMate
+            Chess<span style={{ color: 'var(--cm-accent)' }}>Mate</span>
           </h1>
-          <p style={{ color: 'var(--cm-text-secondary)', fontSize: '14px', margin: 0 }}>
-            Your personal chess improvement platform
+          <p style={{ color: 'var(--cm-text-secondary)', fontSize: '13px', margin: 0 }}>
+            AI-powered chess analysis & coaching
           </p>
         </div>
 
@@ -120,9 +128,9 @@ export function AuthForm() {
         <div style={{
           background: 'var(--cm-bg-elevated)',
           border: '1px solid var(--cm-border-default)',
-          borderRadius: '12px',
+          borderRadius: '14px',
           padding: '28px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          boxShadow: '0 16px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
         }}>
           {/* Tab switcher */}
           <div style={{

@@ -76,10 +76,10 @@ export function ChessBoard({ fen, onPositionChange, interactive = false, highlig
           gridTemplateColumns: 'repeat(8, 1fr)',
           gridTemplateRows: 'repeat(8, 1fr)',
           position: 'relative',
-          border: '2px solid var(--cm-border-default)',
+          border: '1px solid var(--cm-border-subtle)',
           borderRadius: '4px',
           overflow: 'hidden',
-          boxShadow: '0 0 0 1px var(--cm-border-subtle), 0 12px 40px rgba(0,0,0,0.35)',
+          boxShadow: '0 0 0 3px var(--cm-bg-surface), 0 0 0 4px var(--cm-border-subtle), 0 16px 48px rgba(0,0,0,0.4)',
         }}
       >
         {RANKS.map((rank, rankIndex) =>
@@ -91,7 +91,7 @@ export function ChessBoard({ fen, onPositionChange, interactive = false, highlig
             const isPossibleMove = possibleMoves.includes(square);
             const isHighlighted = highlightSquares.includes(square);
 
-            const bgColor = isLight ? '#F0D9B5' : '#B58863';
+            const bgColor = isLight ? 'var(--cm-board-light)' : 'var(--cm-board-dark)';
 
             return (
               <div
@@ -107,7 +107,7 @@ export function ChessBoard({ fen, onPositionChange, interactive = false, highlig
                   position: 'relative',
                   background: bgColor,
                   cursor: interactive ? 'pointer' : 'default',
-                  outline: isSelected ? '3px solid var(--cm-accent)' : isHighlighted ? '3px solid rgba(240,168,64,0.7)' : 'none',
+                  outline: isSelected ? '3px solid var(--cm-accent)' : isHighlighted ? '3px solid var(--cm-accent-ring)' : 'none',
                   outlineOffset: '-3px',
                   transition: 'outline 0.1s',
                 }}

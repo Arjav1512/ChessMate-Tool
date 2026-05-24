@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePerformance } from '../../hooks/usePerformance';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
 import type { Game } from '../../lib/supabase';
 import { parsePGN, PGNParseError } from '../../lib/pgn';
 
@@ -224,6 +223,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
                 onClick={() => setShowPasteModal(true)}
                 disabled={uploading}
                 title="Paste PGN"
+                aria-label="Paste PGN text"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -245,6 +245,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
               </button>
               <label
                 title="Upload PGN file"
+                aria-label="Upload PGN file"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -301,8 +302,13 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
         {/* Game list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
           {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '32px' }}>
-              <LoadingSpinner />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              {[70, 55, 80, 60, 72].map((width, i) => (
+                <div key={i} className="skeleton-game-item">
+                  <div className="skeleton skeleton-title" style={{ width: `${width}%` }} />
+                  <div className="skeleton skeleton-text" style={{ width: '45%', height: '10px' }} />
+                </div>
+              ))}
             </div>
           ) : filteredGames.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 16px' }}>
@@ -384,6 +390,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
                       onMouseEnter={e => (e.currentTarget.style.color = 'var(--cm-error)')}
                       onMouseLeave={e => (e.currentTarget.style.color = 'var(--cm-text-muted)')}
                       title="Delete game"
+                      aria-label="Delete game"
                     >
                       <Trash2 size={13} />
                     </button>
