@@ -79,6 +79,7 @@ function NavButton({ onClick, icon, label }: { onClick: () => void; icon: React.
   return (
     <button
       onClick={onClick}
+      aria-label={label}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

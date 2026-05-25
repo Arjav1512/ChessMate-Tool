@@ -6,9 +6,11 @@ interface ToastProps {
   type: 'success' | 'error';
   onClose: () => void;
   duration?: number;
+  /** Position in the current stack — used to stagger vertically so toasts don't overlap. */
+  stackIndex?: number;
 }
 
-export function Toast({ message, type, onClose, duration = 4000 }: ToastProps) {
+export function Toast({ message, type, onClose, duration = 4000, stackIndex = 0 }: ToastProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
@@ -23,7 +25,7 @@ export function Toast({ message, type, onClose, duration = 4000 }: ToastProps) {
     <div
       style={{
         position: 'fixed',
-        bottom: '24px',
+        bottom: `${24 + stackIndex * 68}px`,
         right: '24px',
         zIndex: 10000,
         minWidth: '300px',

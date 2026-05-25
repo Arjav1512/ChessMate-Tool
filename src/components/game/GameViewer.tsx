@@ -35,6 +35,7 @@ export function GameViewer({ game }: GameViewerProps) {
   const [chess] = useState(() => new Chess());
   const [evaluation, setEvaluation] = useState<StockfishAnalysis | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
     showAnnotations: true,
     showBestMoveArrow: true,
@@ -70,11 +71,15 @@ export function GameViewer({ game }: GameViewerProps) {
 
   const analyzeCurrentPosition = useCallback(async () => {
     setAnalyzing(true);
+    setAnalysisError(null);
     try {
       const result = await stockfish.analyzePosition(chess.fen(), 18, 3);
       setEvaluation(result);
     } catch (error) {
       console.error('Analysis failed:', error);
+      setAnalysisError(
+        error instanceof Error ? error.message : 'Engine analysis failed'
+      );
     } finally {
       setAnalyzing(false);
     }
@@ -91,6 +96,10 @@ export function GameViewer({ game }: GameViewerProps) {
 
   const handleKeyPress = useCallback((e: KeyboardEvent) => {
     if (!pgnData) return;
+
+    // Don't intercept keyboard events when focus is inside a text-entry element
+    const tag = (e.target as HTMLElement)?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
 
     switch (e.key) {
       case 'ArrowLeft':
@@ -177,34 +186,53 @@ export function GameViewer({ game }: GameViewerProps) {
             {[game.event, game.date, game.result ? `Result: ${game.result}` : null].filter(Boolean).join(' · ')}
           </p>
         </div>
-        <button
-          onClick={analyzeCurrentPosition}
-          disabled={analyzing}
-          style={{
-            padding: '7px 14px',
-            background: analyzing ? 'var(--cm-bg-elevated)' : 'var(--cm-accent)',
-            border: '1px solid transparent',
-            borderRadius: '7px',
-            color: analyzing ? 'var(--cm-text-secondary)' : 'var(--cm-text-inverse)',
-            fontSize: '13px',
-            fontWeight: 500,
-            cursor: analyzing ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.15s',
-            flexShrink: 0,
-          }}
-        >
-          {analyzing ? (
-            <>
-              <LoadingSpinner size="sm" />
-              Analyzing...
-            </>
-          ) : (
-            <>⚡ Analyze</>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          {analysisError && (
+            <span style={{
+              fontSize: '11px',
+              color: 'var(--cm-error)',
+              background: 'var(--cm-error-dim)',
+              border: '1px solid rgba(232,85,74,0.25)',
+              borderRadius: '5px',
+              padding: '3px 8px',
+              maxWidth: '180px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            title={analysisError}
+            >
+              ⚠ Engine error
+            </span>
           )}
-        </button>
+          <button
+            onClick={analyzeCurrentPosition}
+            disabled={analyzing}
+            style={{
+              padding: '7px 14px',
+              background: analyzing ? 'var(--cm-bg-elevated)' : 'var(--cm-accent)',
+              border: '1px solid transparent',
+              borderRadius: '7px',
+              color: analyzing ? 'var(--cm-text-secondary)' : 'var(--cm-text-inverse)',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: analyzing ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.15s',
+            }}
+          >
+            {analyzing ? (
+              <>
+                <LoadingSpinner size="sm" />
+                Analyzing...
+              </>
+            ) : (
+              <>⚡ Analyze</>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Main board area */}

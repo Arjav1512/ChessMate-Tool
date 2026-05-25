@@ -258,7 +258,7 @@ export function BulkAnalysis() {
           ) : (
             <>
               <Brain size={15} />
-              Start Analysis
+              Analyze {games.length} Game{games.length !== 1 ? 's' : ''}
             </>
           )}
         </button>

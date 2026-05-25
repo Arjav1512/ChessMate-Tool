@@ -3,6 +3,7 @@ import { GameList } from '../game/GameList';
 import { GameViewer } from '../game/GameViewer';
 import { BulkAnalysis } from './BulkAnalysis';
 import { Microscope, List, X } from 'lucide-react';
+import { useResponsive } from '../../hooks/useResponsive';
 import type { Game } from '../../lib/supabase';
 
 interface AnalyzeGamesPageProps {
@@ -14,6 +15,7 @@ type ViewMode = 'board' | 'bulk';
 export function AnalyzeGamesPage({ onClose }: AnalyzeGamesPageProps) {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('board');
+  const { isMobile } = useResponsive();
 
   const tabBtnStyle = (active: boolean): React.CSSProperties => ({
     display: 'flex',
@@ -94,12 +96,14 @@ export function AnalyzeGamesPage({ onClose }: AnalyzeGamesPageProps) {
       {/* Content */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
         {viewMode === 'board' ? (
-          <div style={{ display: 'flex', width: '100%', height: '100%' }}>
-            {/* Sidebar game list */}
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', width: '100%', height: '100%' }}>
+            {/* Sidebar game list — stacks above board on mobile */}
             <div style={{
-              width: '280px',
+              width: isMobile ? '100%' : '280px',
+              maxHeight: isMobile ? '220px' : undefined,
               flexShrink: 0,
-              borderRight: '1px solid var(--cm-border-subtle)',
+              borderRight: isMobile ? 'none' : '1px solid var(--cm-border-subtle)',
+              borderBottom: isMobile ? '1px solid var(--cm-border-subtle)' : 'none',
               overflow: 'auto',
               background: 'var(--cm-bg-surface)',
             }}>
@@ -110,7 +114,7 @@ export function AnalyzeGamesPage({ onClose }: AnalyzeGamesPageProps) {
             </div>
 
             {/* Board area */}
-            <div style={{ flex: 1, overflow: 'auto', padding: '20px', background: 'var(--cm-bg-base)' }}>
+            <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '12px' : '20px', background: 'var(--cm-bg-base)' }}>
               {selectedGame ? (
                 <GameViewer
                   game={selectedGame}

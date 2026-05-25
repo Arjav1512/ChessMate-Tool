@@ -93,6 +93,27 @@ export function EvaluationGauge({ evaluation, isMate, moveNumber }: EvaluationGa
           )}
         </div>
 
+        {/* Centred label for near-equal positions (48–52%) — shown on the centre line */}
+        {percentage >= 48 && percentage <= 52 && (
+          <span style={{
+            position: 'absolute',
+            top: '50%',
+            left: 0,
+            right: 0,
+            transform: 'translateY(-50%)',
+            fontSize: '9px',
+            fontWeight: 700,
+            color: 'var(--cm-text-muted)',
+            fontFamily: 'var(--font-family-mono)',
+            textAlign: 'center',
+            lineHeight: 1,
+            zIndex: 3,
+            pointerEvents: 'none',
+          }}>
+            {displayEval}
+          </span>
+        )}
+
         {/* Center line */}
         <div style={{
           position: 'absolute',

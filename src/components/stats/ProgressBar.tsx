@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { parsePGN } from '../../lib/pgn';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface AnalysisResult {
   game_id: string;
@@ -37,6 +38,7 @@ interface GameStats {
 
 export function ProgressBar() {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<GameStats>({
     totalGames: 0,
     ratingData: [],
@@ -141,6 +143,7 @@ export function ProgressBar() {
       openingPerformance,
       areasForImprovement,
     });
+    setLoading(false);
   }, [user]);
 
   useEffect(() => {
@@ -160,6 +163,21 @@ export function ProgressBar() {
     if (m === 'g3') return 'King\'s Fianchetto (1.g3)';
     if (m === 'f4') return 'Bird\'s Opening (1.f4)';
     return `Other (1.${firstMove})`;
+  }
+
+  if (loading) {
+    return (
+      <div style={{
+        background: 'var(--cm-bg-elevated)',
+        border: '1px solid var(--cm-border-subtle)',
+        borderRadius: '10px',
+        padding: '40px',
+        display: 'flex',
+        justifyContent: 'center',
+      }}>
+        <LoadingSpinner size="md" text="Loading progress..." />
+      </div>
+    );
   }
 
   if (stats.totalGames === 0) {
@@ -303,7 +321,7 @@ export function ProgressBar() {
 
       {/* Opening Performance */}
       <div style={sectionStyle}>
-        <h3 style={sectionTitleStyle}>Opening Performance</h3>
+        <h3 style={sectionTitleStyle}>Opening Performance <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--cm-text-muted)', fontSize: '11px' }}>(White wins)</span></h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {stats.openingPerformance.map((opening) => (
             <div key={opening.opening} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>

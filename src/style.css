@@ -694,6 +694,13 @@ select.form-control {
   opacity: 1 !important;
 }
 
+/* Touch devices have no hover state — keep delete button always visible */
+@media (hover: none) {
+  .game-delete-btn {
+    opacity: 0.55 !important;
+  }
+}
+
 .game-item--active {
   background: var(--cm-bg-active) !important;
   border-color: var(--cm-border-default) !important;
@@ -1009,6 +1016,18 @@ select.form-control {
   background: var(--cm-accent);
   color: var(--cm-text-inverse);
   border-color: transparent;
+}
+
+/* ===== RESPONSIVE CHESS BOARD ===== */
+/* Prevent board from overflowing its container on narrow viewports */
+@media (max-width: 560px) {
+  /* The board is built with 8×60px squares = 480px.
+     On small screens we scale it down proportionally via CSS transform
+     so pieces and labels remain visible without horizontal scroll. */
+  .chess-board-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* ===== CHESS BOARD LEGACY ===== */

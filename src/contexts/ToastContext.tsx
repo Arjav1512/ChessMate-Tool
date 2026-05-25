@@ -5,6 +5,7 @@ interface ToastMessage {
   id: number;
   message: string;
   type: 'success' | 'error';
+  index?: number;
 }
 
 interface ToastContextType {
@@ -28,11 +29,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {toasts.map((toast) => (
+      {toasts.map((toast, index) => (
         <Toast
           key={toast.id}
           message={toast.message}
           type={toast.type}
+          stackIndex={index}
           onClose={() => removeToast(toast.id)}
         />
       ))}
