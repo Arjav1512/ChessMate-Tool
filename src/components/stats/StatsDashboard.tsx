@@ -46,7 +46,7 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
     try {
       setLoading(true);
 
-      const [statsResult, gamesResult, progressResult, allGamesResult] = await Promise.allSettled([
+      const [statsResult, gamesResult, progressResult, allGamesResult, profileResult] = await Promise.allSettled([
         supabase
           .from('user_statistics')
           .select('*')
@@ -76,6 +76,12 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
           .from('games')
           .select('white_player, black_player, result')
           .eq('user_id', user!.id),
+        // Fetch user profile to get display_name for color-side matching
+        supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', user!.id)
+          .maybeSingle(),
       ]);
 
       // Build user stats, merging DB stats with live game counts
@@ -84,13 +90,34 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
         ? (allGamesResult.value.data || [])
         : [];
 
+      // Resolve user's display_name for color-side matching
+      const displayName: string =
+        profileResult.status === 'fulfilled' && profileResult.value.data?.display_name
+          ? profileResult.value.data.display_name
+          : '';
+      const displayNameLower = displayName.toLowerCase();
+
       if (dbStats || allGames.length > 0) {
         // Compute wins/losses/draws from raw game results
         let wins = 0, losses = 0, draws = 0;
+        let gamesAsWhite = 0, gamesAsBlack = 0;
+
         for (const g of allGames) {
           if (g.result === '1-0') wins++;
           else if (g.result === '0-1') losses++;
           else if (g.result === '1/2-1/2') draws++;
+
+          // Match player name case-insensitively; fall back to 50/50 if unknown
+          if (displayNameLower) {
+            if (g.white_player?.toLowerCase() === displayNameLower) gamesAsWhite++;
+            else if (g.black_player?.toLowerCase() === displayNameLower) gamesAsBlack++;
+          }
+        }
+
+        // Fall back to rough split if we couldn't match any game by name
+        if (!displayNameLower || (gamesAsWhite === 0 && gamesAsBlack === 0 && allGames.length > 0)) {
+          gamesAsWhite = Math.ceil(allGames.length / 2);
+          gamesAsBlack = Math.floor(allGames.length / 2);
         }
 
         setStats({
@@ -98,8 +125,8 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
           average_accuracy: dbStats?.average_accuracy ?? 0,
           total_mistakes: dbStats?.total_mistakes ?? 0,
           total_blunders: dbStats?.total_blunders ?? 0,
-          games_as_white: Math.ceil(allGames.length / 2),
-          games_as_black: Math.floor(allGames.length / 2),
+          games_as_white: gamesAsWhite,
+          games_as_black: gamesAsBlack,
           wins,
           losses,
           draws,

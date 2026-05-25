@@ -33,8 +33,12 @@ export class StockfishEngine {
       try {
         // Create worker with stockfish.js
         const workerCode = `
-          // Import Stockfish from CDN
-          importScripts('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
+          // Load Stockfish from the local public/ bundle (no CDN dependency)
+          try {
+            importScripts('/stockfish.js');
+          } catch (err) {
+            self.postMessage('error: Failed to load Stockfish engine: ' + err);
+          }
 
           let stockfish;
 
@@ -42,13 +46,17 @@ export class StockfishEngine {
             if (e.data === 'init') {
               // Initialize Stockfish
               if (typeof STOCKFISH === 'function') {
-                stockfish = STOCKFISH();
-                stockfish.onmessage = function(line) {
-                  self.postMessage(line);
-                };
-                self.postMessage('ready');
+                try {
+                  stockfish = STOCKFISH();
+                  stockfish.onmessage = function(line) {
+                    self.postMessage(line);
+                  };
+                  self.postMessage('ready');
+                } catch (err) {
+                  self.postMessage('error: Stockfish initialization failed: ' + err);
+                }
               } else {
-                self.postMessage('error: Stockfish not loaded');
+                self.postMessage('error: Stockfish not loaded — STOCKFISH is not a function');
               }
             } else {
               // Forward commands to Stockfish
@@ -72,6 +80,11 @@ export class StockfishEngine {
             // Send UCI initialization commands
             this.sendCommand('uci');
             setTimeout(() => resolve(), 100);
+            return;
+          }
+
+          if (typeof message === 'string' && message.startsWith('error:')) {
+            reject(new Error(message.slice(7).trim()));
             return;
           }
 

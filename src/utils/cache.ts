@@ -90,7 +90,10 @@ export async function cachedFetch(
   }
   const response = await fetch(url, options);
   if (response.ok) {
-    const data = await response.json();
+    // Clone before consuming the body so the caller can still call .json()
+    // on the returned response — reading body is a one-time operation.
+    const responseToCache = response.clone();
+    const data = await responseToCache.json();
     cache.set(key, data);
   }
   return response;

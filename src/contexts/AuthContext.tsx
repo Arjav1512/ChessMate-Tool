@@ -6,6 +6,9 @@ import type { User } from '@supabase/supabase-js';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  /** Non-null when an OAuth callback returned an error (e.g. access_denied). */
+  authError: string | null;
+  clearAuthError: () => void;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -18,6 +21,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(supabaseConfigured);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const clearAuthError = () => setAuthError(null);
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -28,19 +34,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (isOAuthCallback()) {
           const oauthError = getOAuthError();
           if (oauthError) {
-            console.error('OAuth error:', oauthError);
-            // You might want to show this error to the user
+            // Surface the OAuth error to the user instead of silently dropping it
+            setAuthError(
+              oauthError === 'access_denied'
+                ? 'Sign-in was cancelled or access was denied. Please try again.'
+                : `Authentication error: ${oauthError}`
+            );
           }
-          
+
           const { success, error } = await handleOAuthCallback();
           if (!success && error) {
             console.error('OAuth callback failed:', error);
+            if (!oauthError) setAuthError(`Sign-in failed: ${error}`);
           }
-          
+
           // Clear OAuth parameters from URL
           clearOAuthCallback();
         }
-        
+
         // Get current session
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
@@ -143,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, signInWithGitHub, signOut }}>
+    <AuthContext.Provider value={{ user, loading, authError, clearAuthError, signIn, signUp, signInWithGoogle, signInWithGitHub, signOut }}>
       {children}
     </AuthContext.Provider>
   );

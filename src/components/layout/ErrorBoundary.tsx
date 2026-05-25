@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import * as Sentry from '@sentry/react';
 
 interface Props {
   children: ReactNode;
@@ -35,8 +36,8 @@ export class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
 
-    if (window.Sentry) {
-      window.Sentry.captureException(error, {
+    if (import.meta.env.VITE_SENTRY_DSN) {
+      Sentry.captureException(error, {
         contexts: {
           react: {
             componentStack: errorInfo.componentStack,
@@ -114,10 +115,3 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-declare global {
-  interface Window {
-    Sentry?: {
-      captureException: (error: Error, context?: Record<string, unknown>) => void;
-    };
-  }
-}

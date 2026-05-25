@@ -98,13 +98,29 @@ export function BulkAnalysis() {
 
         try {
           const result = await stockfish.analyzePosition(chess.fen(), 15, 1);
-          const evalNum = parseFloat(result.evaluation);
+
+          // Safely parse evaluation — result.evaluation can be "M3" (mate) which
+          // parseFloat silently turns into NaN. Use ±100 as a proxy for mate.
+          let evalNum: number;
+          if (result.isMate) {
+            const mateVal = parseInt(result.evaluation.replace('M', ''), 10);
+            evalNum = isNaN(mateVal) ? 0 : (mateVal > 0 ? 100 : -100);
+          } else {
+            evalNum = parseFloat(result.evaluation);
+            if (isNaN(evalNum)) evalNum = 0;
+          }
           evaluations.push(evalNum);
 
           if (i > 0) {
-            const evalDiff = Math.abs(evaluations[i] - evaluations[i - 1]);
-            if (evalDiff < 0.3) bestMoves++;
-            else if (evalDiff < 1.0) mistakes++;
+            // Compute how much the evaluation DROPPED for the side that just moved.
+            // Even-indexed moves (0, 2, 4…) are White's; odd-indexed are Black's.
+            // Stockfish evals are always from White's perspective.
+            const drop = (i % 2 === 0)
+              ? Math.max(0, evaluations[i - 1] - evaluations[i])  // White wants eval to go UP
+              : Math.max(0, evaluations[i] - evaluations[i - 1]); // Black wants eval to go DOWN
+
+            if (drop < 0.3) bestMoves++;
+            else if (drop < 1.0) mistakes++;
             else blunders++;
           }
 

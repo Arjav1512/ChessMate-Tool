@@ -11,8 +11,9 @@ import { AnalyzeGamesPage } from './components/analysis/AnalyzeGamesPage';
 import { StatsDashboard } from './components/stats/StatsDashboard';
 import { ThemeToggle } from './components/layout/ThemeToggle';
 import { CompatibilityWarning } from './components/layout/CompatibilityWarning';
+import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { useResponsive } from './hooks/useResponsive';
-import { LogOut, TrendingUp, Upload, Brain, BarChart3, Search, Zap, BookOpen } from 'lucide-react';
+import { LogOut, TrendingUp, Upload, Brain, BarChart3, Search, Zap, BookOpen, Menu, X as XIcon } from 'lucide-react';
 import type { Game } from './lib/supabase';
 
 type ModalType = 'import' | 'progress' | 'analyze' | 'stats' | null;
@@ -109,11 +110,28 @@ function NavButton({ onClick, icon, label }: { onClick: () => void; icon: React.
 }
 
 function MainApp() {
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [openModal, setOpenModal] = useState<ModalType>(null);
   const [showCompatibilityWarning, setShowCompatibilityWarning] = useState(true);
+  const [showMobileNav, setShowMobileNav] = useState(false);
   const { isMobile } = useResponsive();
+
+  // Show a full-screen spinner while the auth session is being resolved to
+  // prevent a flash of the sign-in form for already-logged-in users.
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'var(--cm-bg-base)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   if (!user) {
     return <AuthForm />;
@@ -131,7 +149,7 @@ function MainApp() {
           </span>
         </div>
 
-        {/* Nav buttons */}
+        {/* Nav buttons — desktop only */}
         {!isMobile && (
           <>
             <NavButton
@@ -155,6 +173,27 @@ function MainApp() {
               label="Progress"
             />
           </>
+        )}
+
+        {/* Mobile hamburger — opens a bottom-sheet with all nav actions */}
+        {isMobile && (
+          <button
+            onClick={() => setShowMobileNav(true)}
+            aria-label="Open navigation menu"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '6px',
+              background: 'transparent',
+              border: '1px solid var(--cm-border-default)',
+              borderRadius: '6px',
+              color: 'var(--cm-text-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            <Menu size={18} />
+          </button>
         )}
 
         <ThemeToggle />
@@ -286,7 +325,7 @@ function MainApp() {
                     { icon: <Search size={13} />, label: 'Move Analysis' },
                     { icon: <Brain size={13} />, label: 'AI Coach' },
                     { icon: <BarChart3 size={13} />, label: 'Statistics' },
-                    { icon: <Zap size={13} />, label: 'Stockfish 16' },
+                    { icon: <Zap size={13} />, label: 'Stockfish Engine' },
                     { icon: <BookOpen size={13} />, label: 'Opening Theory' },
                   ] as const).map((f, i) => (
                     <div
@@ -371,6 +410,100 @@ function MainApp() {
             <div style={{ padding: '20px' }}>
               <ProgressBar />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile nav bottom-sheet */}
+      {showMobileNav && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.55)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 200,
+            display: 'flex',
+            alignItems: 'flex-end',
+          }}
+          onClick={() => setShowMobileNav(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              background: 'var(--cm-bg-surface)',
+              borderTop: '1px solid var(--cm-border-default)',
+              borderRadius: '16px 16px 0 0',
+              padding: '16px 0 24px',
+              boxShadow: '0 -8px 32px rgba(0,0,0,0.3)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Drag handle */}
+            <div style={{
+              width: '36px',
+              height: '4px',
+              background: 'var(--cm-border-default)',
+              borderRadius: '2px',
+              margin: '0 auto 16px',
+            }} />
+
+            {/* Nav items */}
+            {[
+              { icon: <Upload size={18} />, label: 'Import Games', modal: 'import' as ModalType },
+              { icon: <Brain size={18} />, label: 'Analyze', modal: 'analyze' as ModalType },
+              { icon: <BarChart3 size={18} />, label: 'Statistics', modal: 'stats' as ModalType },
+              { icon: <TrendingUp size={18} />, label: 'Progress', modal: 'progress' as ModalType },
+            ].map(item => (
+              <button
+                key={item.label}
+                onClick={() => { setShowMobileNav(false); setOpenModal(item.modal); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  width: '100%',
+                  padding: '14px 24px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--cm-text-primary)',
+                  fontSize: '15px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'background 0.12s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--cm-bg-elevated)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <span style={{ color: 'var(--cm-accent)', display: 'flex' }}>{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+
+            <div style={{ height: '1px', background: 'var(--cm-border-subtle)', margin: '8px 24px' }} />
+
+            {/* Close */}
+            <button
+              onClick={() => setShowMobileNav(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                width: '100%',
+                padding: '14px 24px',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--cm-text-secondary)',
+                fontSize: '15px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <span style={{ display: 'flex' }}><XIcon size={18} /></span>
+              Close
+            </button>
           </div>
         </div>
       )}

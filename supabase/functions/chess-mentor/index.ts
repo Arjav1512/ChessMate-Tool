@@ -1,46 +1,98 @@
 import { GoogleGenerativeAI } from "npm:@google/generative-ai@0.24.1";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
-
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+// ---------------------------------------------------------------------------
+// CORS — restrict to configured origins instead of wildcard "*"
+// Set ALLOWED_ORIGINS env var to a comma-separated list, e.g.
+//   https://chessmate.app,https://www.chessmate.app
+// If the env var is absent we fall back to echoing the request origin
+// (which is acceptable for local dev but should be set in production).
+// ---------------------------------------------------------------------------
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
-function getRateLimitKey(req: Request): string {
-  const authHeader = req.headers.get("Authorization");
-  if (authHeader) {
-    return authHeader.split(" ")[1] || "anonymous";
+function getCorsHeaders(requestOrigin: string | null): Record<string, string> {
+  const origin = requestOrigin ?? "";
+  let allowed: string;
+
+  if (ALLOWED_ORIGINS.length === 0) {
+    // No explicit allowlist — echo the incoming origin (dev-friendly, but
+    // set ALLOWED_ORIGINS in production to lock this down).
+    allowed = origin || "*";
+  } else if (ALLOWED_ORIGINS.includes(origin)) {
+    allowed = origin;
+  } else {
+    // Origin not in allowlist — return the first configured origin.
+    // The browser will reject the response as a CORS failure.
+    allowed = ALLOWED_ORIGINS[0];
   }
-  return "anonymous";
+
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Vary": "Origin",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  };
 }
 
-function checkRateLimit(key: string, maxRequests: number = 10, windowMs: number = 60000): boolean {
-  const now = Date.now();
-  const userLimit = rateLimitStore.get(key);
+// ---------------------------------------------------------------------------
+// Rate limiting — DB-backed so it survives cold starts and worker recycling.
+// Key: user UUID extracted from the JWT (no network round-trip to verify).
+// ---------------------------------------------------------------------------
 
-  if (!userLimit || now > userLimit.resetAt) {
-    rateLimitStore.set(key, { count: 1, resetAt: now + windowMs });
-    return true;
+/** Extract the `sub` claim from a raw JWT without verifying the signature. */
+function getUserIdFromJWT(token: string): string | null {
+  try {
+    const [, payloadB64] = token.split(".");
+    if (!payloadB64) return null;
+    const json = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
+    const payload = JSON.parse(json);
+    return typeof payload.sub === "string" ? payload.sub : null;
+  } catch {
+    return null;
   }
-
-  if (userLimit.count >= maxRequests) {
-    return false;
-  }
-
-  userLimit.count++;
-  return true;
 }
 
-async function logRequest(userId: string | null, question: string, success: boolean, error?: string) {
+/**
+ * Count how many times `userId` hit this endpoint in the last `windowMs` ms.
+ * Returns true if the request is allowed, false if the limit is exceeded.
+ * Fails open (returns true) when the DB query errors so a DB outage doesn't
+ * lock out all users.
+ */
+async function checkRateLimit(
+  userId: string,
+  max = 10,
+  windowMs = 60_000,
+): Promise<boolean> {
+  const windowStart = new Date(Date.now() - windowMs).toISOString();
+  const { count, error } = await supabase
+    .from("api_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gte("created_at", windowStart);
+
+  if (error) {
+    console.error("Rate-limit DB query failed (failing open):", error.message);
+    return true; // fail open
+  }
+
+  return (count ?? 0) < max;
+}
+
+async function logRequest(
+  userId: string | null,
+  question: string,
+  success: boolean,
+  error?: string,
+) {
   try {
     await supabase.from("api_logs").insert({
       user_id: userId,
@@ -56,43 +108,47 @@ async function logRequest(userId: string | null, question: string, success: bool
 }
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req.headers.get("Origin"));
+
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
-    const rateLimitKey = getRateLimitKey(req);
+    // Extract user ID from the JWT for DB-backed rate limiting
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : authHeader;
+    const userId = getUserIdFromJWT(token);
 
-    if (!checkRateLimit(rateLimitKey, 10, 60000)) {
-      return new Response(
-        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-        {
-          status: 429,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-            "Retry-After": "60",
+    if (userId) {
+      const allowed = await checkRateLimit(userId, 10, 60_000);
+      if (!allowed) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+              "Retry-After": "60",
+            },
           },
-        }
-      );
+        );
+      }
     }
 
     const { question, context } = await req.json();
 
     if (!question) {
-      await logRequest(null, "", false, "Question missing");
+      await logRequest(userId, "", false, "Question missing");
       return new Response(
         JSON.stringify({ error: "Question is required" }),
         {
           status: 400,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -101,11 +157,8 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "GEMINI_API_KEY not configured" }),
         {
           status: 500,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -114,13 +167,17 @@ Deno.serve(async (req: Request) => {
 
     const contextInfo = [];
     if (context?.gameInfo) {
-      contextInfo.push(`Game: ${context.gameInfo.white_player} vs ${context.gameInfo.black_player}, Result: ${context.gameInfo.result}`);
+      contextInfo.push(
+        `Game: ${context.gameInfo.white_player} vs ${context.gameInfo.black_player}, Result: ${context.gameInfo.result}`,
+      );
     }
     if (context?.currentPosition) {
       contextInfo.push(`Position: ${context.currentPosition}`);
     }
     if (context?.evaluation) {
-      contextInfo.push(`Evaluation: ${context.evaluation.evaluation} (${context.evaluation.isMate ? 'Mate' : 'centipawns'})`);
+      contextInfo.push(
+        `Evaluation: ${context.evaluation.evaluation} (${context.evaluation.isMate ? "Mate" : "centipawns"})`,
+      );
     }
 
     const systemPrompt = `You are ChessMate, an expert chess coach. Analyze the following question with clear, actionable insights.
@@ -136,7 +193,7 @@ Format your response with markdown:
 ### 💡 Recommendations
 - [Specific actionable advice]
 
-${contextInfo.length > 0 ? `\nContext: ${contextInfo.join(' | ')}` : ''}
+${contextInfo.length > 0 ? `\nContext: ${contextInfo.join(" | ")}` : ""}
 
 Question: ${question}`;
 
@@ -144,11 +201,11 @@ Question: ${question}`;
     const response = await result.response;
     const answer = response.text();
 
-    await logRequest(rateLimitKey !== "anonymous" ? rateLimitKey : null, question, true);
+    await logRequest(userId, question, true);
 
     console.log({
       timestamp: new Date().toISOString(),
-      user: rateLimitKey,
+      user: userId,
       action: "chess_mentor_query",
       question_length: question.length,
       response_length: answer.length,
@@ -156,17 +213,14 @@ Question: ${question}`;
 
     return new Response(
       JSON.stringify({ answer }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const errorMessage = error instanceof Error
+      ? error.message
+      : "Unknown error occurred";
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     console.error("Error:", error);
 
     await logRequest(null, "", false, errorMessage);
@@ -178,16 +232,11 @@ Question: ${question}`;
     });
 
     return new Response(
-      JSON.stringify({
-        error: errorMessage || "Failed to generate response",
-      }),
+      JSON.stringify({ error: errorMessage || "Failed to generate response" }),
       {
         status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      }
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

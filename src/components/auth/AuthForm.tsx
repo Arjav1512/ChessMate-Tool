@@ -14,7 +14,7 @@ export function AuthForm() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, signInWithGoogle, signInWithGitHub } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithGitHub, authError, clearAuthError } = useAuth();
   const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,7 +144,7 @@ export function AuthForm() {
             {['Sign In', 'Sign Up'].map((label, i) => (
               <button
                 key={label}
-                onClick={() => setIsLogin(i === 0)}
+                onClick={() => { setIsLogin(i === 0); clearAuthError(); }}
                 style={{
                   flex: 1,
                   padding: '7px',
@@ -197,7 +197,7 @@ export function AuthForm() {
               fullWidth
             />
 
-            {error && (
+            {(error || authError) && (
               <div style={{
                 padding: '10px 12px',
                 background: 'var(--cm-error-dim)',
@@ -207,7 +207,7 @@ export function AuthForm() {
                 fontSize: '13px',
                 lineHeight: 1.4,
               }}>
-                {error}
+                {authError || error}
               </div>
             )}
 

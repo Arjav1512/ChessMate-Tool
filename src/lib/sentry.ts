@@ -53,39 +53,36 @@ export function initSentry() {
 
 export function logError(error: Error, context?: Record<string, unknown>) {
   console.error('Error:', error, context);
-  
-  // if (import.meta.env.PROD) {
-  //   Sentry.captureException(error, {
-  //     extra: context,
-  //   });
-  // }
+  if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+    Sentry.captureException(error, {
+      extra: context,
+    });
+  }
 }
 
 export function logMessage(message: string, level: 'info' | 'warning' | 'error' = 'info') {
   console.log(`[${level}] ${message}`);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function setUserContext(_userId: string, _email?: string) {
-  // if (import.meta.env.PROD) {
-  //   Sentry.setUser({ id: userId, email });
-  // }
+export function setUserContext(userId: string, email?: string) {
+  if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+    Sentry.setUser({ id: userId, email });
+  }
 }
 
 export function clearUserContext() {
-  // if (import.meta.env.PROD) {
-  //   Sentry.setUser(null);
-  // }
+  if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+    Sentry.setUser(null);
+  }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function addBreadcrumb(_message: string, _category: string, _data?: Record<string, unknown>) {
-  // if (import.meta.env.PROD) {
-  //   Sentry.addBreadcrumb({
-  //     message,
-  //     category,
-  //     data,
-  //     level: 'info',
-  //   });
-  // }
+export function addBreadcrumb(message: string, category: string, data?: Record<string, unknown>) {
+  if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+    Sentry.addBreadcrumb({
+      message,
+      category,
+      data,
+      level: 'info',
+    });
+  }
 }
