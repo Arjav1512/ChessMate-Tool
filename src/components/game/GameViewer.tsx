@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Chess } from 'chess.js';
 import { ChessBoard } from '../chess/ChessBoard';
 import { BoardArrows } from '../chess/BoardArrows';
 import { EvaluationGauge } from '../chess/EvaluationGauge';
@@ -8,7 +7,7 @@ import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { ChevronLeft, ChevronRight, SkipBack, SkipForward } from 'lucide-react';
 import type { Game } from '../../lib/supabase';
 import { parsePGN, PGNData } from '../../lib/pgn';
-import { stockfish } from '../../lib/stockfish';
+import { StockfishEngine } from '../../lib/stockfish';
 
 interface StockfishAnalysis {
   bestMove: string;
@@ -32,7 +31,8 @@ interface GameViewerProps {
 export function GameViewer({ game }: GameViewerProps) {
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [pgnData, setPgnData] = useState<PGNData | null>(null);
-  const [chess] = useState(() => new Chess());
+  // Own engine instance — avoids singleton race with BulkAnalysis
+  const [engine] = useState(() => new StockfishEngine());
   const [evaluation, setEvaluation] = useState<StockfishAnalysis | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -45,35 +45,31 @@ export function GameViewer({ game }: GameViewerProps) {
     variationOpacity: 70
   });
 
+  // Terminate engine on unmount
+  useEffect(() => () => engine.terminate(), [engine]);
+
   useEffect(() => {
     try {
       const parsed = parsePGN(game.pgn);
       setPgnData(parsed);
-      chess.reset();
       setCurrentMoveIndex(0);
       setEvaluation(null);
       setAnalyzing(false);
     } catch (error) {
       console.error('Failed to parse PGN:', error);
     }
-  }, [game.id, game.pgn, chess]);
+  }, [game.id, game.pgn]);
 
-  useEffect(() => {
-    if (!pgnData) return;
-
-    chess.reset();
-
-    for (let i = 0; i < currentMoveIndex; i++) {
-      const move = pgnData.moves[i];
-      chess.move(move);
-    }
-  }, [currentMoveIndex, pgnData, chess]);
+  // currentFen derived directly from precomputed pgnData.fen — no chess mutation
+  const currentFen = pgnData?.fen[currentMoveIndex] ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
   const analyzeCurrentPosition = useCallback(async () => {
+    if (!pgnData) return;
     setAnalyzing(true);
     setAnalysisError(null);
+    const fen = pgnData.fen[currentMoveIndex] ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
     try {
-      const result = await stockfish.analyzePosition(chess.fen(), 18, 3);
+      const result = await engine.analyzePosition(fen, 18, 3);
       setEvaluation(result);
     } catch (error) {
       console.error('Analysis failed:', error);
@@ -83,7 +79,7 @@ export function GameViewer({ game }: GameViewerProps) {
     } finally {
       setAnalyzing(false);
     }
-  }, [chess]);
+  }, [engine, pgnData, currentMoveIndex]);
 
   useEffect(() => {
     if (displayOptions.showFishnetAnalysis && pgnData) {
@@ -282,7 +278,7 @@ export function GameViewer({ game }: GameViewerProps) {
         {/* Board */}
         <div style={{ position: 'relative' }}>
           <ChessBoard
-            fen={chess.fen()}
+            fen={currentFen}
             arrowOverlay={
               displayOptions.showBestMoveArrow && evaluation?.variations && evaluation.variations.length > 0 ? (
                 <BoardArrows

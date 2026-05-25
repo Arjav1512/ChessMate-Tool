@@ -32,6 +32,22 @@ export class PGNParseError extends Error {
 }
 
 /**
+ * Remove arbitrarily nested parenthetical variations from PGN text.
+ * The simple regex /\([^)]*\)/g silently leaves behind outer parens when
+ * variations are nested (e.g. "( a ( b ) c )"), causing parse failures.
+ */
+function removeNestedParens(text: string): string {
+  let result = '';
+  let depth = 0;
+  for (const ch of text) {
+    if (ch === '(') { depth++; continue; }
+    if (ch === ')') { depth = Math.max(0, depth - 1); continue; }
+    if (depth === 0) result += ch;
+  }
+  return result;
+}
+
+/**
  * Clean PGN text by removing comments and variations
  */
 function cleanPGN(pgnText: string): string {
@@ -47,8 +63,8 @@ function cleanPGN(pgnText: string): string {
   // Remove comments starting with semicolon
   cleaned = cleaned.replace(/;[^\n]*/g, '');
 
-  // Remove variations in parentheses
-  cleaned = cleaned.replace(/\([^)]*\)/g, '');
+  // Remove variations in parentheses (handles arbitrarily nested parens)
+  cleaned = removeNestedParens(cleaned);
 
   return cleaned;
 }
@@ -186,6 +202,38 @@ export function validatePGN(pgnText: string): { valid: boolean; error?: string }
       error: error instanceof Error ? error.message : 'Unknown validation error',
     };
   }
+}
+
+/**
+ * Split a text blob containing one or more PGN games into individual PGN strings.
+ * A new game starts whenever a header tag ('[') appears on a fresh line after
+ * at least one moves line has been seen for the current game.
+ */
+export function splitPGN(text: string): string[] {
+  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const games: string[] = [];
+  let current: string[] = [];
+  let hasMoves = false;
+
+  for (const line of normalized.split('\n')) {
+    if (line.startsWith('[') && hasMoves) {
+      // Flush completed game and start a new one
+      const gameText = current.join('\n').trim();
+      if (gameText) games.push(gameText);
+      current = [line];
+      hasMoves = false;
+    } else {
+      current.push(line);
+      if (line.trim() && !line.startsWith('[')) {
+        hasMoves = true;
+      }
+    }
+  }
+
+  const last = current.join('\n').trim();
+  if (last) games.push(last);
+
+  return games.filter(g => g.length > 0);
 }
 
 /**

@@ -1,3 +1,5 @@
+import { supabase } from './supabase';
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -36,10 +38,16 @@ export async function askChessMentor(
 
     console.log('Calling Edge Function:', apiUrl);
 
+    // Use the authenticated user's JWT so the Edge Function can identify the
+    // caller for rate-limiting and personalisation. Falls back to anon key for
+    // unauthenticated calls (edge cases like session expiry during request).
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token ?? SUPABASE_ANON_KEY;
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

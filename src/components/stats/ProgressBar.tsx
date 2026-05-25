@@ -50,7 +50,7 @@ export function ProgressBar() {
   const loadStats = useCallback(async () => {
     if (!user) return;
 
-    const [gamesRes, analysisRes] = await Promise.allSettled([
+    const [gamesRes, analysisRes, profileRes] = await Promise.allSettled([
       supabase
         .from('games')
         .select('id, result, date, uploaded_at, pgn, white_player, black_player')
@@ -60,18 +60,39 @@ export function ProgressBar() {
         .from('game_analysis_results')
         .select('game_id, accuracy, mistakes, blunders, good_moves, best_moves')
         .eq('user_id', user.id),
+      supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', user.id)
+        .single(),
     ]);
 
     const games: GameRow[] = gamesRes.status === 'fulfilled' ? (gamesRes.value.data || []) : [];
     const analyses: AnalysisResult[] = analysisRes.status === 'fulfilled' ? (analysisRes.value.data || []) : [];
+    const displayName: string | null =
+      profileRes.status === 'fulfilled' ? (profileRes.value.data?.display_name ?? null) : null;
 
     if (games.length === 0) return;
 
-    // Score trend: cumulative score over time (+1 win, 0 draw, -1 loss)
+    // Score trend: cumulative score over time (+1 user win, 0 draw, -1 user loss)
     let cumulative = 0;
     const ratingData = games.map((game, idx) => {
-      if (game.result === '1-0') cumulative += 1;
-      else if (game.result === '0-1') cumulative -= 1;
+      const userIsWhite = displayName
+        ? game.white_player?.toLowerCase() === displayName.toLowerCase()
+        : null;
+      const userIsBlack = displayName
+        ? game.black_player?.toLowerCase() === displayName.toLowerCase()
+        : null;
+      const userWon =
+        (userIsWhite === true && game.result === '1-0') ||
+        (userIsBlack === true && game.result === '0-1') ||
+        (userIsWhite === null && userIsBlack === null && game.result === '1-0'); // fallback
+      const userLost =
+        (userIsWhite === true && game.result === '0-1') ||
+        (userIsBlack === true && game.result === '1-0') ||
+        (userIsWhite === null && userIsBlack === null && game.result === '0-1');
+      if (userWon) cumulative += 1;
+      else if (userLost) cumulative -= 1;
       const label = game.date && game.date !== '??'
         ? game.date.replace(/\.\d+$/, '')
         : `#${idx + 1}`;
@@ -92,7 +113,7 @@ export function ProgressBar() {
         }
       : { tactical: 0, positional: 0, timeManagement: 0, endgame: 0 };
 
-    // Opening performance from PGN first-move extraction
+    // Opening performance from PGN first-move extraction (user-color-aware win rate)
     const openingMap = new Map<string, { wins: number; total: number }>();
     for (const game of games) {
       let firstMove = '';
@@ -105,7 +126,20 @@ export function ProgressBar() {
       const openingName = classifyOpening(firstMove);
       const existing = openingMap.get(openingName) || { wins: 0, total: 0 };
       existing.total += 1;
-      if (game.result === '1-0') existing.wins += 1;
+
+      // Determine whether the user won this game
+      const userIsWhite = displayName
+        ? game.white_player?.toLowerCase() === displayName.toLowerCase()
+        : null;
+      const userIsBlack = displayName
+        ? game.black_player?.toLowerCase() === displayName.toLowerCase()
+        : null;
+      const userWon =
+        (userIsWhite === true && game.result === '1-0') ||
+        (userIsBlack === true && game.result === '0-1') ||
+        (userIsWhite === null && userIsBlack === null && game.result === '1-0'); // fallback: count white wins
+      if (userWon) existing.wins += 1;
+
       openingMap.set(openingName, existing);
     }
     const openingPerformance = Array.from(openingMap.entries())
@@ -321,7 +355,7 @@ export function ProgressBar() {
 
       {/* Opening Performance */}
       <div style={sectionStyle}>
-        <h3 style={sectionTitleStyle}>Opening Performance <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--cm-text-muted)', fontSize: '11px' }}>(White wins)</span></h3>
+        <h3 style={sectionTitleStyle}>Opening Performance <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--cm-text-muted)', fontSize: '11px' }}>(your wins)</span></h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {stats.openingPerformance.map((opening) => (
             <div key={opening.opening} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Brain, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase, Game } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { stockfish } from '../../lib/stockfish';
+import { StockfishEngine } from '../../lib/stockfish';
 import { parsePGN } from '../../lib/pgn';
 import { Chess } from 'chess.js';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
@@ -29,6 +29,9 @@ export function BulkAnalysis() {
   const [analyses, setAnalyses] = useState<Map<string, GameAnalysis>>(new Map());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loading, setLoading] = useState(true);
+  // Own engine instance — avoids singleton race with GameViewer
+  const [engine] = useState(() => new StockfishEngine());
+  useEffect(() => () => engine.terminate(), [engine]);
 
   const loadGames = useCallback(async () => {
     if (!user) return;
@@ -97,7 +100,7 @@ export function BulkAnalysis() {
         chess.move(pgnData.moves[i]);
 
         try {
-          const result = await stockfish.analyzePosition(chess.fen(), 15, 1);
+          const result = await engine.analyzePosition(chess.fen(), 15, 1);
 
           // Safely parse evaluation — result.evaluation can be "M3" (mate) which
           // parseFloat silently turns into NaN. Use ±100 as a proxy for mate.

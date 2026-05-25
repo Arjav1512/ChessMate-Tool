@@ -6,7 +6,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePerformance } from '../../hooks/usePerformance';
 import type { Game } from '../../lib/supabase';
-import { parsePGN, PGNParseError } from '../../lib/pgn';
+import { parsePGN, splitPGN, PGNParseError } from '../../lib/pgn';
 
 interface GameListProps {
   onSelectGame: (game: Game) => void;
@@ -81,47 +81,69 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     setUploading(true);
 
     try {
-      const pgnText = await file.text();
+      const rawText = await file.text();
+      const gameTexts = splitPGN(rawText);
 
-      let pgnData;
-      try {
-        pgnData = parsePGN(pgnText);
-      } catch (parseError) {
-        console.error('PGN parse error:', parseError);
-        if (parseError instanceof PGNParseError) {
-          showToast(`${parseError.message}. ${parseError.suggestion || ''}`, 'error');
-        } else {
-          showToast('Invalid PGN file. The file format could not be parsed.', 'error');
+      if (gameTexts.length === 0) {
+        showToast('No valid PGN games found in the file.', 'error');
+        setUploading(false);
+        e.target.value = '';
+        return;
+      }
+
+      let imported = 0;
+      let firstParseError: string | null = null;
+
+      for (const gameText of gameTexts) {
+        let pgnData;
+        try {
+          pgnData = parsePGN(gameText);
+        } catch (parseError) {
+          console.error('PGN parse error:', parseError);
+          if (!firstParseError) {
+            firstParseError = parseError instanceof PGNParseError
+              ? `${parseError.message}. ${parseError.suggestion || ''}`
+              : 'One or more games could not be parsed.';
+          }
+          continue; // skip unparseable games, try remaining
         }
-        setUploading(false);
-        e.target.value = '';
-        return;
+
+        if (!pgnData.moves || pgnData.moves.length === 0) continue;
+
+        const { error } = await supabase.from('games').insert({
+          user_id: user.id,
+          pgn: gameText,
+          white_player: pgnData.headers.White || 'Unknown',
+          black_player: pgnData.headers.Black || 'Unknown',
+          result: pgnData.headers.Result || '*',
+          date: pgnData.headers.Date || '',
+          event: pgnData.headers.Event || '',
+        });
+
+        if (error) {
+          console.error('DB insert error:', error);
+        } else {
+          imported++;
+        }
       }
 
-      if (!pgnData.moves || pgnData.moves.length === 0) {
-        showToast('Invalid PGN file. No valid moves found.', 'error');
-        setUploading(false);
-        e.target.value = '';
-        return;
+      if (imported === 0) {
+        showToast(firstParseError || 'Failed to import any games from the file.', 'error');
+      } else {
+        const updatedGames = await loadGames();
+        if (updatedGames && updatedGames.length > 0) {
+          onSelectGame(updatedGames[0]);
+        }
+        const skipped = gameTexts.length - imported;
+        if (skipped > 0) {
+          showToast(`Imported ${imported} game${imported !== 1 ? 's' : ''} (${skipped} skipped).`, 'success');
+        } else {
+          showToast(
+            imported === 1 ? 'Game uploaded successfully!' : `${imported} games uploaded successfully!`,
+            'success'
+          );
+        }
       }
-
-      const { error } = await supabase.from('games').insert({
-        user_id: user.id,
-        pgn: pgnText,
-        white_player: pgnData.headers.White || 'Unknown',
-        black_player: pgnData.headers.Black || 'Unknown',
-        result: pgnData.headers.Result || '*',
-        date: pgnData.headers.Date || '',
-        event: pgnData.headers.Event || '',
-      });
-
-      if (error) throw error;
-
-      const updatedGames = await loadGames();
-      if (updatedGames && updatedGames.length > 0) {
-        onSelectGame(updatedGames[0]);
-      }
-      showToast('Game uploaded successfully!', 'success');
     } catch (error) {
       console.error('Error uploading game:', error);
       showToast('Failed to upload game. Please try again.', 'error');
@@ -137,45 +159,69 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     setUploading(true);
 
     try {
-      let pgnData;
-      try {
-        pgnData = parsePGN(pgnText);
-      } catch (parseError) {
-        console.error('PGN parse error:', parseError);
-        if (parseError instanceof PGNParseError) {
-          showToast(`${parseError.message}. ${parseError.suggestion || ''}`, 'error');
-        } else {
-          showToast('Invalid PGN text. The format could not be parsed.', 'error');
+      const gameTexts = splitPGN(pgnText);
+
+      if (gameTexts.length === 0) {
+        showToast('No valid PGN games found in the pasted text.', 'error');
+        setUploading(false);
+        return;
+      }
+
+      let imported = 0;
+      let firstParseError: string | null = null;
+
+      for (const gameText of gameTexts) {
+        let pgnData;
+        try {
+          pgnData = parsePGN(gameText);
+        } catch (parseError) {
+          console.error('PGN parse error:', parseError);
+          if (!firstParseError) {
+            firstParseError = parseError instanceof PGNParseError
+              ? `${parseError.message}. ${parseError.suggestion || ''}`
+              : 'One or more games could not be parsed.';
+          }
+          continue;
         }
-        setUploading(false);
-        return;
+
+        if (!pgnData.moves || pgnData.moves.length === 0) continue;
+
+        const { error } = await supabase.from('games').insert({
+          user_id: user.id,
+          pgn: gameText,
+          white_player: pgnData.headers.White || 'Unknown',
+          black_player: pgnData.headers.Black || 'Unknown',
+          result: pgnData.headers.Result || '*',
+          date: pgnData.headers.Date || '',
+          event: pgnData.headers.Event || '',
+        });
+
+        if (error) {
+          console.error('DB insert error:', error);
+        } else {
+          imported++;
+        }
       }
 
-      if (!pgnData.moves || pgnData.moves.length === 0) {
-        showToast('Invalid PGN text. No valid moves found.', 'error');
-        setUploading(false);
-        return;
+      if (imported === 0) {
+        showToast(firstParseError || 'Failed to import any games from the pasted text.', 'error');
+      } else {
+        const updatedGames = await loadGames();
+        if (updatedGames && updatedGames.length > 0) {
+          onSelectGame(updatedGames[0]);
+        }
+        const skipped = gameTexts.length - imported;
+        if (skipped > 0) {
+          showToast(`Imported ${imported} game${imported !== 1 ? 's' : ''} (${skipped} skipped).`, 'success');
+        } else {
+          showToast(
+            imported === 1 ? 'Game uploaded successfully!' : `${imported} games uploaded successfully!`,
+            'success'
+          );
+        }
+        setShowPasteModal(false);
+        setPgnText('');
       }
-
-      const { error } = await supabase.from('games').insert({
-        user_id: user.id,
-        pgn: pgnText,
-        white_player: pgnData.headers.White || 'Unknown',
-        black_player: pgnData.headers.Black || 'Unknown',
-        result: pgnData.headers.Result || '*',
-        date: pgnData.headers.Date || '',
-        event: pgnData.headers.Event || '',
-      });
-
-      if (error) throw error;
-
-      const updatedGames = await loadGames();
-      if (updatedGames && updatedGames.length > 0) {
-        onSelectGame(updatedGames[0]);
-      }
-      showToast('Game uploaded successfully!', 'success');
-      setShowPasteModal(false);
-      setPgnText('');
     } catch (error) {
       console.error('Error uploading game:', error);
       showToast('Failed to upload game. Please try again.', 'error');

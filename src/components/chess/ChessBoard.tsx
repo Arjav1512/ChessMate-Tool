@@ -1,5 +1,5 @@
 import { Chess, Square } from 'chess.js';
-import { useEffect, useState, ReactNode } from 'react';
+import { useMemo, useState, ReactNode } from 'react';
 
 interface ChessBoardProps {
   fen: string;
@@ -13,17 +13,19 @@ const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1'];
 
 export function ChessBoard({ fen, onPositionChange, interactive = false, highlightSquares = [], arrowOverlay }: ChessBoardProps) {
-  const [chess] = useState(() => new Chess(fen));
+  // Derive the Chess instance from the FEN prop — no mutable state that silently lags behind
+  const chess = useMemo(() => {
+    const instance = new Chess();
+    try {
+      instance.load(fen);
+    } catch {
+      // keep default starting position if FEN is invalid
+    }
+    return instance;
+  }, [fen]);
+
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      chess.load(fen);
-    } catch (error) {
-      console.error('Invalid FEN:', error);
-    }
-  }, [fen, chess]);
 
   const handleSquareClick = (square: string) => {
     if (!interactive) return;
