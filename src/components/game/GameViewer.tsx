@@ -4,10 +4,12 @@ import { BoardArrows } from '../chess/BoardArrows';
 import { EvaluationGauge } from '../chess/EvaluationGauge';
 import { DisplaySettings, DisplayOptions } from '../analysis/DisplaySettings';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { ChevronLeft, ChevronRight, SkipBack, SkipForward } from 'lucide-react';
+import { MarkdownRenderer } from '../ui/MarkdownRenderer';
+import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send } from 'lucide-react';
 import type { Game } from '../../lib/supabase';
 import { parsePGN, PGNData } from '../../lib/pgn';
 import { StockfishEngine } from '../../lib/stockfish';
+import { askChessMentor } from '../../lib/gemini';
 
 interface StockfishAnalysis {
   bestMove: string;
@@ -25,7 +27,6 @@ interface StockfishAnalysis {
 
 interface GameViewerProps {
   game: Game;
-  onAskQuestion?: (question: string, context: Record<string, unknown>) => void;
 }
 
 export function GameViewer({ game }: GameViewerProps) {
@@ -36,6 +37,10 @@ export function GameViewer({ game }: GameViewerProps) {
   const [evaluation, setEvaluation] = useState<StockfishAnalysis | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  // Inline Ask Coach state
+  const [coachQuestion, setCoachQuestion] = useState('');
+  const [coachAnswer, setCoachAnswer] = useState<string | null>(null);
+  const [coachLoading, setCoachLoading] = useState(false);
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
     showAnnotations: true,
     showBestMoveArrow: true,
@@ -89,6 +94,34 @@ export function GameViewer({ game }: GameViewerProps) {
       return () => clearTimeout(timer);
     }
   }, [currentMoveIndex, displayOptions.showFishnetAnalysis, analyzeCurrentPosition, pgnData]);
+
+  const handleAskCoach = useCallback(async () => {
+    if (!coachQuestion.trim() || !pgnData) return;
+    setCoachLoading(true);
+    setCoachAnswer(null);
+    try {
+      const answer = await askChessMentor(coachQuestion, {
+        gameInfo: {
+          white_player: game.white_player,
+          black_player: game.black_player,
+          result: game.result,
+          event: game.event,
+          date: game.date,
+        },
+        currentPosition: currentFen,
+        moveHistory: pgnData.moves.slice(0, currentMoveIndex),
+        evaluation: evaluation
+          ? { evaluation: evaluation.evaluation, isMate: evaluation.isMate, bestMove: evaluation.bestMove }
+          : undefined,
+      });
+      setCoachAnswer(answer);
+      setCoachQuestion('');
+    } catch (err) {
+      setCoachAnswer('⚠️ ' + (err instanceof Error ? err.message : 'Failed to get a response'));
+    } finally {
+      setCoachLoading(false);
+    }
+  }, [coachQuestion, pgnData, game, currentFen, currentMoveIndex, evaluation]);
 
   const handleKeyPress = useCallback((e: KeyboardEvent) => {
     if (!pgnData) return;
@@ -395,6 +428,87 @@ export function GameViewer({ game }: GameViewerProps) {
               </div>
             </div>
           )}
+
+          {/* Ask Coach */}
+          <div style={{
+            background: 'var(--cm-bg-elevated)',
+            border: '1px solid var(--cm-border-subtle)',
+            borderRadius: '8px',
+            padding: '12px',
+          }}>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              color: 'var(--cm-text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: '8px',
+            }}>
+              Ask Coach
+            </div>
+            {coachAnswer && (
+              <div style={{
+                marginBottom: '8px',
+                padding: '8px 10px',
+                background: coachAnswer.startsWith('⚠️') ? 'var(--cm-error-dim)' : 'var(--cm-bg-hover)',
+                border: `1px solid ${coachAnswer.startsWith('⚠️') ? 'rgba(232,85,74,0.25)' : 'var(--cm-border-subtle)'}`,
+                borderRadius: '6px',
+                fontSize: '12px',
+                color: coachAnswer.startsWith('⚠️') ? 'var(--cm-error)' : 'var(--cm-text-primary)',
+                lineHeight: 1.55,
+                maxHeight: '160px',
+                overflowY: 'auto',
+              }}>
+                {coachAnswer.startsWith('⚠️')
+                  ? coachAnswer
+                  : <MarkdownRenderer content={coachAnswer} />
+                }
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <input
+                type="text"
+                value={coachQuestion}
+                onChange={e => setCoachQuestion(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleAskCoach(); }}
+                placeholder="Ask about this position…"
+                disabled={coachLoading}
+                style={{
+                  flex: 1,
+                  padding: '6px 10px',
+                  background: 'var(--cm-bg-base)',
+                  border: '1px solid var(--cm-border-default)',
+                  borderRadius: '6px',
+                  color: 'var(--cm-text-primary)',
+                  fontSize: '12px',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                  transition: 'border-color 0.15s',
+                  minWidth: 0,
+                }}
+                onFocus={e => (e.currentTarget.style.borderColor = 'var(--cm-accent)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'var(--cm-border-default)')}
+              />
+              <button
+                onClick={handleAskCoach}
+                disabled={coachLoading || !coachQuestion.trim()}
+                style={{
+                  padding: '6px 10px',
+                  background: coachLoading || !coachQuestion.trim() ? 'var(--cm-bg-hover)' : 'var(--cm-accent)',
+                  border: '1px solid transparent',
+                  borderRadius: '6px',
+                  color: coachLoading || !coachQuestion.trim() ? 'var(--cm-text-muted)' : 'var(--cm-text-inverse)',
+                  cursor: coachLoading || !coachQuestion.trim() ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                  transition: 'all 0.15s',
+                }}
+              >
+                {coachLoading ? <LoadingSpinner size="sm" /> : <Send size={13} />}
+              </button>
+            </div>
+          </div>
 
           {/* Move history */}
           <div style={{

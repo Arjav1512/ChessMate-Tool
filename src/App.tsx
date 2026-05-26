@@ -11,9 +11,11 @@ import { AnalyzeGamesPage } from './components/analysis/AnalyzeGamesPage';
 import { StatsDashboard } from './components/stats/StatsDashboard';
 import { ThemeToggle } from './components/layout/ThemeToggle';
 import { CompatibilityWarning } from './components/layout/CompatibilityWarning';
+import { ProfileModal } from './components/layout/ProfileModal';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { useResponsive } from './hooks/useResponsive';
-import { LogOut, TrendingUp, Upload, Brain, BarChart3, Search, Zap, BookOpen, Menu, X as XIcon } from 'lucide-react';
+import { LogOut, TrendingUp, Upload, Brain, BarChart3, Search, Zap, User, Menu, X as XIcon } from 'lucide-react';
+// Note: i18n infrastructure removed — no components use useTranslation
 import type { Game } from './lib/supabase';
 
 type ModalType = 'import' | 'progress' | 'analyze' | 'stats' | null;
@@ -116,6 +118,7 @@ function MainApp() {
   const [openModal, setOpenModal] = useState<ModalType>(null);
   const [showCompatibilityWarning, setShowCompatibilityWarning] = useState(true);
   const [showMobileNav, setShowMobileNav] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const { isMobile } = useResponsive();
 
   // Show a full-screen spinner while the auth session is being resolved to
@@ -198,6 +201,36 @@ function MainApp() {
         )}
 
         <ThemeToggle />
+
+        <button
+          onClick={() => setShowProfile(true)}
+          aria-label="Your profile"
+          title="Your profile"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            background: 'transparent',
+            border: '1px solid var(--cm-border-default)',
+            borderRadius: '50%',
+            color: 'var(--cm-text-secondary)',
+            cursor: 'pointer',
+            transition: 'all 0.15s',
+            flexShrink: 0,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = 'var(--cm-border-strong)';
+            e.currentTarget.style.color = 'var(--cm-text-primary)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'var(--cm-border-default)';
+            e.currentTarget.style.color = 'var(--cm-text-secondary)';
+          }}
+        >
+          <User size={15} />
+        </button>
 
         <button
           onClick={signOut}
@@ -327,7 +360,7 @@ function MainApp() {
                     { icon: <Brain size={13} />, label: 'AI Coach' },
                     { icon: <BarChart3 size={13} />, label: 'Statistics' },
                     { icon: <Zap size={13} />, label: 'Stockfish Engine' },
-                    { icon: <BookOpen size={13} />, label: 'Opening Theory' },
+                    { icon: <TrendingUp size={13} />, label: 'Progress Tracking' },
                   ] as const).map((f, i) => (
                     <div
                       key={f.label}
@@ -414,6 +447,9 @@ function MainApp() {
           </div>
         </div>
       )}
+
+      {/* Profile modal */}
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
 
       {/* Mobile nav bottom-sheet */}
       {showMobileNav && (

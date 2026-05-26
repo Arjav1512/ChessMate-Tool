@@ -46,7 +46,7 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
     try {
       setLoading(true);
 
-      const [statsResult, gamesResult, progressResult, allGamesResult, profileResult] = await Promise.allSettled([
+      const [statsResult, gamesResult, progressResult, allGamesResult, profileResult, allAnalysisResult] = await Promise.allSettled([
         supabase
           .from('user_statistics')
           .select('*')
@@ -71,23 +71,31 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
           .eq('user_id', user!.id)
           .order('snapshot_date', { ascending: false })
           .limit(30),
-        // Fetch all games to compute wins/losses/draws/color distribution
+        // All games for win/loss/color distribution
         supabase
           .from('games')
           .select('white_player, black_player, result')
           .eq('user_id', user!.id),
-        // Fetch user profile to get display_name for color-side matching
+        // Profile for display_name (color-side matching)
         supabase
           .from('profiles')
           .select('display_name')
           .eq('id', user!.id)
           .maybeSingle(),
+        // All analysis results for live stat fallback (in case DB trigger hasn't fired)
+        supabase
+          .from('game_analysis_results')
+          .select('accuracy, mistakes, blunders')
+          .eq('user_id', user!.id),
       ]);
 
       // Build user stats, merging DB stats with live game counts
       const dbStats = statsResult.status === 'fulfilled' ? statsResult.value.data : null;
       const allGames = allGamesResult.status === 'fulfilled'
         ? (allGamesResult.value.data || [])
+        : [];
+      const allAnalysis = allAnalysisResult.status === 'fulfilled'
+        ? (allAnalysisResult.value.data || [])
         : [];
 
       // Resolve user's display_name for color-side matching
@@ -98,16 +106,31 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
       const displayNameLower = displayName.toLowerCase();
 
       if (dbStats || allGames.length > 0) {
-        // Compute wins/losses/draws from raw game results
+        // Compute wins/losses/draws from user's perspective (color-aware)
         let wins = 0, losses = 0, draws = 0;
         let gamesAsWhite = 0, gamesAsBlack = 0;
 
         for (const g of allGames) {
-          if (g.result === '1-0') wins++;
-          else if (g.result === '0-1') losses++;
-          else if (g.result === '1/2-1/2') draws++;
+          const isWhite = displayNameLower
+            ? g.white_player?.toLowerCase() === displayNameLower
+            : null;
+          const isBlack = displayNameLower
+            ? g.black_player?.toLowerCase() === displayNameLower
+            : null;
 
-          // Match player name case-insensitively; fall back to 50/50 if unknown
+          if (isWhite || isBlack) {
+            // We know the user's color — count from their perspective
+            if ((isWhite && g.result === '1-0') || (isBlack && g.result === '0-1')) wins++;
+            else if ((isWhite && g.result === '0-1') || (isBlack && g.result === '1-0')) losses++;
+            else if (g.result === '1/2-1/2') draws++;
+          } else {
+            // Fallback: count raw results
+            if (g.result === '1-0') wins++;
+            else if (g.result === '0-1') losses++;
+            else if (g.result === '1/2-1/2') draws++;
+          }
+
+          // Color distribution
           if (displayNameLower) {
             if (g.white_player?.toLowerCase() === displayNameLower) gamesAsWhite++;
             else if (g.black_player?.toLowerCase() === displayNameLower) gamesAsBlack++;
@@ -120,11 +143,19 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
           gamesAsBlack = Math.floor(allGames.length / 2);
         }
 
+        // Prefer DB trigger stats, but fall back to live computation if trigger hasn't fired
+        const liveAnalyzed = allAnalysis.length;
+        const liveAvgAccuracy = liveAnalyzed > 0
+          ? allAnalysis.reduce((s, a) => s + (a.accuracy ?? 0), 0) / liveAnalyzed
+          : 0;
+        const liveMistakes = allAnalysis.reduce((s, a) => s + (a.mistakes ?? 0), 0);
+        const liveBlunders = allAnalysis.reduce((s, a) => s + (a.blunders ?? 0), 0);
+
         setStats({
-          total_games_analyzed: dbStats?.total_games_analyzed ?? 0,
-          average_accuracy: dbStats?.average_accuracy ?? 0,
-          total_mistakes: dbStats?.total_mistakes ?? 0,
-          total_blunders: dbStats?.total_blunders ?? 0,
+          total_games_analyzed: dbStats?.total_games_analyzed ?? liveAnalyzed,
+          average_accuracy: dbStats?.average_accuracy ?? liveAvgAccuracy,
+          total_mistakes: dbStats?.total_mistakes ?? liveMistakes,
+          total_blunders: dbStats?.total_blunders ?? liveBlunders,
           games_as_white: gamesAsWhite,
           games_as_black: gamesAsBlack,
           wins,

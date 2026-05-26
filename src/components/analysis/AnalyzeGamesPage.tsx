@@ -118,9 +118,6 @@ export function AnalyzeGamesPage({ onClose }: AnalyzeGamesPageProps) {
               {selectedGame ? (
                 <GameViewer
                   game={selectedGame}
-                  onAskQuestion={(question, context) => {
-                    console.log('Ask question:', question, context);
-                  }}
                 />
               ) : (
                 <div style={{

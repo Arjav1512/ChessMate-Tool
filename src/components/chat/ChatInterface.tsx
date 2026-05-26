@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { askChessMentor } from '../../lib/gemini';
 import { useAuth } from '../../contexts/AuthContext';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
+import { parsePGN } from '../../lib/pgn';
 import type { Question } from '../../lib/supabase';
 
 interface GameContext {
@@ -29,6 +30,9 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
+  // Full move list and final FEN of the selected game — passed as context to the AI
+  const [gameMoves, setGameMoves] = useState<string[]>([]);
+  const [gameFen, setGameFen] = useState<string | undefined>(undefined);
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -60,6 +64,33 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
     }
   }, [user, gameId, loadQuestions]);
 
+  // When the selected game changes, load its PGN and extract moves/FEN for AI context
+  useEffect(() => {
+    if (!gameId) {
+      setGameMoves([]);
+      setGameFen(undefined);
+      return;
+    }
+    supabase
+      .from('games')
+      .select('pgn')
+      .eq('id', gameId)
+      .single()
+      .then(({ data }) => {
+        if (data?.pgn) {
+          try {
+            const parsed = parsePGN(data.pgn);
+            setGameMoves(parsed.moves);
+            // Last FEN = position after all moves
+            setGameFen(parsed.fen[parsed.fen.length - 1]);
+          } catch {
+            setGameMoves([]);
+            setGameFen(undefined);
+          }
+        }
+      });
+  }, [gameId]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [questions]);
@@ -75,6 +106,8 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
 
       const answer = await askChessMentor(question, {
         gameInfo: gameContext,
+        currentPosition: gameFen,
+        moveHistory: gameMoves.length > 0 ? gameMoves : undefined,
         userHistory,
       });
 

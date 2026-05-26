@@ -63,7 +63,7 @@ export function ProgressBar() {
       supabase
         .from('profiles')
         .select('display_name')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single(),
     ]);
 
