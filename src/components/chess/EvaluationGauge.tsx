@@ -2,9 +2,11 @@ interface EvaluationGaugeProps {
   evaluation: string;
   isMate: boolean;
   moveNumber?: number;
+  /** Height in pixels — defaults to 480 (matches 8×60 board). Pass squareSize*8 for responsive boards. */
+  height?: number;
 }
 
-export function EvaluationGauge({ evaluation, isMate, moveNumber }: EvaluationGaugeProps) {
+export function EvaluationGauge({ evaluation, isMate, moveNumber, height = 480 }: EvaluationGaugeProps) {
   const getEvalPercentage = (): number => {
     if (isMate) {
       const mateIn = parseInt(evaluation.replace('M', ''));
@@ -20,7 +22,7 @@ export function EvaluationGauge({ evaluation, isMate, moveNumber }: EvaluationGa
   const evalNum = isMate ? 0 : parseFloat(evaluation);
   const displayEval = isMate ? evaluation : Math.abs(evalNum).toFixed(1);
 
-  const gaugeHeight = 480;
+  const gaugeHeight = height;
 
   return (
     <div style={{

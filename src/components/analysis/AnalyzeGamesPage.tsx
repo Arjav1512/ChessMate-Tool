@@ -96,14 +96,12 @@ export function AnalyzeGamesPage({ onClose }: AnalyzeGamesPageProps) {
       {/* Content */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
         {viewMode === 'board' ? (
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', width: '100%', height: '100%' }}>
-            {/* Sidebar game list — stacks above board on mobile */}
-            <div style={{
-              width: isMobile ? '100%' : '280px',
-              maxHeight: isMobile ? '220px' : undefined,
+          <div className="analyze-layout" style={{ display: 'flex', flexDirection: 'row', width: '100%', height: '100%' }}>
+            {/* Sidebar game list */}
+            <div className="analyze-sidebar" style={{
+              width: '280px',
               flexShrink: 0,
-              borderRight: isMobile ? 'none' : '1px solid var(--cm-border-subtle)',
-              borderBottom: isMobile ? '1px solid var(--cm-border-subtle)' : 'none',
+              borderRight: '1px solid var(--cm-border-subtle)',
               overflow: 'auto',
               background: 'var(--cm-bg-surface)',
             }}>
@@ -114,7 +112,7 @@ export function AnalyzeGamesPage({ onClose }: AnalyzeGamesPageProps) {
             </div>
 
             {/* Board area */}
-            <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '12px' : '20px', background: 'var(--cm-bg-base)' }}>
+            <div className="analyze-board-area" style={{ flex: 1, overflow: 'auto', padding: '20px', background: 'var(--cm-bg-base)' }}>
               {selectedGame ? (
                 <GameViewer
                   game={selectedGame}

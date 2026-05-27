@@ -248,6 +248,13 @@ export class StockfishEngine {
     fen: string,
     requestedDepth: number,
   ): StockfishAnalysis {
+    // Stockfish UCI scores are from the SIDE-TO-MOVE's perspective.
+    // We normalise everything to White's perspective so the eval gauge
+    // always reads positive = White is better, negative = Black is better.
+    const fenParts = fen.split(' ');
+    const sideToMove = fenParts[1] ?? 'w';        // 'w' | 'b'
+    const flipSign   = sideToMove === 'b' ? -1 : 1;
+
     let bestMove = '';
     let evalScore = 0;
     let mate: number | null = null;
@@ -290,7 +297,7 @@ export class StockfishEngine {
       if (curDepth > maxDepth) maxDepth = curDepth;
 
       const isMate = scoreM[1] === 'mate';
-      const rawScore = parseInt(scoreM[2]);
+      const rawScore = parseInt(scoreM[2]) * flipSign;  // normalise to White's POV
       const score = isMate ? rawScore : rawScore / 100;
       const pvMoves = pvM[1].trim().split(/\s+/).slice(0, 8);
 

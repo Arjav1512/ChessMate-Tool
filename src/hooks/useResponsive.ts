@@ -47,19 +47,21 @@ export function useResponsive(): ResponsiveInfo {
 }
 
 /**
- * Hook for responsive breakpoints
+ * Hook for responsive breakpoints — also exposes raw width for dynamic sizing.
  */
 export function useBreakpoint() {
-  const { width } = useResponsive();
-  
+  const { width, height } = useResponsive();
+
   return {
+    width,
+    height,
     isXs: width < 480,
     isSm: width >= 480 && width < 768,
     isMd: width >= 768 && width < 1024,
     isLg: width >= 1024 && width < 1280,
     isXl: width >= 1280,
-    isMobile: width < 768,
-    isTablet: width >= 768 && width < 1024,
+    isMobile: width < 700,   // matches CSS breakpoint
+    isTablet: width >= 700 && width < 1024,
     isDesktop: width >= 1024,
   };
 }
