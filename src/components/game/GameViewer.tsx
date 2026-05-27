@@ -1,29 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChessBoard } from '../chess/ChessBoard';
 import { BoardArrows } from '../chess/BoardArrows';
 import { EvaluationGauge } from '../chess/EvaluationGauge';
 import { DisplaySettings, DisplayOptions } from '../analysis/DisplaySettings';
+import { EnginePanel } from '../analysis/EnginePanel';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
 import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send } from 'lucide-react';
 import type { Game } from '../../lib/supabase';
 import { parsePGN, PGNData } from '../../lib/pgn';
-import { StockfishEngine } from '../../lib/stockfish';
+import type { StockfishAnalysis } from '../../lib/stockfish';
 import { askChessMentor } from '../../lib/gemini';
-
-interface StockfishAnalysis {
-  bestMove: string;
-  evaluation: string;
-  isMate: boolean;
-  depth: number;
-  fen: string;
-  variations: Array<{
-    move: string;
-    score: number;
-    isMate: boolean;
-    pv: string[];
-  }>;
-}
+import { MoveClassification, CLASSIFICATION } from '../../utils/moveClassifier';
 
 interface GameViewerProps {
   game: Game;
@@ -32,68 +20,47 @@ interface GameViewerProps {
 export function GameViewer({ game }: GameViewerProps) {
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [pgnData, setPgnData] = useState<PGNData | null>(null);
-  // Own engine instance — avoids singleton race with BulkAnalysis
-  const [engine] = useState(() => new StockfishEngine());
-  const [evaluation, setEvaluation] = useState<StockfishAnalysis | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  // Engine analysis results — driven by EnginePanel via onAnalysis callback
+  const [engineAnalysis, setEngineAnalysis] = useState<StockfishAnalysis | null>(null);
+
+  // Full-game analysis results — driven by EnginePanel via onClassifications
+  const [classifications, setClassifications] = useState<Map<number, MoveClassification>>(new Map());
+  const [gameEvals, setGameEvals] = useState<number[]>([]);
+
   // Inline Ask Coach state
   const [coachQuestion, setCoachQuestion] = useState('');
   const [coachAnswer, setCoachAnswer] = useState<string | null>(null);
   const [coachLoading, setCoachLoading] = useState(false);
+
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
     showAnnotations: true,
     showBestMoveArrow: true,
     showEvaluationGauge: true,
     showFishnetAnalysis: true,
     inlineNotation: false,
-    variationOpacity: 70
+    variationOpacity: 70,
   });
 
-  // Terminate engine on unmount
-  useEffect(() => () => engine.terminate(), [engine]);
-
+  // Parse PGN when game changes
   useEffect(() => {
     try {
       const parsed = parsePGN(game.pgn);
       setPgnData(parsed);
       setCurrentMoveIndex(0);
-      setEvaluation(null);
-      setAnalyzing(false);
+      setEngineAnalysis(null);
+      setClassifications(new Map());
+      setGameEvals([]);
     } catch (error) {
       console.error('Failed to parse PGN:', error);
     }
   }, [game.id, game.pgn]);
 
-  // currentFen derived directly from precomputed pgnData.fen — no chess mutation
-  const currentFen = pgnData?.fen[currentMoveIndex] ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  // Current FEN derived from precomputed pgnData.fen — no chess mutation needed
+  const currentFen = pgnData?.fen[currentMoveIndex]
+    ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
-  const analyzeCurrentPosition = useCallback(async () => {
-    if (!pgnData) return;
-    setAnalyzing(true);
-    setAnalysisError(null);
-    const fen = pgnData.fen[currentMoveIndex] ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-    try {
-      const result = await engine.analyzePosition(fen, 18, 3);
-      setEvaluation(result);
-    } catch (error) {
-      console.error('Analysis failed:', error);
-      setAnalysisError(
-        error instanceof Error ? error.message : 'Engine analysis failed'
-      );
-    } finally {
-      setAnalyzing(false);
-    }
-  }, [engine, pgnData, currentMoveIndex]);
-
-  useEffect(() => {
-    if (displayOptions.showFishnetAnalysis && pgnData) {
-      const timer = setTimeout(() => {
-        analyzeCurrentPosition();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [currentMoveIndex, displayOptions.showFishnetAnalysis, analyzeCurrentPosition, pgnData]);
+  // ── Ask Coach ───────────────────────────────────────────────────────────────
 
   const handleAskCoach = useCallback(async () => {
     if (!coachQuestion.trim() || !pgnData) return;
@@ -110,8 +77,12 @@ export function GameViewer({ game }: GameViewerProps) {
         },
         currentPosition: currentFen,
         moveHistory: pgnData.moves.slice(0, currentMoveIndex),
-        evaluation: evaluation
-          ? { evaluation: evaluation.evaluation, isMate: evaluation.isMate, bestMove: evaluation.bestMove }
+        evaluation: engineAnalysis
+          ? {
+              evaluation: engineAnalysis.evaluation,
+              isMate: engineAnalysis.isMate,
+              bestMove: engineAnalysis.bestMove,
+            }
           : undefined,
       });
       setCoachAnswer(answer);
@@ -121,15 +92,14 @@ export function GameViewer({ game }: GameViewerProps) {
     } finally {
       setCoachLoading(false);
     }
-  }, [coachQuestion, pgnData, game, currentFen, currentMoveIndex, evaluation]);
+  }, [coachQuestion, pgnData, game, currentFen, currentMoveIndex, engineAnalysis]);
+
+  // ── Keyboard navigation ─────────────────────────────────────────────────────
 
   const handleKeyPress = useCallback((e: KeyboardEvent) => {
     if (!pgnData) return;
-
-    // Don't intercept keyboard events when focus is inside a text-entry element
     const tag = (e.target as HTMLElement)?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
-
     switch (e.key) {
       case 'ArrowLeft':
         e.preventDefault();
@@ -147,32 +117,36 @@ export function GameViewer({ game }: GameViewerProps) {
         e.preventDefault();
         setCurrentMoveIndex(pgnData.moves.length);
         break;
-      case 'a':
-        if (e.ctrlKey || e.metaKey) {
-          e.preventDefault();
-          analyzeCurrentPosition();
-        }
-        break;
     }
-  }, [pgnData, analyzeCurrentPosition]);
+  }, [pgnData]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [handleKeyPress]);
 
+  // ── Early return ────────────────────────────────────────────────────────────
+
   if (!pgnData) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'var(--cm-text-secondary)' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px',
+        color: 'var(--cm-text-secondary)',
+      }}>
         <LoadingSpinner text="Loading game..." />
       </div>
     );
   }
 
-  const goToStart = () => setCurrentMoveIndex(0);
+  // ── Navigation helpers ──────────────────────────────────────────────────────
+
+  const goToStart    = () => setCurrentMoveIndex(0);
   const goToPrevious = () => setCurrentMoveIndex(prev => Math.max(0, prev - 1));
-  const goToNext = () => setCurrentMoveIndex(prev => Math.min(pgnData.moves.length, prev + 1));
-  const goToEnd = () => setCurrentMoveIndex(pgnData.moves.length);
+  const goToNext     = () => setCurrentMoveIndex(prev => Math.min(pgnData.moves.length, prev + 1));
+  const goToEnd      = () => setCurrentMoveIndex(pgnData.moves.length);
 
   const currentMove = currentMoveIndex > 0 ? pgnData.moves[currentMoveIndex - 1] : null;
 
@@ -190,9 +164,26 @@ export function GameViewer({ game }: GameViewerProps) {
     transition: 'all 0.15s',
   });
 
+  // ── Arrows from engine variations ─────────────────────────────────────────
+
+  const arrows = useMemo(() => {
+    if (!displayOptions.showBestMoveArrow || !engineAnalysis?.variations?.length) return null;
+    return (
+      <BoardArrows
+        arrows={engineAnalysis.variations.map((v, idx) => ({
+          from: v.move.substring(0, 2),
+          to: v.move.substring(2, 4),
+          opacity: idx === 0 ? 0.8 : (displayOptions.variationOpacity / 100) * (1 - idx * 0.2),
+          color: idx === 0 ? '#4ade80' : '#60a5fa',
+        }))}
+        squareSize={60}
+      />
+    );
+  }, [displayOptions.showBestMoveArrow, displayOptions.variationOpacity, engineAnalysis]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-      {/* Game header */}
+      {/* ── Game header ─────────────────────────────────────────────────── */}
       <div style={{
         padding: '16px 20px',
         borderBottom: '1px solid var(--cm-border-subtle)',
@@ -212,59 +203,19 @@ export function GameViewer({ game }: GameViewerProps) {
             {game.black_player || 'Black'}
           </h2>
           <p style={{ fontSize: '12px', color: 'var(--cm-text-muted)', margin: 0 }}>
-            {[game.event, game.date, game.result ? `Result: ${game.result}` : null].filter(Boolean).join(' · ')}
+            {[game.event, game.date, game.result ? `Result: ${game.result}` : null]
+              .filter(Boolean)
+              .join(' · ')}
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          {analysisError && (
-            <span style={{
-              fontSize: '11px',
-              color: 'var(--cm-error)',
-              background: 'var(--cm-error-dim)',
-              border: '1px solid rgba(232,85,74,0.25)',
-              borderRadius: '5px',
-              padding: '3px 8px',
-              maxWidth: '180px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-            title={analysisError}
-            >
-              ⚠ Engine error
-            </span>
-          )}
-          <button
-            onClick={analyzeCurrentPosition}
-            disabled={analyzing}
-            style={{
-              padding: '7px 14px',
-              background: analyzing ? 'var(--cm-bg-elevated)' : 'var(--cm-accent)',
-              border: '1px solid transparent',
-              borderRadius: '7px',
-              color: analyzing ? 'var(--cm-text-secondary)' : 'var(--cm-text-inverse)',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: analyzing ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.15s',
-            }}
-          >
-            {analyzing ? (
-              <>
-                <LoadingSpinner size="sm" />
-                Analyzing...
-              </>
-            ) : (
-              <>⚡ Analyze</>
-            )}
-          </button>
+          <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)' }}>
+            Arrow keys to navigate
+          </span>
         </div>
       </div>
 
-      {/* Main board area */}
+      {/* ── Main board area ─────────────────────────────────────────────── */}
       <div style={{
         display: 'flex',
         gap: '16px',
@@ -277,25 +228,12 @@ export function GameViewer({ game }: GameViewerProps) {
         {/* Eval gauge */}
         {displayOptions.showEvaluationGauge && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {evaluation ? (
+            {engineAnalysis ? (
               <EvaluationGauge
-                evaluation={evaluation.evaluation}
-                isMate={evaluation.isMate}
+                evaluation={engineAnalysis.evaluation}
+                isMate={engineAnalysis.isMate}
                 moveNumber={currentMoveIndex}
               />
-            ) : analyzing ? (
-              <div style={{
-                width: '28px',
-                height: '480px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--cm-bg-elevated)',
-                borderRadius: '4px',
-                border: '1px solid var(--cm-border-default)',
-              }}>
-                <LoadingSpinner size="sm" />
-              </div>
             ) : (
               <div style={{
                 width: '28px',
@@ -312,30 +250,28 @@ export function GameViewer({ game }: GameViewerProps) {
         <div style={{ position: 'relative' }}>
           <ChessBoard
             fen={currentFen}
-            arrowOverlay={
-              displayOptions.showBestMoveArrow && evaluation?.variations && evaluation.variations.length > 0 ? (
-                <BoardArrows
-                  arrows={evaluation.variations.map((v, idx) => {
-                    const opacity = idx === 0 ? 0.8 : (displayOptions.variationOpacity / 100) * (1 - idx * 0.2);
-                    return {
-                      from: v.move.substring(0, 2),
-                      to: v.move.substring(2, 4),
-                      opacity,
-                      color: idx === 0 ? '#4ade80' : '#60a5fa'
-                    };
-                  })}
-                  squareSize={60}
-                />
-              ) : null
-            }
+            arrowOverlay={arrows}
           />
         </div>
 
         {/* Right panel */}
-        <div style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ flex: 1, minWidth: '240px', maxWidth: '320px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <DisplaySettings options={displayOptions} onChange={setDisplayOptions} />
 
-          {/* Navigator */}
+          {/* ── Lichess-style Engine Panel ── */}
+          <EnginePanel
+            fen={currentFen}
+            pgnData={pgnData}
+            currentMoveIndex={currentMoveIndex}
+            onAnalysis={setEngineAnalysis}
+            onClassifications={(map, evals) => {
+              setClassifications(map);
+              setGameEvals(evals);
+            }}
+            onSeek={setCurrentMoveIndex}
+          />
+
+          {/* ── Navigator ── */}
           <div style={{
             background: 'var(--cm-bg-elevated)',
             border: '1px solid var(--cm-border-subtle)',
@@ -353,16 +289,16 @@ export function GameViewer({ game }: GameViewerProps) {
               Navigator
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-              <button onClick={goToStart} disabled={currentMoveIndex === 0} style={navBtnStyle(currentMoveIndex === 0)}>
+              <button onClick={goToStart}    disabled={currentMoveIndex === 0} style={navBtnStyle(currentMoveIndex === 0)}>
                 <SkipBack size={15} />
               </button>
               <button onClick={goToPrevious} disabled={currentMoveIndex === 0} style={navBtnStyle(currentMoveIndex === 0)}>
                 <ChevronLeft size={15} />
               </button>
-              <button onClick={goToNext} disabled={currentMoveIndex === pgnData.moves.length} style={navBtnStyle(currentMoveIndex === pgnData.moves.length)}>
+              <button onClick={goToNext}     disabled={currentMoveIndex === pgnData.moves.length} style={navBtnStyle(currentMoveIndex === pgnData.moves.length)}>
                 <ChevronRight size={15} />
               </button>
-              <button onClick={goToEnd} disabled={currentMoveIndex === pgnData.moves.length} style={navBtnStyle(currentMoveIndex === pgnData.moves.length)}>
+              <button onClick={goToEnd}      disabled={currentMoveIndex === pgnData.moves.length} style={navBtnStyle(currentMoveIndex === pgnData.moves.length)}>
                 <SkipForward size={15} />
               </button>
             </div>
@@ -374,62 +310,12 @@ export function GameViewer({ game }: GameViewerProps) {
                 </span>
               )}
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--cm-text-muted)', textAlign: 'center', marginTop: '6px' }}>
-              Arrow keys · Ctrl+A to analyze
+            <div style={{ fontSize: '11px', color: 'var(--cm-text-muted)', textAlign: 'center', marginTop: '4px' }}>
+              ← → keys to navigate
             </div>
           </div>
 
-          {/* Engine analysis */}
-          {evaluation && (
-            <div style={{
-              background: 'var(--cm-bg-elevated)',
-              border: '1px solid var(--cm-border-subtle)',
-              borderRadius: '8px',
-              padding: '12px',
-            }}>
-              <div style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: 'var(--cm-text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '10px',
-              }}>
-                Engine
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--cm-text-muted)' }}>Evaluation</span>
-                  <span style={{
-                    fontFamily: 'var(--font-family-mono)',
-                    fontWeight: 700,
-                    fontSize: '14px',
-                    color: evaluation.isMate
-                      ? 'var(--cm-warning)'
-                      : parseFloat(evaluation.evaluation) > 0
-                      ? 'var(--cm-success)'
-                      : parseFloat(evaluation.evaluation) < 0
-                      ? 'var(--cm-error)'
-                      : 'var(--cm-text-primary)',
-                  }}>
-                    {evaluation.evaluation}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--cm-text-muted)' }}>Best Move</span>
-                  <span style={{ fontFamily: 'var(--font-family-mono)', fontSize: '13px', color: 'var(--cm-text-primary)' }}>
-                    {evaluation.bestMove}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--cm-text-muted)' }}>Depth</span>
-                  <span style={{ fontSize: '13px', color: 'var(--cm-text-secondary)' }}>{evaluation.depth}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Ask Coach */}
+          {/* ── Ask Coach (Gemini context-aware) ── */}
           <div style={{
             background: 'var(--cm-bg-elevated)',
             border: '1px solid var(--cm-border-subtle)',
@@ -510,15 +396,14 @@ export function GameViewer({ game }: GameViewerProps) {
             </div>
           </div>
 
-          {/* Move history */}
+          {/* ── Move list with classification badges ── */}
           <div style={{
             background: 'var(--cm-bg-elevated)',
             border: '1px solid var(--cm-border-subtle)',
             borderRadius: '8px',
             padding: '12px',
-            flex: 1,
             overflowY: 'auto',
-            maxHeight: '240px',
+            maxHeight: '260px',
           }}>
             <div style={{
               fontSize: '11px',
@@ -536,19 +421,27 @@ export function GameViewer({ game }: GameViewerProps) {
                 const moveNum = Math.floor(index / 2) + 1;
                 const whiteMove = pgnData.moves[index];
                 const blackMove = pgnData.moves[index + 1];
+                const whiteClass = classifications.get(index);
+                const blackClass = blackMove ? classifications.get(index + 1) : undefined;
 
-                const btnStyle = (active: boolean): React.CSSProperties => ({
-                  background: active ? 'var(--cm-accent-dim)' : 'transparent',
-                  border: 'none',
-                  padding: '2px 5px',
-                  borderRadius: '3px',
-                  cursor: 'pointer',
-                  color: active ? 'var(--cm-accent)' : 'var(--cm-text-primary)',
-                  fontWeight: active ? 600 : 400,
-                  fontFamily: 'var(--font-family-mono)',
-                  fontSize: '13px',
-                  transition: 'background 0.1s, color 0.1s',
-                });
+                const btnStyle = (active: boolean, cls?: MoveClassification): React.CSSProperties => {
+                  const info = cls ? CLASSIFICATION[cls] : null;
+                  return {
+                    background: active ? 'var(--cm-accent-dim)' : info ? info.dim : 'transparent',
+                    border: 'none',
+                    padding: '2px 5px',
+                    borderRadius: '3px',
+                    cursor: 'pointer',
+                    color: active ? 'var(--cm-accent)' : info ? info.color : 'var(--cm-text-primary)',
+                    fontWeight: active ? 600 : 400,
+                    fontFamily: 'var(--font-family-mono)',
+                    fontSize: '13px',
+                    transition: 'background 0.1s, color 0.1s',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                  };
+                };
 
                 return (
                   <div key={index} style={{ display: 'flex', gap: '2px', alignItems: 'center', marginBottom: '1px' }}>
@@ -557,16 +450,28 @@ export function GameViewer({ game }: GameViewerProps) {
                     </span>
                     <button
                       onClick={() => setCurrentMoveIndex(index + 1)}
-                      style={btnStyle(currentMoveIndex === index + 1)}
+                      style={btnStyle(currentMoveIndex === index + 1, whiteClass)}
+                      title={whiteClass ? CLASSIFICATION[whiteClass].label : undefined}
                     >
                       {whiteMove}
+                      {whiteClass && CLASSIFICATION[whiteClass].symbol && (
+                        <span style={{ fontSize: '10px', opacity: 0.9 }}>
+                          {CLASSIFICATION[whiteClass].symbol}
+                        </span>
+                      )}
                     </button>
                     {blackMove && (
                       <button
                         onClick={() => setCurrentMoveIndex(index + 2)}
-                        style={btnStyle(currentMoveIndex === index + 2)}
+                        style={btnStyle(currentMoveIndex === index + 2, blackClass)}
+                        title={blackClass ? CLASSIFICATION[blackClass].label : undefined}
                       >
                         {blackMove}
+                        {blackClass && CLASSIFICATION[blackClass].symbol && (
+                          <span style={{ fontSize: '10px', opacity: 0.9 }}>
+                            {CLASSIFICATION[blackClass].symbol}
+                          </span>
+                        )}
                       </button>
                     )}
                   </div>
