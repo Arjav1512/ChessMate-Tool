@@ -33,61 +33,44 @@ export async function askChessMentor(
     userHistory?: QuestionContext[];
   }
 ): Promise<string> {
-  try {
-    const apiUrl = `${SUPABASE_URL}/functions/v1/chess-mentor`;
+  const apiUrl = `${SUPABASE_URL}/functions/v1/chess-mentor`;
 
-    console.log('Calling Edge Function:', apiUrl);
+  // Use the authenticated user's JWT so the Edge Function can identify the
+  // caller for rate-limiting and personalisation. Falls back to anon key for
+  // unauthenticated calls (edge cases like session expiry during request).
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? SUPABASE_ANON_KEY;
 
-    // Use the authenticated user's JWT so the Edge Function can identify the
-    // caller for rate-limiting and personalisation. Falls back to anon key for
-    // unauthenticated calls (edge cases like session expiry during request).
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token ?? SUPABASE_ANON_KEY;
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      question,
+      context,
+    }),
+  });
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        question,
-        context,
-      }),
-    });
+  if (!response.ok) {
+    const errorText = await response.text();
 
-    console.log('Response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        throw new Error(`Request failed with status ${response.status}: ${errorText}`);
-      }
-
-      throw new Error(errorData.error || errorData.message || `Request failed with status ${response.status}`);
+    let errorData;
+    try {
+      errorData = JSON.parse(errorText);
+    } catch {
+      throw new Error(`Request failed with status ${response.status}: ${errorText}`);
     }
 
-    const data = await response.json();
-    console.log('Response data:', data);
-
-    if (!data.answer) {
-      throw new Error('No answer received from the AI service');
-    }
-
-    return data.answer;
-  } catch (error) {
-    console.error('Chess Mentor API error:', error);
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      name: error instanceof Error ? error.name : 'Error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
-
-    throw error;
+    throw new Error(errorData.error || errorData.message || `Request failed with status ${response.status}`);
   }
+
+  const data = await response.json();
+
+  if (!data.answer) {
+    throw new Error('No answer received from the AI service');
+  }
+
+  return data.answer;
 }

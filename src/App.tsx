@@ -602,7 +602,6 @@ function MissingConfigScreen() {
           <div style={{ color: 'var(--cm-text-muted)' }}># .env.local</div>
           <div><span style={{ color: 'var(--cm-accent)' }}>VITE_SUPABASE_URL</span>=https://your-project.supabase.co</div>
           <div><span style={{ color: 'var(--cm-accent)' }}>VITE_SUPABASE_ANON_KEY</span>=your_anon_key</div>
-          <div><span style={{ color: 'var(--cm-accent)' }}>VITE_GEMINI_API_KEY</span>=your_gemini_key</div>
         </div>
         <p style={{ color: 'var(--cm-text-muted)', fontSize: '12px', marginTop: '16px' }}>
           Supabase dashboard → Project Settings → API

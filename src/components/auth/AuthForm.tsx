@@ -4,6 +4,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { ThemeToggle } from '../layout/ThemeToggle';
+import { PrivacyPage } from '../legal/PrivacyPage';
 import { isValidEmail, isValidPassword, isValidDisplayName } from '../../utils/validation';
 import { handleError, logError } from '../../utils/errorHandling';
 
@@ -14,6 +15,7 @@ export function AuthForm() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [legalView, setLegalView] = useState<'privacy' | 'terms' | null>(null);
   const { signIn, signUp, signInWithGoogle, signInWithGitHub, authError, clearAuthError } = useAuth();
   const { showToast } = useToast();
 
@@ -65,8 +67,6 @@ export function AuthForm() {
     setLoading(true);
 
     try {
-      console.log(`Attempting to sign in with ${provider}...`);
-
       if (provider === 'google') {
         await signInWithGoogle();
       } else {
@@ -290,11 +290,50 @@ export function AuthForm() {
           </div>
         </div>
 
-        {/* Theme toggle at bottom */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+        {/* Theme toggle + legal links */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
           <ThemeToggle />
+          <p style={{ fontSize: '11px', color: 'var(--cm-text-muted)', margin: 0, textAlign: 'center' }}>
+            By continuing you agree to our{' '}
+            <button
+              onClick={() => setLegalView('terms')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                color: 'var(--cm-accent)',
+                fontSize: '11px',
+                textDecoration: 'underline',
+                textUnderlineOffset: '2px',
+              }}
+            >
+              Terms of Service
+            </button>
+            {' '}and{' '}
+            <button
+              onClick={() => setLegalView('privacy')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                color: 'var(--cm-accent)',
+                fontSize: '11px',
+                textDecoration: 'underline',
+                textUnderlineOffset: '2px',
+              }}
+            >
+              Privacy Policy
+            </button>
+            .
+          </p>
         </div>
       </div>
+
+      {legalView && (
+        <PrivacyPage view={legalView} onClose={() => setLegalView(null)} />
+      )}
     </div>
   );
 }

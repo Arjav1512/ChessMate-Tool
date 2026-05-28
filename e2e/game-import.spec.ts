@@ -10,9 +10,28 @@ const SAMPLE_PGN = `[Event "Test Game"]
 1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7
 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 1-0`;
 
-test.describe('Game Import Flow', () => {
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTE: The game import flow is only accessible to authenticated users.
+// These tests are skipped in CI until test credentials / auth fixtures are set
+// up via PLAYWRIGHT_TEST_USER and PLAYWRIGHT_TEST_PASSWORD env vars.
+//
+// To enable locally, create a .env.test with those variables and run:
+//   npx playwright test e2e/game-import.spec.ts
+// ─────────────────────────────────────────────────────────────────────────────
+
+const needsAuth = !process.env.PLAYWRIGHT_TEST_USER;
+
+test.describe('Game Import Flow (requires auth)', () => {
+  test.skip(needsAuth, 'Skipped: set PLAYWRIGHT_TEST_USER / PLAYWRIGHT_TEST_PASSWORD to enable');
+
   test.beforeEach(async ({ page }) => {
+    // Sign in using env-supplied credentials before each test.
     await page.goto('/');
+    await page.getByLabel('Email').fill(process.env.PLAYWRIGHT_TEST_USER!);
+    await page.getByLabel('Password').fill(process.env.PLAYWRIGHT_TEST_PASSWORD!);
+    await page.getByRole('button', { name: 'Sign In', exact: true }).last().click();
+    // Wait for the main app to be ready.
+    await expect(page.getByRole('button', { name: /Import/i })).toBeVisible({ timeout: 10_000 });
   });
 
   test('should show import modal when import button is clicked', async ({ page }) => {
@@ -72,5 +91,19 @@ test.describe('Game Import Flow', () => {
 
     await page.keyboard.press('Escape');
     await expect(page.getByRole('heading', { name: 'Import Games' })).not.toBeVisible();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth-page smoke test (always runs, no credentials needed)
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('Auth page smoke test', () => {
+  test('should show sign-in form on landing', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'ChessMate' })).toBeVisible();
+    await expect(page.getByLabel('Email')).toBeVisible();
+    // The Import button should NOT be visible when unauthenticated.
+    await expect(page.getByRole('button', { name: /^Import$/i })).not.toBeVisible();
   });
 });

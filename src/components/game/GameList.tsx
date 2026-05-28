@@ -13,9 +13,13 @@ interface GameListProps {
   selectedGameId?: string;
 }
 
+const PAGE_SIZE = 50;
+
 function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [pgnText, setPgnText] = useState('');
@@ -37,19 +41,46 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
           .from('games')
           .select('*')
           .eq('user_id', user.id)
-          .order('uploaded_at', { ascending: false });
+          .order('uploaded_at', { ascending: false })
+          .range(0, PAGE_SIZE - 1);
 
         if (error) {
           console.error('Error loading games:', error);
           return [];
         }
-        setGames(data || []);
-        return data || [];
+        const rows = data || [];
+        setGames(rows);
+        setHasMore(rows.length === PAGE_SIZE);
+        return rows;
       } finally {
         setLoading(false);
       }
     });
   }, [user, measureAsync]);
+
+  const loadMore = useCallback(async () => {
+    if (!user || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const from = games.length;
+      const { data, error } = await supabase
+        .from('games')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('uploaded_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (error) {
+        console.error('Error loading more games:', error);
+        return;
+      }
+      const rows = data || [];
+      setGames(prev => [...prev, ...rows]);
+      setHasMore(rows.length === PAGE_SIZE);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [user, games.length, loadingMore]);
 
   useEffect(() => {
     if (user) {
@@ -364,86 +395,114 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
               </p>
             </div>
           ) : (
-            filteredGames.map(game => {
-              const isActive = selectedGameId === game.id;
-              return (
-                <div
-                  key={game.id}
-                  className={`game-item${isActive ? ' game-item--active' : ''}`}
-                  onClick={() => onSelectGame(game)}
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    marginBottom: '2px',
-                    background: isActive ? 'var(--cm-bg-active)' : 'transparent',
-                    border: `1px solid ${isActive ? 'var(--cm-border-default)' : 'transparent'}`,
-                    transition: 'all 0.15s',
-                    position: 'relative',
-                  }}
-                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--cm-bg-hover)'; }}
-                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        color: 'var(--cm-text-primary)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        marginBottom: '3px',
-                      }}>
-                        {game.white_player || '?'} vs {game.black_player || '?'}
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'var(--cm-text-muted)', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                        <span style={{
-                          background: 'var(--cm-bg-elevated)',
-                          border: '1px solid var(--cm-border-subtle)',
-                          borderRadius: '3px',
-                          padding: '0 4px',
-                          fontSize: '10px',
-                          fontWeight: 600,
-                          color: 'var(--cm-text-secondary)',
+            <>
+              {filteredGames.map(game => {
+                const isActive = selectedGameId === game.id;
+                return (
+                  <div
+                    key={game.id}
+                    className={`game-item${isActive ? ' game-item--active' : ''}`}
+                    onClick={() => onSelectGame(game)}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      marginBottom: '2px',
+                      background: isActive ? 'var(--cm-bg-active)' : 'transparent',
+                      border: `1px solid ${isActive ? 'var(--cm-border-default)' : 'transparent'}`,
+                      transition: 'all 0.15s',
+                      position: 'relative',
+                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--cm-bg-hover)'; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          color: 'var(--cm-text-primary)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          marginBottom: '3px',
                         }}>
-                          {game.result || '?'}
-                        </span>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {game.event || 'Unknown'}
-                        </span>
+                          {game.white_player || '?'} vs {game.black_player || '?'}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--cm-text-muted)', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          <span style={{
+                            background: 'var(--cm-bg-elevated)',
+                            border: '1px solid var(--cm-border-subtle)',
+                            borderRadius: '3px',
+                            padding: '0 4px',
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            color: 'var(--cm-text-secondary)',
+                          }}>
+                            {game.result || '?'}
+                          </span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {game.event || 'Unknown'}
+                          </span>
+                        </div>
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteGame(game.id);
+                        }}
+                        className="game-delete-btn"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--cm-text-muted)',
+                          padding: '2px',
+                          borderRadius: '4px',
+                          opacity: 0,
+                          transition: 'opacity 0.15s, color 0.15s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          flexShrink: 0,
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--cm-error)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--cm-text-muted)')}
+                        title="Delete game"
+                        aria-label="Delete game"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteGame(game.id);
-                      }}
-                      className="game-delete-btn"
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: 'var(--cm-text-muted)',
-                        padding: '2px',
-                        borderRadius: '4px',
-                        opacity: 0,
-                        transition: 'opacity 0.15s, color 0.15s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        flexShrink: 0,
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--cm-error)')}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--cm-text-muted)')}
-                      title="Delete game"
-                      aria-label="Delete game"
-                    >
-                      <Trash2 size={13} />
-                    </button>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+
+              {/* Load more */}
+              {hasMore && !debouncedSearchTerm && (
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    marginTop: '6px',
+                    padding: '8px',
+                    background: 'var(--cm-bg-elevated)',
+                    border: '1px solid var(--cm-border-subtle)',
+                    borderRadius: '7px',
+                    color: loadingMore ? 'var(--cm-text-muted)' : 'var(--cm-text-secondary)',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    cursor: loadingMore ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { if (!loadingMore) e.currentTarget.style.borderColor = 'var(--cm-border-strong)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--cm-border-subtle)'; }}
+                >
+                  {loadingMore ? 'Loading…' : 'Load more'}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

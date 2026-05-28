@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { GameList } from '../game/GameList';
 import { GameViewer } from '../game/GameViewer';
 import { BulkAnalysis } from './BulkAnalysis';
+import { ErrorBoundary } from '../layout/ErrorBoundary';
 import { Microscope, List, X } from 'lucide-react';
 import { useResponsive } from '../../hooks/useResponsive';
 import type { Game } from '../../lib/supabase';
@@ -114,9 +115,9 @@ export function AnalyzeGamesPage({ onClose }: AnalyzeGamesPageProps) {
             {/* Board area */}
             <div className="analyze-board-area" style={{ flex: 1, overflow: 'auto', padding: '20px', background: 'var(--cm-bg-base)' }}>
               {selectedGame ? (
-                <GameViewer
-                  game={selectedGame}
-                />
+                <ErrorBoundary key={selectedGame.id}>
+                  <GameViewer game={selectedGame} />
+                </ErrorBoundary>
               ) : (
                 <div style={{
                   height: '100%',

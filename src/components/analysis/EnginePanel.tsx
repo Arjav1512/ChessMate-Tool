@@ -499,10 +499,12 @@ export function EnginePanel({
               </>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--cm-text-muted)', fontSize: '13px' }}>
-                {analyzing || (!engineReady && engineOn) ? (
-                  <><LoadingSpinner size="sm" /> Initializing…</>
+                {!engineReady && engineOn ? (
+                  <><LoadingSpinner size="sm" /><span>Loading engine…</span></>
+                ) : analyzing ? (
+                  <><LoadingSpinner size="sm" /><span style={{ opacity: 0.8 }}>Analyzing…</span></>
                 ) : engineOn ? (
-                  <span style={{ opacity: 0.5 }}>Waiting…</span>
+                  <span style={{ opacity: 0.5 }}>Waiting for position…</span>
                 ) : (
                   <span style={{ opacity: 0.4 }}>Engine off</span>
                 )}
