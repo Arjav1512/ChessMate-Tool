@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send } from 'lucide-react';
+import { Send, RotateCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { askChessMentor } from '../../lib/gemini';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
 import { parsePGN } from '../../lib/pgn';
 import type { Question } from '../../lib/supabase';
@@ -30,10 +31,13 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
+  // Last question that failed — drives the inline Retry affordance.
+  const [lastFailed, setLastFailed] = useState<string | null>(null);
   // Full move list and final FEN of the selected game — passed as context to the AI
   const [gameMoves, setGameMoves] = useState<string[]>([]);
   const [gameFen, setGameFen] = useState<string | undefined>(undefined);
   const { user } = useAuth();
+  const { showToast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const loadQuestions = useCallback(async () => {
@@ -95,16 +99,13 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [questions]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!question.trim() || !user) return;
-
+  const askAndPersist = useCallback(async (text: string) => {
+    if (!user) return;
     setLoading(true);
-
     try {
       const userHistory = questions.slice(-5);
 
-      const answer = await askChessMentor(question, {
+      const answer = await askChessMentor(text, {
         gameInfo: gameContext,
         currentPosition: gameFen,
         moveHistory: gameMoves.length > 0 ? gameMoves : undefined,
@@ -114,7 +115,7 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
       const { error } = await supabase.from('questions').insert({
         user_id: user.id,
         game_id: gameId || null,
-        question: question.trim(),
+        question: text,
         answer,
         context: gameContext || {},
       });
@@ -122,28 +123,33 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
       if (error) throw error;
 
       setQuestion('');
+      setLastFailed(null);
       await loadQuestions();
-    } catch (error) {
-      console.error('Error asking question:', error);
-
-      const errorMessage = error instanceof Error ? error.message : 'Failed to get answer. Please try again.';
-
-      const { error: dbError } = await supabase.from('questions').insert({
-        user_id: user.id,
-        game_id: gameId || null,
-        question: question.trim(),
-        answer: `⚠️ Error: ${errorMessage}`,
-        context: gameContext || {},
-      });
-
-      if (!dbError) {
-        await loadQuestions();
-      }
-
-      setQuestion('');
+    } catch (err) {
+      console.error('Error asking question:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get answer. Please try again.';
+      // Keep question in input so the user can edit + resend. Surface the
+      // failure as a toast and expose an inline Retry rather than poisoning
+      // the questions table with a ⚠️ Error row that would otherwise show
+      // up in chat history and be fed back to the AI as context.
+      setQuestion(text);
+      setLastFailed(text);
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
+  }, [user, questions, gameContext, gameFen, gameMoves, gameId, loadQuestions, showToast]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = question.trim();
+    if (!text) return;
+    await askAndPersist(text);
+  };
+
+  const handleRetry = async () => {
+    if (!lastFailed) return;
+    await askAndPersist(lastFailed);
   };
 
   return (
@@ -264,63 +270,56 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
             </div>
           </div>
         ) : (
-          questions.map(q => {
-            const isError = q.answer.startsWith('⚠️ Error:');
-            return (
-              <div key={q.id} className="fade-up">
-                {/* User message - right aligned */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-                  <div style={{
-                    maxWidth: '75%',
-                    padding: '9px 13px',
-                    background: 'var(--cm-accent)',
-                    borderRadius: '12px 12px 2px 12px',
-                    color: 'var(--cm-text-inverse)',
-                    fontSize: '13px',
-                    lineHeight: 1.5,
-                    wordBreak: 'break-word',
-                  }}>
-                    {q.question}
-                  </div>
-                </div>
-
-                {/* AI response - left aligned */}
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                  <div style={{
-                    width: '26px',
-                    height: '26px',
-                    background: 'var(--cm-accent-dim)',
-                    border: '1px solid var(--cm-accent-ring)',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '13px',
-                    flexShrink: 0,
-                    marginTop: '3px',
-                    color: 'var(--cm-accent)',
-                  }}>♟</div>
-                  <div style={{
-                    maxWidth: '80%',
-                    padding: '10px 14px',
-                    background: isError ? 'var(--cm-error-dim)' : 'var(--cm-bg-elevated)',
-                    border: `1px solid ${isError ? 'rgba(232,85,74,0.25)' : 'var(--cm-border-subtle)'}`,
-                    borderRadius: '2px 12px 12px 12px',
-                    color: isError ? 'var(--cm-error)' : 'var(--cm-text-primary)',
-                    fontSize: '13px',
-                    lineHeight: 1.65,
-                    wordBreak: 'break-word',
-                  }}>
-                    {isError ? (
-                      <p style={{ fontSize: '13px', margin: 0 }}>{q.answer}</p>
-                    ) : (
-                      <MarkdownRenderer content={q.answer} />
-                    )}
-                  </div>
+          questions.map(q => (
+            <div key={q.id} className="fade-up">
+              {/* User message - right aligned */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+                <div style={{
+                  maxWidth: '75%',
+                  padding: '9px 13px',
+                  background: 'var(--cm-accent)',
+                  borderRadius: '12px 12px 2px 12px',
+                  color: 'var(--cm-text-inverse)',
+                  fontSize: '13px',
+                  lineHeight: 1.5,
+                  wordBreak: 'break-word',
+                }}>
+                  {q.question}
                 </div>
               </div>
-            );
-          })
+
+              {/* AI response - left aligned */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <div style={{
+                  width: '26px',
+                  height: '26px',
+                  background: 'var(--cm-accent-dim)',
+                  border: '1px solid var(--cm-accent-ring)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '13px',
+                  flexShrink: 0,
+                  marginTop: '3px',
+                  color: 'var(--cm-accent)',
+                }}>♟</div>
+                <div style={{
+                  maxWidth: '80%',
+                  padding: '10px 14px',
+                  background: 'var(--cm-bg-elevated)',
+                  border: '1px solid var(--cm-border-subtle)',
+                  borderRadius: '2px 12px 12px 12px',
+                  color: 'var(--cm-text-primary)',
+                  fontSize: '13px',
+                  lineHeight: 1.65,
+                  wordBreak: 'break-word',
+                }}>
+                  <MarkdownRenderer content={q.answer} />
+                </div>
+              </div>
+            </div>
+          ))
         )}
         {loading && (
           <div className="fade-up" style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
@@ -353,6 +352,43 @@ export function ChatInterface({ gameId, gameContext }: ChatInterfaceProps) {
         borderTop: '1px solid var(--cm-border-subtle)',
         background: 'var(--cm-bg-surface)',
       }}>
+        {lastFailed && !loading && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            marginBottom: '8px',
+            padding: '8px 12px',
+            background: 'var(--cm-error-dim)',
+            border: '1px solid rgba(232,85,74,0.25)',
+            borderRadius: '8px',
+          }}>
+            <span style={{ fontSize: '12px', color: 'var(--cm-error)' }}>
+              Last question failed.
+            </span>
+            <button
+              type="button"
+              onClick={handleRetry}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '4px 10px',
+                background: 'var(--cm-error)',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#fff',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              <RotateCw size={12} />
+              Retry
+            </button>
+          </div>
+        )}
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px' }}>
           <input
             type="text"
