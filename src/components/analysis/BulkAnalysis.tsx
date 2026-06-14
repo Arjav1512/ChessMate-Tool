@@ -4,6 +4,7 @@ import { supabase, Game } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { StockfishEngine } from '../../lib/stockfish';
 import { parsePGN } from '../../lib/pgn';
+import { classifyMove, MoveClassification } from '../../utils/moveClassifier';
 import { Chess } from 'chess.js';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
@@ -92,9 +93,11 @@ export function BulkAnalysis() {
       const chess = new Chess();
 
       const evaluations: number[] = [];
-      let bestMoves = 0;
-      let mistakes = 0;
-      let blunders = 0;
+      const classCounts: Record<MoveClassification, number> = {
+        best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0,
+      };
+      let totalCpLoss = 0;
+      let classifiedMoves = 0;
 
       for (let i = 0; i < pgnData.moves.length; i++) {
         chess.move(pgnData.moves[i]);
@@ -115,16 +118,17 @@ export function BulkAnalysis() {
           evaluations.push(evalNum);
 
           if (i > 0) {
-            // Compute how much the evaluation DROPPED for the side that just moved.
-            // Even-indexed moves (0, 2, 4…) are White's; odd-indexed are Black's.
-            // Stockfish evals are always from White's perspective.
-            const drop = (i % 2 === 0)
-              ? Math.max(0, evaluations[i - 1] - evaluations[i])  // White wants eval to go UP
-              : Math.max(0, evaluations[i] - evaluations[i - 1]); // Black wants eval to go DOWN
-
-            if (drop < 0.3) bestMoves++;
-            else if (drop < 1.0) mistakes++;
-            else blunders++;
+            // Use Lichess-style cp-loss thresholds from moveClassifier rather
+            // than the previous ad-hoc 0.3 / 1.0 split.
+            const evalBeforeCp = evaluations[i - 1] * 100;
+            const evalAfterCp = evaluations[i] * 100;
+            const isWhiteMove = i % 2 === 0;
+            const cpLoss = isWhiteMove
+              ? Math.max(0, evalBeforeCp - evalAfterCp)
+              : Math.max(0, evalAfterCp - evalBeforeCp);
+            totalCpLoss += cpLoss;
+            classCounts[classifyMove(evalBeforeCp, evalAfterCp, isWhiteMove)]++;
+            classifiedMoves++;
           }
 
           setAnalyses(prev => {
@@ -142,7 +146,17 @@ export function BulkAnalysis() {
         ? evaluations.reduce((a, b) => a + b, 0) / evaluations.length
         : 0;
       const totalMoves = pgnData.moves.length;
-      const accuracy = totalMoves > 0 ? (bestMoves / totalMoves) * 100 : 0;
+      const bestMoves = classCounts.best;
+      const goodMoves = classCounts.excellent + classCounts.good;
+      const mistakes = classCounts.inaccuracy + classCounts.mistake;
+      const blunders = classCounts.blunder;
+      // Accuracy = share of moves rated good or better.
+      const accuracy = totalMoves > 0
+        ? ((bestMoves + goodMoves) / totalMoves) * 100
+        : 0;
+      const avgCentipawnLoss = classifiedMoves > 0
+        ? totalCpLoss / classifiedMoves
+        : 0;
 
       // Persist analysis results so StatsDashboard and trigger can use them
       await supabase.from('game_analysis_results').upsert({
@@ -152,9 +166,9 @@ export function BulkAnalysis() {
         total_moves: totalMoves,
         mistakes,
         blunders,
-        good_moves: bestMoves,
+        good_moves: goodMoves,
         best_moves: bestMoves,
-        average_centipawn_loss: 0,
+        average_centipawn_loss: Math.round(avgCentipawnLoss * 100) / 100,
       }, { onConflict: 'game_id' });
 
       setAnalyses(prev => {
