@@ -122,21 +122,32 @@ Deno.serve(async (req: Request) => {
       : authHeader;
     const userId = getUserIdFromJWT(token);
 
-    if (userId) {
-      const allowed = await checkRateLimit(userId, 10, 60_000);
-      if (!allowed) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          {
-            status: 429,
-            headers: {
-              ...corsHeaders,
-              "Content-Type": "application/json",
-              "Retry-After": "60",
-            },
+    // Reject unauthenticated callers — the anon key produces no `sub` claim,
+    // so without this any client could spam Gemini with the public anon key
+    // and bypass per-user rate limiting entirely.
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required." }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const allowed = await checkRateLimit(userId, 10, 60_000);
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": "60",
           },
-        );
-      }
+        },
+      );
     }
 
     const { question, context } = await req.json();
