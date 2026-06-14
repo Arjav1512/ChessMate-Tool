@@ -5,7 +5,7 @@ import { supabaseConfigured } from './lib/supabase';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { AuthForm } from './components/auth/AuthForm';
 import { GameList } from './components/game/GameList';
-import { ChatInterface } from './components/chat/ChatInterface';
+import { GameViewer } from './components/game/GameViewer';
 import { ProgressBar } from './components/stats/ProgressBar';
 import { AnalyzeGamesPage } from './components/analysis/AnalyzeGamesPage';
 import { StatsDashboard } from './components/stats/StatsDashboard';
@@ -306,16 +306,9 @@ function MainApp() {
 
           <div style={{ flex: 1, overflow: 'auto' }}>
             {selectedGame ? (
-              <ChatInterface
-                gameId={selectedGame.id}
-                gameContext={{
-                  white_player: selectedGame.white_player,
-                  black_player: selectedGame.black_player,
-                  result: selectedGame.result,
-                  event: selectedGame.event,
-                  date: selectedGame.date,
-                }}
-              />
+              <ErrorBoundary key={selectedGame.id}>
+                <GameViewer game={selectedGame} />
+              </ErrorBoundary>
             ) : (
               /* Welcome screen */
               <div className="fade-up" style={{
