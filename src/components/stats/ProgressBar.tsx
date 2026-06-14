@@ -72,7 +72,10 @@ export function ProgressBar() {
     const displayName: string | null =
       profileRes.status === 'fulfilled' ? (profileRes.value.data?.display_name ?? null) : null;
 
-    if (games.length === 0) return;
+    if (games.length === 0) {
+      setLoading(false);
+      return;
+    }
 
     // Score trend: cumulative score over time (+1 user win, 0 draw, -1 user loss)
     let cumulative = 0;
