@@ -27,6 +27,10 @@ export interface Game {
   result: string;
   date: string;
   event: string;
+  /** Which side the user played, populated at import time when the PGN
+   *  headers match the user's display_name or email prefix. NULL when
+   *  detection is ambiguous — readers should not guess. */
+  user_color: 'white' | 'black' | null;
   uploaded_at: string;
   created_at: string;
 }

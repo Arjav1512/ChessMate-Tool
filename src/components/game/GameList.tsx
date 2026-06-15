@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePerformance } from '../../hooks/usePerformance';
+import { detectUserColor } from '../../lib/userColor';
 import type { Game } from '../../lib/supabase';
 import type { ParsedGame } from '../../workers/pgnWorker';
 
@@ -59,12 +60,34 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [pgnText, setPgnText] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  // Cached display_name so import can detect user_color without
+  // refetching the profile per upload.
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const { user } = useAuth();
   const { showToast } = useToast();
   const { logRender, measureAsync } = usePerformance();
   // Latest onSelectGame in a ref so the import helper doesn't need it in deps.
   const onSelectRef = useRef(onSelectGame);
   onSelectRef.current = onSelectGame;
+
+  // Pull display_name once when the user changes — used for color detection
+  // at import time. Refreshed automatically if the user updates their profile
+  // in another component because the Profile modal triggers a re-mount via
+  // selectedGameId churn (ProfileModal isn't in this subtree).
+  useEffect(() => {
+    if (!user) {
+      setDisplayName(null);
+      return;
+    }
+    supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setDisplayName(data?.display_name ?? null);
+      });
+  }, [user]);
 
   // Debounce search term to avoid excessive filtering
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -175,6 +198,12 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     for (let i = 0; i < total; i++) {
       const g = parsed.games[i];
       setProgress({ phase: 'insert', done: i, total });
+      const userColor = detectUserColor(
+        g.headers.White,
+        g.headers.Black,
+        displayName,
+        user.email,
+      );
       const { error } = await supabase.from('games').insert({
         user_id: user.id,
         pgn: g.pgnText,
@@ -183,6 +212,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
         result: g.headers.Result || '*',
         date: g.headers.Date || '',
         event: g.headers.Event || '',
+        user_color: userColor,
       });
       if (error) console.error('DB insert error:', error);
       else imported++;
@@ -190,7 +220,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     setProgress({ phase: 'insert', done: total, total });
 
     return { imported, skipped: parsed.skipped };
-  }, [user, showToast]);
+  }, [user, showToast, displayName]);
 
   const announceImportResult = useCallback((
     imported: number,

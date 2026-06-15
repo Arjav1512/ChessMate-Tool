@@ -22,6 +22,7 @@ interface GameRow {
   pgn: string;
   white_player: string;
   black_player: string;
+  user_color: 'white' | 'black' | null;
 }
 
 interface GameStats {
@@ -50,50 +51,39 @@ export function ProgressBar() {
   const loadStats = useCallback(async () => {
     if (!user) return;
 
-    const [gamesRes, analysisRes, profileRes] = await Promise.allSettled([
+    const [gamesRes, analysisRes] = await Promise.allSettled([
       supabase
         .from('games')
-        .select('id, result, date, uploaded_at, pgn, white_player, black_player')
+        .select('id, result, date, uploaded_at, pgn, white_player, black_player, user_color')
         .eq('user_id', user.id)
         .order('uploaded_at', { ascending: true }),
       supabase
         .from('game_analysis_results')
         .select('game_id, accuracy, mistakes, inaccuracies, blunders, good_moves, best_moves')
         .eq('user_id', user.id),
-      supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', user.id)
-        .single(),
     ]);
 
     const games: GameRow[] = gamesRes.status === 'fulfilled' ? (gamesRes.value.data || []) : [];
     const analyses: AnalysisResult[] = analysisRes.status === 'fulfilled' ? (analysisRes.value.data || []) : [];
-    const displayName: string | null =
-      profileRes.status === 'fulfilled' ? (profileRes.value.data?.display_name ?? null) : null;
 
     if (games.length === 0) {
       setLoading(false);
       return;
     }
 
-    // Score trend: cumulative score over time (+1 user win, 0 draw, -1 user loss)
+    // Score trend: cumulative score over time. Only games with a known
+    // user_color contribute — unresolved games leave the cumulative
+    // line flat so the chart never shows fabricated wins.
     let cumulative = 0;
     const ratingData = games.map((game, idx) => {
-      const userIsWhite = displayName
-        ? game.white_player?.toLowerCase() === displayName.toLowerCase()
-        : null;
-      const userIsBlack = displayName
-        ? game.black_player?.toLowerCase() === displayName.toLowerCase()
-        : null;
+      const isWhite = game.user_color === 'white';
+      const isBlack = game.user_color === 'black';
       const userWon =
-        (userIsWhite === true && game.result === '1-0') ||
-        (userIsBlack === true && game.result === '0-1') ||
-        (userIsWhite === null && userIsBlack === null && game.result === '1-0'); // fallback
+        (isWhite && game.result === '1-0') ||
+        (isBlack && game.result === '0-1');
       const userLost =
-        (userIsWhite === true && game.result === '0-1') ||
-        (userIsBlack === true && game.result === '1-0') ||
-        (userIsWhite === null && userIsBlack === null && game.result === '0-1');
+        (isWhite && game.result === '0-1') ||
+        (isBlack && game.result === '1-0');
       if (userWon) cumulative += 1;
       else if (userLost) cumulative -= 1;
       const label = game.date && game.date !== '??'
@@ -132,17 +122,14 @@ export function ProgressBar() {
       const existing = openingMap.get(openingName) || { wins: 0, total: 0 };
       existing.total += 1;
 
-      // Determine whether the user won this game
-      const userIsWhite = displayName
-        ? game.white_player?.toLowerCase() === displayName.toLowerCase()
-        : null;
-      const userIsBlack = displayName
-        ? game.black_player?.toLowerCase() === displayName.toLowerCase()
-        : null;
+      // Only resolved-color games contribute to win rates — otherwise
+      // we'd inflate the rate with games where we don't know which side
+      // the user was on.
+      const isWhite = game.user_color === 'white';
+      const isBlack = game.user_color === 'black';
       const userWon =
-        (userIsWhite === true && game.result === '1-0') ||
-        (userIsBlack === true && game.result === '0-1') ||
-        (userIsWhite === null && userIsBlack === null && game.result === '1-0'); // fallback: count white wins
+        (isWhite && game.result === '1-0') ||
+        (isBlack && game.result === '0-1');
       if (userWon) existing.wins += 1;
 
       openingMap.set(openingName, existing);
