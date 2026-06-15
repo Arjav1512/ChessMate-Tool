@@ -6,7 +6,7 @@ import { DisplaySettings, DisplayOptions } from '../analysis/DisplaySettings';
 import { EnginePanel } from '../analysis/EnginePanel';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
-import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send, Zap, List, MessageCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send, Zap, List, MessageCircle, RotateCw } from 'lucide-react';
 import type { Game } from '../../lib/supabase';
 import { parsePGN, PGNData } from '../../lib/pgn';
 import type { StockfishAnalysis } from '../../lib/stockfish';
@@ -14,6 +14,7 @@ import { askChessMentor } from '../../lib/gemini';
 import { MoveClassification, CLASSIFICATION } from '../../utils/moveClassifier';
 import { detectOpening } from '../../lib/openings';
 import { useBreakpoint } from '../../hooks/useResponsive';
+import { useToast } from '../../contexts/ToastContext';
 
 // ─── Mobile tab type ────────────────────────────────────────────────────────
 type MobileTab = 'engine' | 'moves' | 'coach';
@@ -48,6 +49,9 @@ export function GameViewer({ game }: GameViewerProps) {
   const [coachQuestion, setCoachQuestion] = useState('');
   const [coachAnswer, setCoachAnswer] = useState<string | null>(null);
   const [coachLoading, setCoachLoading] = useState(false);
+  // Last failed question — drives the Retry pill. Cleared on success.
+  const [coachLastFailed, setCoachLastFailed] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
     showAnnotations: true,
@@ -84,12 +88,12 @@ export function GameViewer({ game }: GameViewerProps) {
 
   // ── Ask Coach ──────────────────────────────────────────────────────────────
 
-  const handleAskCoach = useCallback(async () => {
-    if (!coachQuestion.trim() || !pgnData) return;
+  const askCoach = useCallback(async (text: string) => {
+    if (!text.trim() || !pgnData) return;
     setCoachLoading(true);
     setCoachAnswer(null);
     try {
-      const answer = await askChessMentor(coachQuestion, {
+      const answer = await askChessMentor(text, {
         gameInfo: {
           white_player: game.white_player,
           black_player: game.black_player,
@@ -105,12 +109,27 @@ export function GameViewer({ game }: GameViewerProps) {
       });
       setCoachAnswer(answer);
       setCoachQuestion('');
+      setCoachLastFailed(null);
     } catch (err) {
-      setCoachAnswer('⚠️ ' + (err instanceof Error ? err.message : 'Failed to get a response'));
+      const message = err instanceof Error ? err.message : 'Failed to get a response';
+      // Surface as toast and remember the question for the Retry pill.
+      // Don't write the failure into setCoachAnswer — the previous
+      // success (if any) stays visible while the toast informs the user.
+      showToast(message, 'error');
+      setCoachLastFailed(text);
+      setCoachQuestion(text);
     } finally {
       setCoachLoading(false);
     }
-  }, [coachQuestion, pgnData, game, currentFen, currentMoveIndex, engineAnalysis]);
+  }, [pgnData, game, currentFen, currentMoveIndex, engineAnalysis, showToast]);
+
+  const handleAskCoach = useCallback(() => {
+    askCoach(coachQuestion);
+  }, [askCoach, coachQuestion]);
+
+  const handleRetryCoach = useCallback(() => {
+    if (coachLastFailed) askCoach(coachLastFailed);
+  }, [askCoach, coachLastFailed]);
 
   // ── Keyboard navigation ────────────────────────────────────────────────────
 
@@ -242,19 +261,53 @@ export function GameViewer({ game }: GameViewerProps) {
         <div style={{
           marginBottom: '8px',
           padding: '8px 10px',
-          background: coachAnswer.startsWith('⚠️') ? 'var(--cm-error-dim)' : 'var(--cm-bg-hover)',
-          border: `1px solid ${coachAnswer.startsWith('⚠️') ? 'rgba(232,85,74,0.25)' : 'var(--cm-border-subtle)'}`,
+          background: 'var(--cm-bg-hover)',
+          border: '1px solid var(--cm-border-subtle)',
           borderRadius: '6px',
           fontSize: '12px',
-          color: coachAnswer.startsWith('⚠️') ? 'var(--cm-error)' : 'var(--cm-text-primary)',
+          color: 'var(--cm-text-primary)',
           lineHeight: 1.55,
           maxHeight: '220px',
           overflowY: 'auto',
         }}>
-          {coachAnswer.startsWith('⚠️')
-            ? coachAnswer
-            : <MarkdownRenderer content={coachAnswer} />
-          }
+          <MarkdownRenderer content={coachAnswer} />
+        </div>
+      )}
+      {coachLastFailed && !coachLoading && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+          marginBottom: '8px',
+          padding: '6px 10px',
+          background: 'var(--cm-error-dim)',
+          border: '1px solid rgba(232,85,74,0.25)',
+          borderRadius: '6px',
+        }}>
+          <span style={{ fontSize: '11px', color: 'var(--cm-error)' }}>
+            Last question failed.
+          </span>
+          <button
+            type="button"
+            onClick={handleRetryCoach}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '3px 8px',
+              background: 'var(--cm-error)',
+              border: 'none',
+              borderRadius: '5px',
+              color: '#fff',
+              fontSize: '11px',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            <RotateCw size={10} />
+            Retry
+          </button>
         </div>
       )}
       <div style={{ display: 'flex', gap: '6px' }}>
