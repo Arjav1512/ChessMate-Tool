@@ -8,6 +8,7 @@ interface AnalysisResult {
   game_id: string;
   accuracy: number;
   mistakes: number;
+  inaccuracies: number | null;
   blunders: number;
   good_moves: number;
   best_moves: number;
@@ -27,10 +28,9 @@ interface GameStats {
   totalGames: number;
   ratingData: Array<{ date: string; rating: number }>;
   mistakeBreakdown: {
-    tactical: number;
-    positional: number;
-    timeManagement: number;
-    endgame: number;
+    blunders: number;
+    mistakes: number;
+    inaccuracies: number;
   };
   openingPerformance: Array<{ opening: string; winRate: number; games: number }>;
   areasForImprovement: Array<{ area: string; score: number }>;
@@ -42,7 +42,7 @@ export function ProgressBar() {
   const [stats, setStats] = useState<GameStats>({
     totalGames: 0,
     ratingData: [],
-    mistakeBreakdown: { tactical: 0, positional: 0, timeManagement: 0, endgame: 0 },
+    mistakeBreakdown: { blunders: 0, mistakes: 0, inaccuracies: 0 },
     openingPerformance: [],
     areasForImprovement: []
   });
@@ -58,7 +58,7 @@ export function ProgressBar() {
         .order('uploaded_at', { ascending: true }),
       supabase
         .from('game_analysis_results')
-        .select('game_id, accuracy, mistakes, blunders, good_moves, best_moves')
+        .select('game_id, accuracy, mistakes, inaccuracies, blunders, good_moves, best_moves')
         .eq('user_id', user.id),
       supabase
         .from('profiles')
@@ -102,19 +102,21 @@ export function ProgressBar() {
       return { date: label, rating: cumulative };
     });
 
-    // Mistake breakdown from real analysis data
+    // Real Lichess-style breakdown from per-game analysis. After the
+    // 20260615010000 migration, inaccuracies live in their own column;
+    // for older rows analysed before that split, inaccuracies is NULL
+    // and the inaccuracy count is rolled into mistakes — we keep it
+    // there rather than guessing.
     const totalMistakes = analyses.reduce((s, a) => s + (a.mistakes || 0), 0);
     const totalBlunders = analyses.reduce((s, a) => s + (a.blunders || 0), 0);
-    const totalGood = analyses.reduce((s, a) => s + (a.good_moves || 0), 0);
-    const totalBest = analyses.reduce((s, a) => s + (a.best_moves || 0), 0);
+    const totalInaccuracies = analyses.reduce((s, a) => s + (a.inaccuracies ?? 0), 0);
     const mistakeBreakdown = analyses.length > 0
       ? {
-          tactical: totalBlunders,
-          positional: totalMistakes,
-          timeManagement: Math.max(0, totalGood - totalBest),
-          endgame: 0,
+          blunders: totalBlunders,
+          mistakes: totalMistakes,
+          inaccuracies: totalInaccuracies,
         }
-      : { tactical: 0, positional: 0, timeManagement: 0, endgame: 0 };
+      : { blunders: 0, mistakes: 0, inaccuracies: 0 };
 
     // Opening performance from PGN first-move extraction (user-color-aware win rate)
     const openingMap = new Map<string, { wins: number; total: number }>();
@@ -336,20 +338,19 @@ export function ProgressBar() {
               <svg width="160" height="160" viewBox="0 0 180 180">
                 <DonutChart
                   data={[
-                    { value: stats.mistakeBreakdown.tactical, color: 'var(--cm-accent)', label: 'Blunders' },
-                    { value: stats.mistakeBreakdown.positional, color: 'var(--cm-info)', label: 'Mistakes' },
-                    { value: stats.mistakeBreakdown.timeManagement, color: 'var(--cm-error)', label: 'Inaccuracies' },
-                    { value: stats.mistakeBreakdown.endgame, color: 'var(--cm-border-strong)', label: 'Other' }
+                    { value: stats.mistakeBreakdown.blunders, color: 'var(--cm-error)', label: 'Blunders' },
+                    { value: stats.mistakeBreakdown.mistakes, color: 'var(--cm-warning)', label: 'Mistakes' },
+                    { value: stats.mistakeBreakdown.inaccuracies, color: 'var(--cm-info)', label: 'Inaccuracies' },
                   ]}
                   total={totalMistakes}
                 />
               </svg>
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <LegendItem color="var(--cm-accent)" label={`Blunders (${stats.mistakeBreakdown.tactical})`} />
-              <LegendItem color="var(--cm-info)" label={`Mistakes (${stats.mistakeBreakdown.positional})`} />
-              {stats.mistakeBreakdown.timeManagement > 0 && (
-                <LegendItem color="var(--cm-error)" label={`Inaccuracies (${stats.mistakeBreakdown.timeManagement})`} />
+              <LegendItem color="var(--cm-error)" label={`Blunders (${stats.mistakeBreakdown.blunders})`} />
+              <LegendItem color="var(--cm-warning)" label={`Mistakes (${stats.mistakeBreakdown.mistakes})`} />
+              {stats.mistakeBreakdown.inaccuracies > 0 && (
+                <LegendItem color="var(--cm-info)" label={`Inaccuracies (${stats.mistakeBreakdown.inaccuracies})`} />
               )}
             </div>
           </div>

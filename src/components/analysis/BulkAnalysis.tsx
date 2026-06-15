@@ -17,6 +17,7 @@ interface GameAnalysis {
   insights: {
     avgEvaluation: number;
     bestMoves: number;
+    inaccuracies: number;
     mistakes: number;
     blunders: number;
     accuracy: number;
@@ -148,7 +149,11 @@ export function BulkAnalysis() {
       const totalMoves = pgnData.moves.length;
       const bestMoves = classCounts.best;
       const goodMoves = classCounts.excellent + classCounts.good;
-      const mistakes = classCounts.inaccuracy + classCounts.mistake;
+      // Split: mistakes column now holds the mistake bucket only;
+      // inaccuracies live in their own column so ProgressBar can show
+      // a real three-category pie.
+      const inaccuracies = classCounts.inaccuracy;
+      const mistakes = classCounts.mistake;
       const blunders = classCounts.blunder;
       // Accuracy = share of moves rated good or better.
       const accuracy = totalMoves > 0
@@ -165,6 +170,7 @@ export function BulkAnalysis() {
         accuracy: Math.round(accuracy * 100) / 100,
         total_moves: totalMoves,
         mistakes,
+        inaccuracies,
         blunders,
         good_moves: goodMoves,
         best_moves: bestMoves,
@@ -178,6 +184,7 @@ export function BulkAnalysis() {
         analysis.insights = {
           avgEvaluation: avgEval,
           bestMoves,
+          inaccuracies,
           mistakes,
           blunders,
           accuracy,
