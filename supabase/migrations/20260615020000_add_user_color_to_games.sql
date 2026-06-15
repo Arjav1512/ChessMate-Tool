@@ -26,41 +26,23 @@ ALTER TABLE games
 CREATE INDEX IF NOT EXISTS idx_games_user_color
   ON games(user_id, user_color);
 
--- Backfill: best-effort using existing data. Mirrors the runtime
--- detectUserColor() logic — case-insensitive exact match against
--- display_name first, then the email local-part. Anything ambiguous
--- stays NULL so the UI can still flag the user to set a name.
-
-UPDATE games AS g
-SET user_color = 'white'
-FROM profiles p
-WHERE g.user_color IS NULL
-  AND g.user_id = p.id
-  AND p.display_name IS NOT NULL
-  AND LOWER(TRIM(p.display_name)) <> ''
-  AND LOWER(TRIM(g.white_player)) = LOWER(TRIM(p.display_name));
-
-UPDATE games AS g
-SET user_color = 'black'
-FROM profiles p
-WHERE g.user_color IS NULL
-  AND g.user_id = p.id
-  AND p.display_name IS NOT NULL
-  AND LOWER(TRIM(p.display_name)) <> ''
-  AND LOWER(TRIM(g.black_player)) = LOWER(TRIM(p.display_name));
-
-UPDATE games AS g
-SET user_color = 'white'
-FROM profiles p
-WHERE g.user_color IS NULL
-  AND g.user_id = p.id
-  AND p.email IS NOT NULL
-  AND LOWER(TRIM(g.white_player)) = LOWER(SPLIT_PART(p.email, '@', 1));
-
-UPDATE games AS g
-SET user_color = 'black'
-FROM profiles p
-WHERE g.user_color IS NULL
-  AND g.user_id = p.id
-  AND p.email IS NOT NULL
-  AND LOWER(TRIM(g.black_player)) = LOWER(SPLIT_PART(p.email, '@', 1));
+-- NO BACKFILL. Deliberate.
+--
+-- A previous revision of this migration ran four UPDATE statements
+-- that reproduced the runtime detectUserColor() logic in SQL —
+-- LOWER + TRIM + SPLIT_PART. That created two sources of truth: SQL
+-- and src/lib/userColor.ts. The two would drift the moment
+-- detectUserColor's normalisation grew (it already strips "(1500)"
+-- and " 1500" rating tails; the SQL did not), and identical PGN
+-- headers would resolve to different user_color values depending on
+-- whether the row arrived through backfill or through a fresh
+-- import. That is exactly the brittleness the column was added to
+-- kill.
+--
+-- Pre-existing rows therefore keep user_color = NULL. They surface
+-- to the user via the "N games have no detected color" banner in
+-- StatsDashboard; resolving them is a re-import, not a SQL job.
+--
+-- If an automatic backfill is ever wanted, the only acceptable path
+-- is a one-off Node script that imports and reuses detectUserColor
+-- from src/lib/userColor.ts — not a SQL reimplementation.
