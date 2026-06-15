@@ -60,34 +60,12 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [pgnText, setPgnText] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  // Cached display_name so import can detect user_color without
-  // refetching the profile per upload.
-  const [displayName, setDisplayName] = useState<string | null>(null);
   const { user } = useAuth();
   const { showToast } = useToast();
   const { logRender, measureAsync } = usePerformance();
   // Latest onSelectGame in a ref so the import helper doesn't need it in deps.
   const onSelectRef = useRef(onSelectGame);
   onSelectRef.current = onSelectGame;
-
-  // Pull display_name once when the user changes — used for color detection
-  // at import time. Refreshed automatically if the user updates their profile
-  // in another component because the Profile modal triggers a re-mount via
-  // selectedGameId churn (ProfileModal isn't in this subtree).
-  useEffect(() => {
-    if (!user) {
-      setDisplayName(null);
-      return;
-    }
-    supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setDisplayName(data?.display_name ?? null);
-      });
-  }, [user]);
 
   // Debounce search term to avoid excessive filtering
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -193,6 +171,22 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
       return { imported: 0, skipped: parsed.skipped };
     }
 
+    // Fetch display_name freshly at the moment of import — used by
+    // detectUserColor() for every row in this batch. We don't cache it
+    // in state because (a) the user may have updated their profile
+    // since GameList mounted, and (b) for brand-new OAuth users the
+    // SIGNED_IN handler is still racing the profile upsert when
+    // GameList first renders, so a stale cache would land an entire
+    // first batch with user_color = NULL. If the row doesn't exist
+    // yet, NULL color + the unresolved-color banner is acceptable —
+    // we don't block the import on it.
+    const { data: profileRow } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .maybeSingle();
+    const displayName = profileRow?.display_name ?? null;
+
     let imported = 0;
     const total = parsed.games.length;
     for (let i = 0; i < total; i++) {
@@ -220,7 +214,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     setProgress({ phase: 'insert', done: total, total });
 
     return { imported, skipped: parsed.skipped };
-  }, [user, showToast, displayName]);
+  }, [user, showToast]);
 
   const announceImportResult = useCallback((
     imported: number,
