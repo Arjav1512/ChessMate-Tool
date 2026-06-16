@@ -18,9 +18,15 @@ export function EvaluationGauge({ evaluation, isMate, moveNumber, height = 480 }
     return 50 + (clampedEval / 10) * 50;
   };
 
+  // percentage = share of the bar that belongs to WHITE (top).
+  // Positive eval → percentage > 50 → white area grows.
   const percentage = getEvalPercentage();
   const evalNum = isMate ? 0 : parseFloat(evaluation);
-  const displayEval = isMate ? evaluation : Math.abs(evalNum).toFixed(1);
+  // Signed display: "+1.2" / "-0.4" / "M5" — makes side advantage
+  // legible without relying solely on the bar orientation.
+  const displayEval = isMate
+    ? evaluation
+    : (evalNum > 0 ? `+${evalNum.toFixed(1)}` : evalNum.toFixed(1));
 
   const gaugeHeight = height;
 
@@ -41,13 +47,13 @@ export function EvaluationGauge({ evaluation, isMate, moveNumber, height = 480 }
         border: '1px solid var(--cm-border-default)',
         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
       }}>
-        {/* White area (top) */}
+        {/* White area (top) — grows when eval is positive */}
         <div style={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          height: `${100 - percentage}%`,
+          height: `${percentage}%`,
           background: 'linear-gradient(to bottom, #FAFAFA, #E8E8E8)',
           transition: 'height 0.35s ease',
           display: 'flex',
@@ -55,7 +61,7 @@ export function EvaluationGauge({ evaluation, isMate, moveNumber, height = 480 }
           justifyContent: 'center',
           paddingTop: '5px',
         }}>
-          {percentage < 48 && (
+          {percentage > 52 && (
             <span style={{
               fontSize: '10px',
               fontWeight: 700,
@@ -68,13 +74,13 @@ export function EvaluationGauge({ evaluation, isMate, moveNumber, height = 480 }
           )}
         </div>
 
-        {/* Black area (bottom) */}
+        {/* Black area (bottom) — grows when eval is negative */}
         <div style={{
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
-          height: `${percentage}%`,
+          height: `${100 - percentage}%`,
           background: 'linear-gradient(to top, #0C0C0C, #1A1A1A)',
           transition: 'height 0.35s ease',
           display: 'flex',
@@ -82,7 +88,7 @@ export function EvaluationGauge({ evaluation, isMate, moveNumber, height = 480 }
           justifyContent: 'center',
           paddingBottom: '5px',
         }}>
-          {percentage > 52 && (
+          {percentage < 48 && (
             <span style={{
               fontSize: '10px',
               fontWeight: 700,
@@ -128,12 +134,12 @@ export function EvaluationGauge({ evaluation, isMate, moveNumber, height = 480 }
           zIndex: 2,
         }} />
 
-        {/* Move number indicator */}
+        {/* Move number indicator — sits at the white/black boundary */}
         {moveNumber && moveNumber > 0 && (
           <div style={{
             position: 'absolute',
             left: '-30px',
-            top: `${100 - percentage}%`,
+            top: `${percentage}%`,
             transform: 'translateY(-50%)',
             fontSize: '10px',
             color: 'var(--cm-text-muted)',
@@ -157,7 +163,7 @@ export function EvaluationGauge({ evaluation, isMate, moveNumber, height = 480 }
         lineHeight: 1.3,
       }}>
         <div style={{ fontWeight: 600 }}>
-          {percentage > 55 ? 'Black' : percentage < 45 ? 'White' : 'Eq'}
+          {percentage > 55 ? 'White' : percentage < 45 ? 'Black' : 'Eq'}
         </div>
         {isMate && (
           <div style={{ fontSize: '9px', marginTop: '2px', color: 'var(--cm-warning)' }}>

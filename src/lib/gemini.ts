@@ -1,7 +1,6 @@
 import { supabase } from './supabase';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 interface GameInfo {
   white_player?: string;
@@ -35,11 +34,15 @@ export async function askChessMentor(
 ): Promise<string> {
   const apiUrl = `${SUPABASE_URL}/functions/v1/chess-mentor`;
 
-  // Use the authenticated user's JWT so the Edge Function can identify the
-  // caller for rate-limiting and personalisation. Falls back to anon key for
-  // unauthenticated calls (edge cases like session expiry during request).
+  // The Edge Function requires a user JWT — it identifies the caller for
+  // DB-backed rate limiting and rejects requests without a `sub` claim.
+  // If the session expired mid-flow, surface a clear error rather than
+  // silently spamming Gemini with the public anon key.
   const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token ?? SUPABASE_ANON_KEY;
+  if (!session?.access_token) {
+    throw new Error('Your session has expired. Please sign in again.');
+  }
+  const token = session.access_token;
 
   const response = await fetch(apiUrl, {
     method: 'POST',

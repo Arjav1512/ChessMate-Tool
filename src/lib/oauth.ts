@@ -41,7 +41,25 @@ export function isOAuthCallback(): boolean {
 }
 
 /**
- * Clear OAuth callback parameters from URL
+ * Clear OAuth callback parameters from URL.
+ *
+ * H-5 verdict (closed-as-not-a-bug): the `state` parameter we delete here
+ * is *not* an app-level CSRF token we need to validate before removing.
+ *
+ *  - In the default `implicit` flow (supabase-js constants.ts flowType
+ *    default = 'implicit'), tokens are returned in the URL fragment and
+ *    the Supabase auth server has already validated state against the
+ *    OAuth provider before redirecting back. The SPA never sees the
+ *    pre-redirect state.
+ *  - In the `pkce` flow (auth-js GoTrueClient.ts _exchangeCodeForSession),
+ *    CSRF protection comes from the code_verifier that supabase-js
+ *    persists in storage at signInWithOAuth time and presents to the
+ *    /token?grant_type=pkce endpoint. The `state` query param is along
+ *    for the ride but not the security boundary.
+ *
+ * So stripping `code` / `state` / `error` from the URL here is a UI
+ * cleanup, not a CSRF check, and adding one in this file would be
+ * security theatre that duplicates what the SDK already does correctly.
  */
 export function clearOAuthCallback(): void {
   if (isOAuthCallback()) {

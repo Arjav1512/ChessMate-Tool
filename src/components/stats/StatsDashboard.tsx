@@ -35,9 +35,14 @@ interface RecentGame {
   blunders?: number;
 }
 
+interface UserStatsExtras {
+  unresolved_color_count: number;
+}
+
 export function StatsDashboard({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [extras, setExtras] = useState<UserStatsExtras>({ unresolved_color_count: 0 });
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
   const [progressData, setProgressData] = useState<ProgressSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +51,7 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
     try {
       setLoading(true);
 
-      const [statsResult, gamesResult, progressResult, allGamesResult, profileResult, allAnalysisResult] = await Promise.allSettled([
+      const [statsResult, gamesResult, progressResult, allGamesResult, allAnalysisResult] = await Promise.allSettled([
         supabase
           .from('user_statistics')
           .select('*')
@@ -71,17 +76,12 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
           .eq('user_id', user!.id)
           .order('snapshot_date', { ascending: false })
           .limit(30),
-        // All games for win/loss/color distribution
+        // user_color is the only field we need from each game now — string
+        // matching against PGN player headers has been moved to import time.
         supabase
           .from('games')
-          .select('white_player, black_player, result')
+          .select('result, user_color')
           .eq('user_id', user!.id),
-        // Profile for display_name (color-side matching)
-        supabase
-          .from('profiles')
-          .select('display_name')
-          .eq('id', user!.id)
-          .maybeSingle(),
         // All analysis results for live stat fallback (in case DB trigger hasn't fired)
         supabase
           .from('game_analysis_results')
@@ -98,49 +98,29 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
         ? (allAnalysisResult.value.data || [])
         : [];
 
-      // Resolve user's display_name for color-side matching
-      const displayName: string =
-        profileResult.status === 'fulfilled' && profileResult.value.data?.display_name
-          ? profileResult.value.data.display_name
-          : '';
-      const displayNameLower = displayName.toLowerCase();
-
       if (dbStats || allGames.length > 0) {
-        // Compute wins/losses/draws from user's perspective (color-aware)
+        // Read user_color directly — populated at import time by detectUserColor().
+        // Games with user_color = NULL are excluded from every per-side
+        // count; surfacing them as "unresolved" is the responsibility of
+        // the banner below, not the totals.
         let wins = 0, losses = 0, draws = 0;
         let gamesAsWhite = 0, gamesAsBlack = 0;
+        let unresolved = 0;
 
         for (const g of allGames) {
-          const isWhite = displayNameLower
-            ? g.white_player?.toLowerCase() === displayNameLower
-            : null;
-          const isBlack = displayNameLower
-            ? g.black_player?.toLowerCase() === displayNameLower
-            : null;
-
-          if (isWhite || isBlack) {
-            // We know the user's color — count from their perspective
-            if ((isWhite && g.result === '1-0') || (isBlack && g.result === '0-1')) wins++;
-            else if ((isWhite && g.result === '0-1') || (isBlack && g.result === '1-0')) losses++;
-            else if (g.result === '1/2-1/2') draws++;
-          } else {
-            // Fallback: count raw results
+          if (g.user_color === 'white') {
+            gamesAsWhite++;
             if (g.result === '1-0') wins++;
             else if (g.result === '0-1') losses++;
             else if (g.result === '1/2-1/2') draws++;
+          } else if (g.user_color === 'black') {
+            gamesAsBlack++;
+            if (g.result === '0-1') wins++;
+            else if (g.result === '1-0') losses++;
+            else if (g.result === '1/2-1/2') draws++;
+          } else {
+            unresolved++;
           }
-
-          // Color distribution
-          if (displayNameLower) {
-            if (g.white_player?.toLowerCase() === displayNameLower) gamesAsWhite++;
-            else if (g.black_player?.toLowerCase() === displayNameLower) gamesAsBlack++;
-          }
-        }
-
-        // Fall back to rough split if we couldn't match any game by name
-        if (!displayNameLower || (gamesAsWhite === 0 && gamesAsBlack === 0 && allGames.length > 0)) {
-          gamesAsWhite = Math.ceil(allGames.length / 2);
-          gamesAsBlack = Math.floor(allGames.length / 2);
         }
 
         // Prefer DB trigger stats, but fall back to live computation if trigger hasn't fired
@@ -162,6 +142,7 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
           losses,
           draws,
         });
+        setExtras({ unresolved_color_count: unresolved });
       }
 
       if (gamesResult.status === 'fulfilled' && gamesResult.value.data) {
@@ -226,7 +207,12 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
     );
   }
 
-  const hasData = stats && (stats.wins + stats.losses + stats.draws) > 0;
+  // Have data if either user_color resolved at least one game, OR there's
+  // a populated dbStats row, OR we have any games at all and the banner
+  // can still prompt the user to set display_name.
+  const hasResolvedColor = !!stats && (stats.wins + stats.losses + stats.draws) > 0;
+  const hasAnyGames = !!stats && (stats.games_as_white + stats.games_as_black + extras.unresolved_color_count) > 0;
+  const hasData = !!stats && (hasResolvedColor || hasAnyGames || stats.total_games_analyzed > 0);
 
   const getTrend = () => {
     if (progressData.length < 2) return null;
@@ -299,6 +285,28 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
             </div>
           ) : (
             <>
+              {extras.unresolved_color_count > 0 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  padding: '12px 14px',
+                  marginBottom: '20px',
+                  background: 'var(--cm-warning-dim)',
+                  border: '1px solid rgba(240,168,64,0.25)',
+                  borderLeft: '3px solid var(--cm-warning)',
+                  borderRadius: '8px',
+                }}>
+                  <AlertCircle size={16} style={{ color: 'var(--cm-warning)', flexShrink: 0, marginTop: '1px' }} />
+                  <div style={{ flex: 1, fontSize: '12px', color: 'var(--cm-text-secondary)', lineHeight: 1.5 }}>
+                    <strong style={{ color: 'var(--cm-text-primary)' }}>
+                      {extras.unresolved_color_count} game{extras.unresolved_color_count === 1 ? '' : 's'} have no detected color
+                    </strong>{' '}
+                    — wins, losses, and color split exclude them. Set your display name in Profile to match the PGN player headers, then re-import or re-link the games to resolve.
+                  </div>
+                </div>
+              )}
+
               {/* Stat cards grid */}
               <div style={{
                 display: 'grid',
