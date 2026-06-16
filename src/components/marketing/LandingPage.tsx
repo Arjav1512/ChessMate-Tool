@@ -37,6 +37,7 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
         <ExampleAnalysis />
         <ProgressPreview />
         <FaqSection />
+        <PricingSection onGetStarted={onGetStarted} />
         <FinalCTA onGetStarted={onGetStarted} />
       </main>
       <Footer />
@@ -273,37 +274,84 @@ function DemoSection() {
 }
 
 function DemoBoard() {
-  // Pure CSS 8x8 chessboard preview — no chess.js needed.
+  // Sicilian Najdorf after 6.Bg5 — a rich mid-game position.
+  // Rows are rank 8 → rank 1; cols are file a → h.
+  // '·' = empty, uppercase = white, lowercase = black piece symbols.
+  const POSITION = [
+    ['♜', '♞', '♝', '♛', '♚', '♝', '·', '♜'],  // rank 8
+    ['·', '♟', '·', '·', '♟', '♟', '♟', '♟'],  // rank 7
+    ['♟', '·', '·', '♟', '·', '♞', '·', '·'],  // rank 6
+    ['·', '·', '·', '·', '·', '·', '♗', '·'],  // rank 5  ← Bg5
+    ['·', '·', '·', '♘', '♙', '·', '·', '·'],  // rank 4  ← Nd4, Pe4
+    ['·', '·', '♘', '·', '·', '·', '·', '·'],  // rank 3  ← Nc3
+    ['♙', '♙', '♙', '·', '·', '♙', '♙', '♙'],  // rank 2
+    ['♖', '·', '♗', '♕', '♔', '·', '·', '♖'],  // rank 1
+  ];
+
+  // Bg5 just played (last move) → threat on Nf6
+  const highlights: Record<string, string> = {
+    '3-6': 'rgba(240,168,64,0.45)',  // Bg5 last move (from)
+    '2-5': 'rgba(239,68,68,0.25)',   // Nf6 threatened piece
+  };
+
+  const WHITE_PIECES = new Set(['♔', '♕', '♖', '♗', '♘', '♙']);
+
   const cells: React.ReactNode[] = [];
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
       const dark = (r + c) % 2 === 1;
-      const isHighlight = r === 4 && c === 4;
+      const piece = POSITION[r][c];
+      const isEmpty = piece === '·';
+      const isWhite = WHITE_PIECES.has(piece);
+      const hl = highlights[`${r}-${c}`];
+
       cells.push(
         <div
           key={`${r}-${c}`}
           style={{
             aspectRatio: '1',
-            background: dark ? 'var(--cm-board-dark)' : 'var(--cm-board-light)',
-            position: 'relative',
-            boxShadow: isHighlight ? 'inset 0 0 0 3px var(--cm-accent)' : undefined,
+            background: hl ?? (dark ? 'var(--cm-board-dark)' : 'var(--cm-board-light)'),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-        />,
+        >
+          {!isEmpty && (
+            <span
+              aria-hidden
+              style={{
+                fontSize: 'clamp(16px, 3vw, 26px)',
+                lineHeight: 1,
+                color: isWhite
+                  ? dark ? '#f5e8c8' : '#ede0c4'
+                  : dark ? '#1c1c28' : '#2c2c3e',
+                textShadow: isWhite
+                  ? '0 1px 4px rgba(0,0,0,0.65)'
+                  : '0 1px 3px rgba(255,255,255,0.25)',
+                userSelect: 'none',
+              }}
+            >
+              {piece}
+            </span>
+          )}
+        </div>,
       );
     }
   }
+
   return (
     <div
       role="img"
-      aria-label="Sample chess board preview"
+      aria-label="Chess board showing Sicilian Najdorf position with AI analysis"
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(8, 1fr)',
         borderRadius: '8px',
         overflow: 'hidden',
         border: '1px solid var(--cm-border-subtle)',
-        maxWidth: '380px',
+        maxWidth: '340px',
         margin: '0 auto',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
       }}
     >
       {cells}
@@ -780,6 +828,156 @@ function FaqSection() {
                 </div>
               )}
             </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Pricing ────────────────────────────────────────────────────────────────
+
+function PricingSection({ onGetStarted }: { onGetStarted: () => void }) {
+  const plans = [
+    {
+      name: 'Free',
+      price: '$0',
+      period: 'forever',
+      highlight: false,
+      cta: 'Get started',
+      features: [
+        'Unlimited PGN imports',
+        'Full Stockfish analysis (depth 1–20)',
+        '10 AI coach queries / day',
+        'Stats dashboard & progress tracking',
+        'Move classification (blunders, mistakes)',
+        'Works in any modern browser',
+      ],
+    },
+    {
+      name: 'Pro',
+      price: 'Coming soon',
+      period: '',
+      highlight: true,
+      cta: 'Join waitlist',
+      features: [
+        'Everything in Free',
+        'Unlimited AI coach queries',
+        'Bulk analysis with batch scheduling',
+        'Opening explorer & repertoire builder',
+        'CSV / JSON export',
+        'Priority support',
+      ],
+    },
+    {
+      name: 'Team',
+      price: 'Coming soon',
+      period: '',
+      highlight: false,
+      cta: 'Join waitlist',
+      features: [
+        'Everything in Pro',
+        'Shared analysis boards',
+        'Student & coach accounts',
+        'Custom Supabase deployment',
+        'Role-based access control',
+        'Dedicated onboarding',
+      ],
+    },
+  ];
+
+  return (
+    <section id="pricing" style={sectionWrap}>
+      <div style={sectionInner}>
+        <SectionHeader
+          eyebrow="Pricing"
+          title="Free to start. Built to scale."
+          subtitle="Stockfish analysis, PGN imports, and progress tracking are always free. Richer features are on the roadmap."
+        />
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '16px',
+            maxWidth: '860px',
+            margin: '0 auto',
+          }}
+        >
+          {plans.map((plan) => (
+            <div
+              key={plan.name}
+              style={{
+                background: plan.highlight ? 'var(--cm-bg-surface)' : 'var(--cm-bg-elevated)',
+                border: `1px solid ${plan.highlight ? 'var(--cm-accent)' : 'var(--cm-border-subtle)'}`,
+                borderRadius: '14px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                position: 'relative',
+                boxShadow: plan.highlight ? '0 0 0 1px var(--cm-accent-ring)' : undefined,
+              }}
+            >
+              {plan.highlight && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-11px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'var(--cm-accent)',
+                  color: 'var(--cm-text-inverse)',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '0.5px',
+                  padding: '3px 10px',
+                  borderRadius: '999px',
+                  whiteSpace: 'nowrap',
+                }}>
+                  MOST POPULAR
+                </span>
+              )}
+
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cm-text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {plan.name}
+                </div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--cm-text-primary)', lineHeight: 1.1 }}>
+                  {plan.price}
+                  {plan.period && (
+                    <span style={{ fontSize: '13px', fontWeight: 400, color: 'var(--cm-text-muted)', marginLeft: '4px' }}>
+                      / {plan.period}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                {plan.features.map((f) => (
+                  <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: 'var(--cm-text-secondary)' }}>
+                    <Check size={13} style={{ color: 'var(--cm-success)', flexShrink: 0, marginTop: '2px' }} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={plan.name === 'Free' ? onGetStarted : undefined}
+                style={{
+                  padding: '10px 16px',
+                  background: plan.highlight ? 'var(--cm-accent)' : 'var(--cm-bg-hover)',
+                  border: `1px solid ${plan.highlight ? 'transparent' : 'var(--cm-border-default)'}`,
+                  borderRadius: '8px',
+                  color: plan.highlight ? 'var(--cm-text-inverse)' : 'var(--cm-text-secondary)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: plan.name === 'Free' ? 'pointer' : 'default',
+                  opacity: plan.name !== 'Free' ? 0.6 : 1,
+                  textAlign: 'center',
+                }}
+              >
+                {plan.cta}
+              </button>
+            </div>
           ))}
         </div>
       </div>

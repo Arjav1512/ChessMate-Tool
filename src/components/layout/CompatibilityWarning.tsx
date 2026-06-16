@@ -1,16 +1,29 @@
+import { useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { checkCompatibility } from '../../utils/compatibility';
+
+const DISMISSED_KEY = 'cm_compat_warning_dismissed';
 
 interface CompatibilityWarningProps {
   onDismiss?: () => void;
 }
 
 export function CompatibilityWarning({ onDismiss }: CompatibilityWarningProps) {
+  const [dismissed, setDismissed] = useState<boolean>(
+    () => localStorage.getItem(DISMISSED_KEY) === '1',
+  );
+
   const compatibility = checkCompatibility();
 
-  if (compatibility.supported) {
+  if (compatibility.supported || dismissed) {
     return null;
   }
+
+  const handleDismiss = () => {
+    localStorage.setItem(DISMISSED_KEY, '1');
+    setDismissed(true);
+    onDismiss?.();
+  };
 
   return (
     <div style={{
@@ -44,26 +57,25 @@ export function CompatibilityWarning({ onDismiss }: CompatibilityWarningProps) {
           For the best experience, please use Chrome, Firefox, Safari, or Edge.
         </p>
       </div>
-      {onDismiss && (
-        <button
-          onClick={onDismiss}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--cm-text-muted)',
-            padding: '2px',
-            display: 'flex',
-            alignItems: 'center',
-            borderRadius: '4px',
-            transition: 'color 0.15s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cm-text-primary)')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cm-text-muted)')}
-        >
-          <X style={{ width: '14px', height: '14px' }} />
-        </button>
-      )}
+      <button
+        onClick={handleDismiss}
+        title="Dismiss (won't show again)"
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--cm-text-muted)',
+          padding: '2px',
+          display: 'flex',
+          alignItems: 'center',
+          borderRadius: '4px',
+          transition: 'color 0.15s',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cm-text-primary)')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cm-text-muted)')}
+      >
+        <X style={{ width: '14px', height: '14px' }} />
+      </button>
     </div>
   );
 }

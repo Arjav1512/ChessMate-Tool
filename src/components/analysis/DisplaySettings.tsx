@@ -54,7 +54,7 @@ export function DisplaySettings({ options, onChange }: DisplaySettingsProps) {
             onChange={(checked) => updateOption('inlineNotation', checked)}
           />
           <Toggle
-            label="Annotations on Board"
+            label="Move Symbols (!, ?, …)"
             checked={options.showAnnotations}
             onChange={(checked) => updateOption('showAnnotations', checked)}
           />

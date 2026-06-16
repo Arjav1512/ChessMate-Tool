@@ -278,13 +278,34 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
           {!hasData ? (
             <div style={{ textAlign: 'center', padding: '48px 20px' }}>
               <Target size={40} style={{ color: 'var(--cm-text-muted)', margin: '0 auto 16px', display: 'block' }} />
-              <h3 style={{ fontSize: '17px', marginBottom: '8px', color: 'var(--cm-text-primary)' }}>No Data Yet</h3>
-              <p style={{ color: 'var(--cm-text-secondary)', fontSize: '14px' }}>
-                Analyze some games to see your statistics and track your progress!
+              <h3 style={{ fontSize: '17px', marginBottom: '8px', color: 'var(--cm-text-primary)' }}>No Games Imported Yet</h3>
+              <p style={{ color: 'var(--cm-text-secondary)', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
+                Import a PGN from the <strong>Import</strong> button in the nav bar, then run
+                {' '}<strong>Bulk Analysis</strong> in the Analyze tab to see your accuracy and stats here.
               </p>
             </div>
           ) : (
             <>
+              {stats.total_games_analyzed === 0 && hasAnyGames && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  padding: '12px 14px',
+                  marginBottom: '20px',
+                  background: 'rgba(74,222,128,0.08)',
+                  border: '1px solid rgba(74,222,128,0.2)',
+                  borderLeft: '3px solid var(--cm-success)',
+                  borderRadius: '8px',
+                }}>
+                  <Zap size={16} style={{ color: 'var(--cm-success)', flexShrink: 0, marginTop: '1px' }} />
+                  <div style={{ flex: 1, fontSize: '12px', color: 'var(--cm-text-secondary)', lineHeight: 1.5 }}>
+                    <strong style={{ color: 'var(--cm-text-primary)' }}>Games imported — run analysis to unlock full stats.</strong>
+                    {' '}Open <strong>Analyze</strong> → <strong>Bulk Analysis</strong> tab to get accuracy, mistake, and blunder counts for all your games.
+                  </div>
+                </div>
+              )}
+
               {extras.unresolved_color_count > 0 && (
                 <div style={{
                   display: 'flex',

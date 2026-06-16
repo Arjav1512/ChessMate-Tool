@@ -1,6 +1,13 @@
 /**
  * Stockfish Chess Engine — Web Worker bridge.
- * Loads stockfish.js from the local public/ bundle (no CDN).
+ *
+ * stockfish.js@10 (niklasf build) is a self-contained Emscripten module that
+ * runs as the worker script itself. It uses self.onmessage / postMessage for
+ * UCI I/O and does NOT export a STOCKFISH() global. The correct pattern is:
+ *
+ *   new Worker('/stockfish.js')   ← use it directly, not wrapped
+ *   worker.postMessage('uci')     ← send UCI commands
+ *   worker.onmessage = (e) => ... ← receive UCI output lines
  */
 
 export interface StockfishAnalysis {
@@ -30,64 +37,74 @@ export class StockfishEngine {
   private ready = false;
   private messageHandlers: Map<number, (msg: string) => void> = new Map();
   private requestId = 0;
-  private sessionId = 0; // incremented on every analyzePositionLive call
+  private sessionId = 0;
 
   // ─── Init ─────────────────────────────────────────────────────────────────
 
   async initialize(): Promise<void> {
     if (this.ready) return;
 
+    // If a worker already exists but isn't ready yet, just wait for readyok.
+    if (this.worker) {
+      return new Promise<void>((resolve, reject) => {
+        const id = this.requestId++;
+        const timer = setTimeout(() => {
+          this.messageHandlers.delete(id);
+          reject(new Error('Stockfish init timeout'));
+        }, 15_000);
+        this.messageHandlers.set(id, (msg) => {
+          if (msg === 'readyok') {
+            clearTimeout(timer);
+            this.messageHandlers.delete(id);
+            this.ready = true;
+            resolve();
+          }
+        });
+      });
+    }
+
     return new Promise((resolve, reject) => {
       try {
-        const workerCode = `
-          try { importScripts('/stockfish.js'); }
-          catch (err) { self.postMessage('error: Failed to load Stockfish: ' + err); }
+        // Use stockfish.js directly as the Worker — it IS the worker script.
+        // The file is copied from node_modules to public/ by the copy-stockfish
+        // Vite plugin at build time (see vite.config.ts).
+        this.worker = new Worker('/stockfish.js');
 
-          let stockfish;
-          self.onmessage = function(e) {
-            if (e.data === 'init') {
-              if (typeof STOCKFISH === 'function') {
-                try {
-                  stockfish = STOCKFISH();
-                  stockfish.onmessage = function(line) { self.postMessage(line); };
-                  self.postMessage('ready');
-                } catch(err) {
-                  self.postMessage('error: Stockfish init failed: ' + err);
-                }
-              } else {
-                self.postMessage('error: STOCKFISH is not a function');
-              }
-            } else {
-              if (stockfish) stockfish.postMessage(e.data);
-            }
-          };
-        `;
-
-        const blob = new Blob([workerCode], { type: 'application/javascript' });
-        this.worker = new Worker(URL.createObjectURL(blob));
+        let sentIsReady = false;
 
         this.worker.onmessage = (e) => {
-          const msg: string = e.data;
+          const msg: string =
+            typeof e.data === 'string' ? e.data : String(e.data ?? '');
+          if (!msg) return;
 
-          if (msg === 'ready') {
-            this.ready = true;
-            this.sendCommand('uci');
-            setTimeout(resolve, 100);
-            return;
+          // UCI init handshake — resolve only after readyok so the engine is
+          // guaranteed to accept commands before we issue the first analysis.
+          if (!this.ready) {
+            if (msg === 'uciok' && !sentIsReady) {
+              sentIsReady = true;
+              this.worker!.postMessage('isready');
+            } else if (msg === 'readyok') {
+              this.ready = true;
+              resolve();
+            }
           }
-          if (msg.startsWith('error:')) {
-            reject(new Error(msg.slice(6).trim()));
-            return;
-          }
+
+          // Broadcast to all waiting handlers (analysis callbacks etc.)
           this.messageHandlers.forEach((h) => h(msg));
         };
 
         this.worker.onerror = (err) => reject(err);
-        this.worker.postMessage('init');
+
+        // Send UCI identification — stockfish.js queues this until its WASM
+        // runtime is fully initialized, then processes it.
+        this.worker.postMessage('uci');
 
         setTimeout(() => {
-          if (!this.ready) reject(new Error('Stockfish init timeout'));
-        }, 10000);
+          if (!this.ready)
+            reject(new Error(
+              'Stockfish init timeout. Make sure /stockfish.js is accessible.',
+            ));
+        }, 15_000);
       } catch (err) {
         reject(err);
       }
@@ -341,6 +358,7 @@ export class StockfishEngine {
 
   terminate(): void {
     if (this.worker) {
+      try { this.sendCommand('quit'); } catch { /* ignore */ }
       this.worker.terminate();
       this.worker = null;
       this.ready = false;
