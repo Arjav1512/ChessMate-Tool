@@ -17,7 +17,9 @@
 
   --cm-text-primary:   #F1F3F6;
   --cm-text-secondary: #9499A5;
-  --cm-text-muted:     #5C6070;
+  /* WCAG 2.1 AA: brightened from #5C6070 (2.7:1) to clear 4.5:1 on
+     --cm-bg-elevated (#1A1D24) for small-text usage. */
+  --cm-text-muted:     #828799;
   --cm-text-inverse:   #0C0E12;
 
   --cm-accent:         #F0A840;
@@ -165,7 +167,8 @@
   --cm-border-strong:  #454A56;
   --cm-text-primary:   #F1F3F6;
   --cm-text-secondary: #9499A5;
-  --cm-text-muted:     #5C6070;
+  /* WCAG AA on #1A1D24 — kept in sync with :root. */
+  --cm-text-muted:     #828799;
   --cm-text-inverse:   #0C0E12;
   --cm-accent:         #F0A840;
   --cm-accent-hover:   #E8972A;
@@ -221,8 +224,11 @@
   --cm-border-strong:  #B8BCC5;
   --cm-text-primary:   #0C0E12;
   --cm-text-secondary: #4A4F5C;
-  --cm-text-muted:     #8C909A;
-  --cm-text-inverse:   #FFFFFF;
+  /* WCAG 2.1 AA: 4.5:1 on #F5F6F8. Previously #8C909A was 2.95. */
+  --cm-text-muted:     #6A6E78;
+  /* Light-theme inverse used on amber CTAs — white-on-amber was 2.65; dark-on-amber
+     hits 5.6+ which clears WCAG AA. */
+  --cm-text-inverse:   #1A1D24;
   --cm-accent:         #D4920A;
   --cm-accent-hover:   #C07F05;
   --cm-accent-dim:     rgba(212,146,10,0.10);
@@ -1552,3 +1558,54 @@ select.form-control {
     padding-top: env(safe-area-inset-top);
   }
 }
+
+/* ===== POLISH: scrollbars (Webkit) ============================================ */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--cm-border-default);
+  border-radius: 999px;
+  border: 2px solid var(--cm-bg-base);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--cm-border-strong);
+}
+
+/* ===== POLISH: selection highlight =========================================== */
+::selection {
+  background: var(--cm-accent-dim);
+  color: var(--cm-text-primary);
+}
+
+/* ===== POLISH: tighter focus ring on interactive elements =================== */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--cm-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ===== POLISH: respect reduced-motion preference =========================== */
+@media (prefers-reduced-motion: reduce) {
+  .fade-up,
+  .fade-up-delay-1,
+  .fade-up-delay-2,
+  .fade-up-delay-3,
+  .fade-up-delay-4 {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
