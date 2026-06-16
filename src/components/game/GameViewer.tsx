@@ -11,6 +11,7 @@ import type { Game } from '../../lib/supabase';
 import { parsePGN, PGNData } from '../../lib/pgn';
 import type { StockfishAnalysis } from '../../lib/stockfish';
 import { askChessMentor } from '../../lib/gemini';
+import { COACH_STARTER_PROMPTS } from '../../lib/sampleData';
 import { MoveClassification, CLASSIFICATION } from '../../utils/moveClassifier';
 import { detectOpening } from '../../lib/openings';
 import { useBreakpoint } from '../../hooks/useResponsive';
@@ -43,7 +44,6 @@ export function GameViewer({ game }: GameViewerProps) {
 
   // Full-game analysis results
   const [classifications, setClassifications] = useState<Map<number, MoveClassification>>(new Map());
-  const [gameEvals, setGameEvals] = useState<number[]>([]);
 
   // Ask Coach state
   const [coachQuestion, setCoachQuestion] = useState('');
@@ -76,7 +76,6 @@ export function GameViewer({ game }: GameViewerProps) {
       setCurrentMoveIndex(0);
       setEngineAnalysis(null);
       setClassifications(new Map());
-      setGameEvals([]);
     } catch (error) {
       console.error('Failed to parse PGN:', error);
     }
@@ -150,6 +149,24 @@ export function GameViewer({ game }: GameViewerProps) {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [handleKeyPress]);
 
+  // ── Arrow overlay ──────────────────────────────────────────────────────────
+  // Computed before the `pgnData` early-return so the hook order stays
+  // stable across renders (Rules of Hooks).
+  const arrowOverlay = useMemo(() => {
+    if (!displayOptions.showBestMoveArrow || !engineAnalysis?.variations?.length) return null;
+    return (
+      <BoardArrows
+        arrows={engineAnalysis.variations.map((v, idx) => ({
+          from: v.move.substring(0, 2),
+          to: v.move.substring(2, 4),
+          opacity: idx === 0 ? 0.8 : (displayOptions.variationOpacity / 100) * (1 - idx * 0.2),
+          color: idx === 0 ? '#4ade80' : '#60a5fa',
+        }))}
+        squareSize={squareSize}
+      />
+    );
+  }, [displayOptions, engineAnalysis, squareSize]);
+
   if (!pgnData) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
@@ -169,23 +186,6 @@ export function GameViewer({ game }: GameViewerProps) {
   const goToEnd      = () => setCurrentMoveIndex(pgnData.moves.length);
 
   const currentMove = currentMoveIndex > 0 ? pgnData.moves[currentMoveIndex - 1] : null;
-
-  // ── Arrow overlay ──────────────────────────────────────────────────────────
-
-  const arrowOverlay = useMemo(() => {
-    if (!displayOptions.showBestMoveArrow || !engineAnalysis?.variations?.length) return null;
-    return (
-      <BoardArrows
-        arrows={engineAnalysis.variations.map((v, idx) => ({
-          from: v.move.substring(0, 2),
-          to: v.move.substring(2, 4),
-          opacity: idx === 0 ? 0.8 : (displayOptions.variationOpacity / 100) * (1 - idx * 0.2),
-          color: idx === 0 ? '#4ade80' : '#60a5fa',
-        }))}
-        squareSize={squareSize}
-      />
-    );
-  }, [displayOptions, engineAnalysis, squareSize]);
 
   // ── Shared sub-components ──────────────────────────────────────────────────
 
@@ -310,6 +310,51 @@ export function GameViewer({ game }: GameViewerProps) {
           </button>
         </div>
       )}
+      {!coachAnswer && !coachLoading && !coachLastFailed && (
+        <div style={{ marginBottom: '8px' }}>
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'var(--cm-text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.6px',
+              marginBottom: '6px',
+            }}
+          >
+            Try a starter prompt
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            {COACH_STARTER_PROMPTS.slice(0, 3).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => { setCoachQuestion(p); askCoach(p); }}
+                disabled={coachLoading}
+                style={{
+                  padding: '4px 8px',
+                  background: 'var(--cm-bg-hover)',
+                  border: '1px solid var(--cm-border-subtle)',
+                  borderRadius: '999px',
+                  color: 'var(--cm-text-secondary)',
+                  fontSize: '11px',
+                  cursor: coachLoading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--cm-accent)';
+                  e.currentTarget.style.color = 'var(--cm-accent)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--cm-border-subtle)';
+                  e.currentTarget.style.color = 'var(--cm-text-secondary)';
+                }}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div style={{ display: 'flex', gap: '6px' }}>
         <input
           type="text"
@@ -359,9 +404,8 @@ export function GameViewer({ game }: GameViewerProps) {
     pgnData,
     currentMoveIndex,
     onAnalysis: setEngineAnalysis,
-    onClassifications: (map: Map<number, MoveClassification>, evals: number[]) => {
+    onClassifications: (map: Map<number, MoveClassification>) => {
       setClassifications(map);
-      setGameEvals(evals);
     },
     onSeek: setCurrentMoveIndex,
   };

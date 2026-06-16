@@ -4,6 +4,8 @@ import { ToastProvider } from './contexts/ToastContext';
 import { supabaseConfigured } from './lib/supabase';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { AuthForm } from './components/auth/AuthForm';
+import { PasswordResetComplete } from './components/auth/PasswordResetComplete';
+import { LandingPage } from './components/marketing/LandingPage';
 import { GameList } from './components/game/GameList';
 import { GameViewer } from './components/game/GameViewer';
 import { ProgressBar } from './components/stats/ProgressBar';
@@ -14,7 +16,7 @@ import { CompatibilityWarning } from './components/layout/CompatibilityWarning';
 import { ProfileModal } from './components/layout/ProfileModal';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { useResponsive } from './hooks/useResponsive';
-import { LogOut, TrendingUp, Upload, Brain, BarChart3, Search, Zap, User, Menu, X as XIcon } from 'lucide-react';
+import { LogOut, TrendingUp, Upload, Brain, BarChart3, User, Menu, X as XIcon } from 'lucide-react';
 // Note: i18n infrastructure removed — no components use useTranslation
 import type { Game } from './lib/supabase';
 
@@ -113,12 +115,27 @@ function NavButton({ onClick, icon, label }: { onClick: () => void; icon: React.
 }
 
 function MainApp() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, passwordRecovery } = useAuth();
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [openModal, setOpenModal] = useState<ModalType>(null);
   const [showCompatibilityWarning, setShowCompatibilityWarning] = useState(true);
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  // Pre-auth view: 'landing' (marketing page) or 'auth' (sign-in form).
+  // Persists "they clicked Get Started" across a refresh so the user
+  // doesn't bounce back to the landing page mid-signup.
+  const [preAuthView, setPreAuthView] = useState<'landing' | 'auth'>(() => {
+    if (typeof window === 'undefined') return 'landing';
+    return window.sessionStorage.getItem('cm.preAuthView') === 'auth' ? 'auth' : 'landing';
+  });
+  const goToAuth = () => {
+    setPreAuthView('auth');
+    try { window.sessionStorage.setItem('cm.preAuthView', 'auth'); } catch { /* ignore */ }
+  };
+  const goToLanding = () => {
+    setPreAuthView('landing');
+    try { window.sessionStorage.removeItem('cm.preAuthView'); } catch { /* ignore */ }
+  };
   const { isMobile } = useResponsive();
 
   // Show a full-screen spinner while the auth session is being resolved to
@@ -137,8 +154,17 @@ function MainApp() {
     );
   }
 
+  // Password recovery takes precedence over the rest of the app: even though
+  // Supabase has signed the user in (so `user` is non-null), we should not
+  // let them touch the main UI until they've set a new password.
+  if (passwordRecovery) {
+    return <PasswordResetComplete />;
+  }
+
   if (!user) {
-    return <AuthForm />;
+    return preAuthView === 'landing'
+      ? <LandingPage onGetStarted={goToAuth} onSignIn={goToAuth} />
+      : <AuthForm onBackToLanding={goToLanding} />;
   }
 
   return (
@@ -310,72 +336,10 @@ function MainApp() {
                 <GameViewer game={selectedGame} />
               </ErrorBoundary>
             ) : (
-              /* Welcome screen */
-              <div className="fade-up" style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                gap: '32px',
-                padding: '40px 20px',
-              }}>
-                <div style={{
-                  width: '64px',
-                  height: '64px',
-                  background: 'var(--cm-accent-dim)',
-                  border: '1px solid var(--cm-accent-ring)',
-                  borderRadius: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  <span style={{ fontSize: '32px', lineHeight: 1, filter: 'drop-shadow(0 2px 4px rgba(240,168,64,0.4))' }}>♟</span>
-                </div>
-                <div>
-                  <h2 style={{
-                    fontSize: '24px',
-                    fontWeight: 600,
-                    marginBottom: '10px',
-                    color: 'var(--cm-text-primary)',
-                    letterSpacing: '-0.3px',
-                  }}>
-                    Select a game to begin
-                  </h2>
-                  <p style={{ color: 'var(--cm-text-secondary)', fontSize: '14px', maxWidth: '380px', margin: '0 auto', lineHeight: 1.6 }}>
-                    Import a PGN from the sidebar, then navigate moves to get deep Stockfish analysis and AI-powered coaching.
-                  </p>
-                </div>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                  {([
-                    { icon: <Search size={13} />, label: 'Move Analysis' },
-                    { icon: <Brain size={13} />, label: 'AI Coach' },
-                    { icon: <BarChart3 size={13} />, label: 'Statistics' },
-                    { icon: <Zap size={13} />, label: 'Stockfish Engine' },
-                    { icon: <TrendingUp size={13} />, label: 'Progress Tracking' },
-                  ] as const).map((f, i) => (
-                    <div
-                      key={f.label}
-                      className={`fade-up fade-up-delay-${Math.min(i + 1, 4) as 1 | 2 | 3 | 4}`}
-                      style={{
-                        padding: '8px 14px',
-                        background: 'var(--cm-bg-elevated)',
-                        border: '1px solid var(--cm-border-subtle)',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        color: 'var(--cm-text-secondary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      <span style={{ color: 'var(--cm-accent)', opacity: 0.8, display: 'flex' }}>{f.icon}</span>
-                      {f.label}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <WelcomeScreen
+                onImport={() => setOpenModal('import')}
+                onOpenAnalyze={() => setOpenModal('analyze')}
+              />
             )}
           </div>
         </main>
@@ -537,6 +501,158 @@ function MainApp() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Welcome screen (post-auth empty state for "no game selected") ──────────
+
+function WelcomeScreen({ onImport, onOpenAnalyze }: { onImport: () => void; onOpenAnalyze: () => void }) {
+  const steps = [
+    {
+      icon: <Upload size={16} />,
+      title: 'Import a PGN',
+      body: 'Upload a .pgn or paste raw text. We support files up to 5 MB and parse off the main thread.',
+    },
+    {
+      icon: <Brain size={16} />,
+      title: 'Run Stockfish + ask the coach',
+      body: 'Every move evaluated, every blunder flagged. The AI coach explains why in plain English.',
+    },
+    {
+      icon: <TrendingUp size={16} />,
+      title: 'Track your progress',
+      body: 'Accuracy, W/L/D and color-split update automatically as you analyze more games.',
+    },
+  ];
+
+  return (
+    <div className="fade-up" style={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
+      gap: '24px',
+      padding: '40px 20px',
+    }}>
+      <div style={{
+        width: '64px',
+        height: '64px',
+        background: 'var(--cm-accent-dim)',
+        border: '1px solid var(--cm-accent-ring)',
+        borderRadius: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <span aria-hidden style={{ fontSize: '32px', lineHeight: 1, filter: 'drop-shadow(0 2px 4px rgba(240,168,64,0.4))' }}>♟</span>
+      </div>
+
+      <div>
+        <h2 style={{
+          fontSize: 'clamp(22px, 3vw, 28px)',
+          fontWeight: 700,
+          marginBottom: '10px',
+          color: 'var(--cm-text-primary)',
+          letterSpacing: '-0.4px',
+        }}>
+          Welcome to ChessMate
+        </h2>
+        <p style={{ color: 'var(--cm-text-secondary)', fontSize: '14px', maxWidth: '440px', margin: '0 auto', lineHeight: 1.6 }}>
+          Three steps to your first analysis — import a game, watch Stockfish
+          evaluate it, then ask the AI coach what to drill next.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <button
+          onClick={onImport}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            background: 'var(--cm-accent)',
+            border: '1px solid transparent',
+            borderRadius: '8px',
+            color: 'var(--cm-text-inverse)',
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'background 0.15s',
+          }}
+        >
+          <Upload size={14} /> Import games
+        </button>
+        <button
+          onClick={onOpenAnalyze}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            background: 'var(--cm-bg-elevated)',
+            border: '1px solid var(--cm-border-default)',
+            borderRadius: '8px',
+            color: 'var(--cm-text-primary)',
+            fontSize: '14px',
+            fontWeight: 500,
+            cursor: 'pointer',
+          }}
+        >
+          <Brain size={14} /> Open analysis hub
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '12px',
+          marginTop: '8px',
+          maxWidth: '760px',
+          width: '100%',
+        }}
+      >
+        {steps.map((s, i) => (
+          <div
+            key={s.title}
+            className={`fade-up fade-up-delay-${Math.min(i + 1, 4) as 1 | 2 | 3 | 4}`}
+            style={{
+              textAlign: 'left',
+              background: 'var(--cm-bg-surface)',
+              border: '1px solid var(--cm-border-subtle)',
+              borderRadius: '12px',
+              padding: '16px',
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-flex',
+                width: '32px',
+                height: '32px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+                background: 'var(--cm-accent-dim)',
+                color: 'var(--cm-accent)',
+                border: '1px solid var(--cm-accent-ring)',
+                marginBottom: '10px',
+              }}
+            >
+              {s.icon}
+            </div>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--cm-text-primary)', marginBottom: '4px' }}>
+              {s.title}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--cm-text-secondary)', lineHeight: 1.55 }}>
+              {s.body}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

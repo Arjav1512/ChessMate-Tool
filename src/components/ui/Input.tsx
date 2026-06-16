@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -17,9 +17,12 @@ export function Input({
   rightIcon,
   fullWidth = false,
   className = '',
+  id: idProp,
   ...props
 }: InputProps) {
   const [focused, setFocused] = useState(false);
+  const autoId = useId();
+  const id = idProp ?? `inp-${autoId}`;
 
   const inputStyle: React.CSSProperties = {
     display: 'block',
@@ -48,7 +51,11 @@ export function Input({
 
   return (
     <div style={{ width: fullWidth ? '100%' : undefined }} className={className}>
-      {label && <label style={labelStyle}>{label}</label>}
+      {label && (
+        <label style={labelStyle} htmlFor={id}>
+          {label}
+        </label>
+      )}
 
       <div style={{ position: 'relative' }}>
         {leftIcon && (
@@ -64,6 +71,7 @@ export function Input({
         )}
 
         <input
+          id={id}
           style={inputStyle}
           onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
           onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}

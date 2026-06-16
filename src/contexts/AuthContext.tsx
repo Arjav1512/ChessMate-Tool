@@ -9,11 +9,20 @@ interface AuthContextType {
   /** Non-null when an OAuth callback returned an error (e.g. access_denied). */
   authError: string | null;
   clearAuthError: () => void;
+  /** True when the user clicked a password-reset email link and Supabase
+   *  emitted a PASSWORD_RECOVERY event. Surfaces the "set new password" UI. */
+  passwordRecovery: boolean;
+  clearPasswordRecovery: () => void;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithGitHub: () => Promise<void>;
   signOut: () => Promise<void>;
+  /** Send a password-reset email. The link in the email lands back at the
+   *  app and triggers the PASSWORD_RECOVERY flow. */
+  sendPasswordResetEmail: (email: string) => Promise<void>;
+  /** Set a new password during the recovery flow. */
+  updatePassword: (newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,22 +44,70 @@ function deriveDisplayName(user: User): string {
 // profiles(id), so OAuth users must have a row before they can upload games.
 // ignoreDuplicates ensures we don't clobber a display_name set during email
 // signUp or in the Profile modal.
-async function ensureProfileExists(user: User): Promise<void> {
-  const { error } = await supabase
-    .from('profiles')
-    .upsert(
-      { id: user.id, email: user.email ?? '', display_name: deriveDisplayName(user) },
-      { onConflict: 'id', ignoreDuplicates: true },
-    );
-  if (error) console.error('ensureProfileExists failed:', error);
+//
+// Retries with exponential backoff to survive transient network failures.
+// A failure here leaves the user in a broken state (game inserts fail with
+// FK violations), so it's worth a handful of retries before giving up.
+const PROFILE_RETRY_ATTEMPTS = 4;
+const PROFILE_RETRY_BASE_MS = 250;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export async function ensureProfileExists(user: User): Promise<{ ok: boolean; error?: string }> {
+  let lastError: string | undefined;
+
+  for (let attempt = 0; attempt < PROFILE_RETRY_ATTEMPTS; attempt++) {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(
+          { id: user.id, email: user.email ?? '', display_name: deriveDisplayName(user) },
+          { onConflict: 'id', ignoreDuplicates: true },
+        );
+
+      if (!error) {
+        if (attempt > 0) {
+          console.info(`ensureProfileExists: succeeded on attempt ${attempt + 1}`);
+        }
+        return { ok: true };
+      }
+
+      lastError = error.message;
+      console.warn(
+        `ensureProfileExists: attempt ${attempt + 1}/${PROFILE_RETRY_ATTEMPTS} failed:`,
+        error.message,
+      );
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `ensureProfileExists: attempt ${attempt + 1}/${PROFILE_RETRY_ATTEMPTS} threw:`,
+        lastError,
+      );
+    }
+
+    // Don't sleep after the final attempt.
+    if (attempt < PROFILE_RETRY_ATTEMPTS - 1) {
+      const jitter = Math.floor(Math.random() * 100);
+      await sleep(PROFILE_RETRY_BASE_MS * Math.pow(2, attempt) + jitter);
+    }
+  }
+
+  // Final failure — log loud but don't throw. The games INSERT path will
+  // surface a clearer error to the user if/when they try to upload.
+  console.error('ensureProfileExists: giving up after retries:', lastError);
+  return { ok: false, error: lastError };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(supabaseConfigured);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   const clearAuthError = () => setAuthError(null);
+  const clearPasswordRecovery = () => setPasswordRecovery(false);
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -97,6 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === 'SIGNED_IN' && session?.user) {
         // Fire-and-forget: the games INSERT path catches FK errors anyway.
         ensureProfileExists(session.user);
+      }
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecovery(true);
       }
     });
 
@@ -185,8 +245,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
+  const sendPasswordResetEmail = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/?recovery=1`,
+    });
+    if (error) throw error;
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    setPasswordRecovery(false);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, authError, clearAuthError, signIn, signUp, signInWithGoogle, signInWithGitHub, signOut }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      authError,
+      clearAuthError,
+      passwordRecovery,
+      clearPasswordRecovery,
+      signIn,
+      signUp,
+      signInWithGoogle,
+      signInWithGitHub,
+      signOut,
+      sendPasswordResetEmail,
+      updatePassword,
+    }}>
       {children}
     </AuthContext.Provider>
   );

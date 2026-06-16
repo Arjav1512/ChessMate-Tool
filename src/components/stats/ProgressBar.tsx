@@ -211,12 +211,66 @@ export function ProgressBar() {
       <div style={{
         background: 'var(--cm-bg-elevated)',
         border: '1px solid var(--cm-border-subtle)',
-        borderRadius: '10px',
-        padding: '24px',
-        textAlign: 'center',
+        borderRadius: '12px',
+        padding: '28px 24px',
       }}>
-        <p style={{ color: 'var(--cm-text-muted)', margin: 0, fontSize: '14px' }}>
-          Upload games to see your progress statistics
+        <div
+          aria-hidden
+          style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            background: 'var(--cm-accent-dim)',
+            border: '1px solid var(--cm-accent-ring)',
+            color: 'var(--cm-accent)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 14px',
+            fontSize: '22px',
+          }}
+        >
+          📈
+        </div>
+        <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--cm-text-primary)', margin: '0 0 8px', textAlign: 'center' }}>
+          No progress data yet
+        </h3>
+        <p style={{ color: 'var(--cm-text-secondary)', margin: '0 0 16px', fontSize: '13px', lineHeight: 1.6, textAlign: 'center', maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>
+          Your progress charts populate automatically as you import and analyze games. You&rsquo;ll see:
+        </p>
+        <ul
+          style={{
+            margin: '0 auto',
+            maxWidth: '440px',
+            padding: 0,
+            listStyle: 'none',
+            display: 'grid',
+            gap: '8px',
+          }}
+        >
+          {[
+            'Cumulative W/L trend across every game you import.',
+            'Mistake / blunder / inaccuracy breakdown.',
+            'Opening performance and win-rate per first move.',
+            'Areas-for-improvement based on Stockfish accuracy.',
+          ].map((line) => (
+            <li
+              key={line}
+              style={{
+                display: 'flex',
+                gap: '8px',
+                fontSize: '13px',
+                color: 'var(--cm-text-secondary)',
+                lineHeight: 1.55,
+              }}
+            >
+              <span style={{ color: 'var(--cm-accent)' }}>•</span>
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+        <p style={{ color: 'var(--cm-text-muted)', margin: '16px auto 0', fontSize: '12px', textAlign: 'center', maxWidth: '440px' }}>
+          Import your first game from the sidebar to get started.
         </p>
       </div>
     );

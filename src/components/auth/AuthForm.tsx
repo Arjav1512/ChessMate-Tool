@@ -5,10 +5,17 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { ThemeToggle } from '../layout/ThemeToggle';
 import { PrivacyPage } from '../legal/PrivacyPage';
+import { PasswordResetRequest } from './PasswordResetRequest';
 import { isValidEmail, isValidPassword, isValidDisplayName } from '../../utils/validation';
 import { handleError, logError } from '../../utils/errorHandling';
+import { oauthProviders, anyOAuthEnabled, explainOAuthError } from '../../lib/oauthProviders';
 
-export function AuthForm() {
+interface AuthFormProps {
+  /** When provided, render a back-arrow link to the landing page. */
+  onBackToLanding?: () => void;
+}
+
+export function AuthForm({ onBackToLanding }: AuthFormProps = {}) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,6 +23,7 @@ export function AuthForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [legalView, setLegalView] = useState<'privacy' | 'terms' | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { signIn, signUp, signInWithGoogle, signInWithGitHub, authError, clearAuthError } = useAuth();
   const { showToast } = useToast();
 
@@ -78,9 +86,9 @@ export function AuthForm() {
     } catch (err) {
       logError(err, `AuthForm.handleOAuthSignIn.${provider}`);
       const errorInfo = handleError(err);
-
-      setError(errorInfo.message);
-      showToast(errorInfo.message, 'error');
+      const friendly = explainOAuthError(provider, errorInfo.message);
+      setError(friendly);
+      showToast(friendly, 'error');
       setLoading(false);
     }
   };
@@ -95,6 +103,30 @@ export function AuthForm() {
       padding: '24px',
     }}>
       <div className="fade-up" style={{ width: '100%', maxWidth: '400px' }}>
+        {onBackToLanding && (
+          <button
+            type="button"
+            onClick={onBackToLanding}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '4px 0',
+              marginBottom: '8px',
+              cursor: 'pointer',
+              color: 'var(--cm-text-muted)',
+              fontSize: '12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cm-text-primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cm-text-muted)')}
+            aria-label="Back to home"
+          >
+            ← Back to home
+          </button>
+        )}
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
@@ -132,37 +164,50 @@ export function AuthForm() {
           padding: '28px',
           boxShadow: '0 16px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
         }}>
-          {/* Tab switcher */}
-          <div style={{
-            display: 'flex',
-            background: 'var(--cm-bg-surface)',
-            borderRadius: '8px',
-            padding: '3px',
-            marginBottom: '24px',
-            border: '1px solid var(--cm-border-subtle)',
-          }}>
-            {['Sign In', 'Sign Up'].map((label, i) => (
-              <button
-                key={label}
-                onClick={() => { setIsLogin(i === 0); clearAuthError(); }}
-                style={{
-                  flex: 1,
-                  padding: '7px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  transition: 'all 0.15s',
-                  background: (i === 0) === isLogin ? 'var(--cm-bg-elevated)' : 'transparent',
-                  color: (i === 0) === isLogin ? 'var(--cm-text-primary)' : 'var(--cm-text-muted)',
-                  boxShadow: (i === 0) === isLogin ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {/* Tab switcher (hidden during password reset) */}
+          {!showForgotPassword && (
+            <div style={{
+              display: 'flex',
+              background: 'var(--cm-bg-surface)',
+              borderRadius: '8px',
+              padding: '3px',
+              marginBottom: '24px',
+              border: '1px solid var(--cm-border-subtle)',
+            }}>
+              {['Sign In', 'Sign Up'].map((label, i) => (
+                <button
+                  key={label}
+                  onClick={() => { setIsLogin(i === 0); clearAuthError(); }}
+                  style={{
+                    flex: 1,
+                    padding: '7px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    transition: 'all 0.15s',
+                    background: (i === 0) === isLogin ? 'var(--cm-bg-elevated)' : 'transparent',
+                    color: (i === 0) === isLogin ? 'var(--cm-text-primary)' : 'var(--cm-text-muted)',
+                    boxShadow: (i === 0) === isLogin ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {showForgotPassword && (
+            <PasswordResetRequest
+              initialEmail={email}
+              onBack={() => { setShowForgotPassword(false); setError(''); }}
+            />
+          )}
+
+          {!showForgotPassword && (
+          <>
+
 
           {/* Form */}
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -194,8 +239,30 @@ export function AuthForm() {
               placeholder="••••••••"
               required
               minLength={8}
+              autoComplete={isLogin ? 'current-password' : 'new-password'}
               fullWidth
             />
+
+            {isLogin && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-6px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowForgotPassword(true); setError(''); clearAuthError(); }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    color: 'var(--cm-accent)',
+                    fontSize: '12px',
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '2px',
+                  }}
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
 
             {(error || authError) && (
               <div style={{
@@ -216,17 +283,21 @@ export function AuthForm() {
             </Button>
           </form>
 
-          {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--cm-border-subtle)' }} />
-            <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              or
-            </span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--cm-border-subtle)' }} />
-          </div>
+          {/* Divider (only when at least one OAuth provider is enabled) */}
+          {anyOAuthEnabled() && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--cm-border-subtle)' }} />
+              <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                or
+              </span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--cm-border-subtle)' }} />
+            </div>
+          )}
 
-          {/* OAuth buttons */}
+          {/* OAuth buttons — each gated by its own env flag so an un-configured
+              provider never appears as a clickable, guaranteed-to-fail button. */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {oauthProviders.google && (
             <button
               onClick={() => handleOAuthSignIn('google')}
               disabled={loading}
@@ -258,7 +329,9 @@ export function AuthForm() {
               </svg>
               Continue with Google
             </button>
+            )}
 
+            {oauthProviders.github && (
             <button
               onClick={() => handleOAuthSignIn('github')}
               disabled={loading}
@@ -287,7 +360,10 @@ export function AuthForm() {
               </svg>
               Continue with GitHub
             </button>
+            )}
           </div>
+          </>
+          )}
         </div>
 
         {/* Theme toggle + legal links */}

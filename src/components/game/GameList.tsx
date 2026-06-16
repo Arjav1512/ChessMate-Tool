@@ -6,6 +6,10 @@ import { useToast } from '../../contexts/ToastContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePerformance } from '../../hooks/usePerformance';
 import { detectUserColor } from '../../lib/userColor';
+import { checkPgnSize } from '../../lib/pgnLimits';
+import { translateDbError } from '../../lib/dbErrors';
+import { ensureProfileExists } from '../../contexts/AuthContext';
+import { SAMPLE_PGN } from '../../lib/sampleData';
 import type { Game } from '../../lib/supabase';
 import type { ParsedGame } from '../../workers/pgnWorker';
 
@@ -15,7 +19,20 @@ interface GameListProps {
 }
 
 const PAGE_SIZE = 50;
-const MAX_PGN_BYTES = 5 * 1024 * 1024; // 5 MB hard cap on a single upload/paste
+
+class WorkerInitError extends Error {
+  constructor(cause: string) {
+    super(`Could not start the PGN parser worker: ${cause}`);
+    this.name = 'WorkerInitError';
+  }
+}
+
+class WorkerParseError extends Error {
+  constructor(detail: string) {
+    super(detail || 'The PGN parser worker reported a fatal error');
+    this.name = 'WorkerParseError';
+  }
+}
 
 // Drive the off-main-thread parser. Resolves with the full parsed batch
 // once the worker finishes; reports progress via onProgress along the way.
@@ -24,10 +41,17 @@ function parsePgnInWorker(
   onProgress: (done: number, total: number) => void,
 ): Promise<{ games: ParsedGame[]; skipped: number; firstError?: string }> {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(
-      new URL('../../workers/pgnWorker.ts', import.meta.url),
-      { type: 'module' },
-    );
+    let worker: Worker;
+    try {
+      worker = new Worker(
+        new URL('../../workers/pgnWorker.ts', import.meta.url),
+        { type: 'module' },
+      );
+    } catch (err) {
+      reject(new WorkerInitError(err instanceof Error ? err.message : String(err)));
+      return;
+    }
+
     worker.onmessage = (e: MessageEvent) => {
       const msg = e.data;
       if (msg?.type === 'progress') {
@@ -37,12 +61,12 @@ function parsePgnInWorker(
         resolve({ games: msg.games, skipped: msg.skipped, firstError: msg.firstError });
       } else if (msg?.type === 'error') {
         worker.terminate();
-        reject(new Error(msg.message));
+        reject(new WorkerParseError(msg.message));
       }
     };
     worker.onerror = (err) => {
       worker.terminate();
-      reject(err.error ?? new Error(err.message || 'Worker error'));
+      reject(new WorkerInitError(err.message || 'Unknown worker error'));
     };
     worker.postMessage({ type: 'parse', text });
   });
@@ -146,11 +170,35 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
 
   // Shared parse-and-insert pipeline used by both file upload and paste.
   // sourceLabel just tailors the error toasts.
+  //
+  // Returns { imported, skipped, firstDbError? }. When firstDbError is
+  // non-null the caller knows the inserts were attempted but every row
+  // failed at the database; the message in firstDbError is already
+  // user-friendly (see translateDbError).
   const importPgnBatch = useCallback(async (
     rawText: string,
     sourceLabel: 'file' | 'pasted text',
-  ): Promise<{ imported: number; skipped: number }> => {
+  ): Promise<{ imported: number; skipped: number; firstDbError?: string }> => {
     if (!user) return { imported: 0, skipped: 0 };
+
+    console.info('[import] starting batch', {
+      sourceLabel,
+      bytes: rawText.length,
+      userId: user.id,
+    });
+
+    // 0. Make sure the profiles row exists BEFORE we attempt any games
+    //    inserts. Without it every games row fails with an FK violation
+    //    (23503) and the user sees an opaque "Failed to import" toast.
+    const profileResult = await ensureProfileExists(user);
+    if (!profileResult.ok) {
+      console.error('[import] profile bootstrap failed', profileResult.error);
+      showToast(
+        "Couldn't prepare your profile before import. Try signing out and back in, then retry.",
+        'error',
+      );
+      return { imported: 0, skipped: 0 };
+    }
 
     let parsed;
     try {
@@ -158,10 +206,20 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
         setProgress({ phase: 'parse', done, total });
       });
     } catch (err) {
-      console.error('Worker parse error:', err);
-      showToast('Failed to parse PGN. Please try again.', 'error');
+      console.error('[import] worker error', err);
+      const msg =
+        err instanceof Error && err.message
+          ? `${err.message}`
+          : 'The PGN parser failed unexpectedly. Try again.';
+      showToast(msg, 'error');
       return { imported: 0, skipped: 0 };
     }
+
+    console.info('[import] worker parsed', {
+      games: parsed.games.length,
+      skipped: parsed.skipped,
+      firstError: parsed.firstError,
+    });
 
     if (parsed.games.length === 0) {
       showToast(
@@ -172,23 +230,23 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     }
 
     // Fetch display_name freshly at the moment of import — used by
-    // detectUserColor() for every row in this batch. We don't cache it
-    // in state because (a) the user may have updated their profile
-    // since GameList mounted, and (b) for brand-new OAuth users the
-    // SIGNED_IN handler is still racing the profile upsert when
-    // GameList first renders, so a stale cache would land an entire
-    // first batch with user_color = NULL. If the row doesn't exist
-    // yet, NULL color + the unresolved-color banner is acceptable —
-    // we don't block the import on it.
-    const { data: profileRow } = await supabase
+    // detectUserColor() for every row in this batch. If the row doesn't
+    // exist yet (shouldn't happen after ensureProfileExists above), NULL
+    // color is acceptable — we don't block the import on it.
+    const { data: profileRow, error: profileFetchError } = await supabase
       .from('profiles')
       .select('display_name')
       .eq('id', user.id)
       .maybeSingle();
+    if (profileFetchError) {
+      console.warn('[import] profile fetch failed; falling back to email', profileFetchError);
+    }
     const displayName = profileRow?.display_name ?? null;
 
     let imported = 0;
+    let firstDbError: string | undefined;
     const total = parsed.games.length;
+
     for (let i = 0; i < total; i++) {
       const g = parsed.games[i];
       setProgress({ phase: 'insert', done: i, total });
@@ -208,12 +266,35 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
         event: g.headers.Event || '',
         user_color: userColor,
       });
-      if (error) console.error('DB insert error:', error);
-      else imported++;
+      if (error) {
+        const translated = translateDbError(error);
+        console.error('[import] insert failed', {
+          gameIndex: i,
+          sqlstate: error.code,
+          detail: translated.detail,
+          translated: translated.code,
+        });
+        if (!firstDbError) firstDbError = translated.message;
+
+        // For schema- or auth-shaped errors the next 99 inserts will fail
+        // the same way. Bail out instead of hammering the database.
+        if (
+          translated.code === 'MISSING_COLUMN' ||
+          translated.code === 'MISSING_TABLE' ||
+          translated.code === 'NOT_AUTHENTICATED' ||
+          translated.code === 'RLS_DENIED'
+        ) {
+          break;
+        }
+      } else {
+        imported++;
+      }
     }
     setProgress({ phase: 'insert', done: total, total });
 
-    return { imported, skipped: parsed.skipped };
+    console.info('[import] batch complete', { imported, skipped: parsed.skipped, firstDbError });
+
+    return { imported, skipped: parsed.skipped, firstDbError };
   }, [user, showToast]);
 
   const announceImportResult = useCallback((
@@ -223,7 +304,10 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     parseFallback?: string,
   ) => {
     if (imported === 0) {
-      showToast(parseFallback || `Failed to import any games from the ${sourceLabel}.`, 'error');
+      showToast(
+        parseFallback || `Failed to import any games from the ${sourceLabel}.`,
+        'error',
+      );
       return;
     }
     if (skipped > 0) {
@@ -240,11 +324,9 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > MAX_PGN_BYTES) {
-      showToast(
-        `That PGN is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is 5 MB — split it into smaller files and import them separately.`,
-        'error',
-      );
+    const sizeCheck = checkPgnSize(file, 'file');
+    if (!sizeCheck.ok) {
+      showToast(sizeCheck.message, 'error');
       e.target.value = '';
       return;
     }
@@ -252,8 +334,8 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     setUploading(true);
     try {
       const rawText = await file.text();
-      const { imported, skipped } = await importPgnBatch(rawText, 'file');
-      announceImportResult(imported, skipped, 'file');
+      const { imported, skipped, firstDbError } = await importPgnBatch(rawText, 'file');
+      announceImportResult(imported, skipped, 'file', firstDbError);
       if (imported > 0) {
         const updatedGames = await loadGames();
         if (updatedGames && updatedGames.length > 0) {
@@ -273,19 +355,16 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
   const handlePasteSubmit = async () => {
     if (!pgnText.trim() || !user) return;
 
-    const byteSize = new Blob([pgnText]).size;
-    if (byteSize > MAX_PGN_BYTES) {
-      showToast(
-        `That PGN is ${(byteSize / 1024 / 1024).toFixed(1)} MB. The limit is 5 MB — paste fewer games or upload as a file split.`,
-        'error',
-      );
+    const sizeCheck = checkPgnSize(pgnText, 'pasted text');
+    if (!sizeCheck.ok) {
+      showToast(sizeCheck.message, 'error');
       return;
     }
 
     setUploading(true);
     try {
-      const { imported, skipped } = await importPgnBatch(pgnText, 'pasted text');
-      announceImportResult(imported, skipped, 'pasted text');
+      const { imported, skipped, firstDbError } = await importPgnBatch(pgnText, 'pasted text');
+      announceImportResult(imported, skipped, 'pasted text', firstDbError);
       if (imported > 0) {
         const updatedGames = await loadGames();
         if (updatedGames && updatedGames.length > 0) {
@@ -297,6 +376,24 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     } catch (error) {
       console.error('Error uploading game:', error);
       showToast('Failed to upload game. Please try again.', 'error');
+    } finally {
+      setUploading(false);
+      setProgress(null);
+    }
+  };
+
+  // Empty-state helper: imports the bundled sample PGN so new users get
+  // an immediate "wow" without finding a PGN of their own first.
+  const handleImportSample = async () => {
+    if (!user || uploading) return;
+    setUploading(true);
+    try {
+      const { imported, skipped, firstDbError } = await importPgnBatch(SAMPLE_PGN, 'pasted text');
+      announceImportResult(imported, skipped, 'pasted text', firstDbError);
+      if (imported > 0) {
+        const updatedGames = await loadGames();
+        if (updatedGames && updatedGames.length > 0) onSelectRef.current(updatedGames[0]);
+      }
     } finally {
       setUploading(false);
       setProgress(null);
@@ -460,12 +557,79 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
               ))}
             </div>
           ) : filteredGames.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-              <FileText size={28} style={{ color: 'var(--cm-text-muted)', margin: '0 auto 10px', display: 'block' }} />
-              <p style={{ color: 'var(--cm-text-muted)', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
-                {searchTerm ? 'No matching games' : 'No games yet.\nImport a PGN to start.'}
-              </p>
-            </div>
+            searchTerm ? (
+              <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+                <FileText size={28} style={{ color: 'var(--cm-text-muted)', margin: '0 auto 10px', display: 'block' }} />
+                <p style={{ color: 'var(--cm-text-muted)', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
+                  No matching games
+                </p>
+              </div>
+            ) : (
+              <div style={{ padding: '20px 14px', textAlign: 'center' }}>
+                <div
+                  aria-hidden
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    margin: '0 auto 14px',
+                    borderRadius: '12px',
+                    background: 'var(--cm-accent-dim)',
+                    border: '1px solid var(--cm-accent-ring)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--cm-accent)',
+                  }}
+                >
+                  <FileText size={20} />
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--cm-text-primary)', marginBottom: '6px' }}>
+                  No games yet
+                </div>
+                <p style={{ color: 'var(--cm-text-secondary)', fontSize: '12px', margin: '0 0 14px', lineHeight: 1.5 }}>
+                  Import a PGN from Chess.com, Lichess, or anywhere else — or try a sample game to see ChessMate in action.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <button
+                    onClick={handleImportSample}
+                    disabled={uploading}
+                    style={{
+                      padding: '8px 12px',
+                      background: 'var(--cm-accent)',
+                      border: '1px solid transparent',
+                      borderRadius: '7px',
+                      color: 'var(--cm-text-inverse)',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: uploading ? 'not-allowed' : 'pointer',
+                      opacity: uploading ? 0.6 : 1,
+                    }}
+                  >
+                    {uploading ? 'Importing…' : 'Try a sample game'}
+                  </button>
+                  <button
+                    onClick={() => setShowPasteModal(true)}
+                    disabled={uploading}
+                    style={{
+                      padding: '8px 12px',
+                      background: 'var(--cm-bg-elevated)',
+                      border: '1px solid var(--cm-border-default)',
+                      borderRadius: '7px',
+                      color: 'var(--cm-text-secondary)',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      cursor: uploading ? 'not-allowed' : 'pointer',
+                      opacity: uploading ? 0.6 : 1,
+                    }}
+                  >
+                    Paste PGN text
+                  </button>
+                </div>
+                <p style={{ color: 'var(--cm-text-muted)', fontSize: '11px', margin: '12px 0 0', lineHeight: 1.55 }}>
+                  Or click the <strong>+</strong> button above to upload a <code>.pgn</code> file.
+                </p>
+              </div>
+            )
           ) : (
             <>
               {filteredGames.map(game => {
