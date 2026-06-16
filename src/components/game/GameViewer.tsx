@@ -52,6 +52,7 @@ export function GameViewer({ game }: GameViewerProps) {
   const [coachLastQuestion, setCoachLastQuestion] = useState<string | null>(null);
   // Last failed question — drives the Retry pill. Cleared on success.
   const [coachLastFailed, setCoachLastFailed] = useState<string | null>(null);
+  const [coachError, setCoachError] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
@@ -111,6 +112,7 @@ export function GameViewer({ game }: GameViewerProps) {
       setCoachLastQuestion(text);
       setCoachQuestion('');
       setCoachLastFailed(null);
+      setCoachError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to get a response';
       // Surface as toast and remember the question for the Retry pill.
@@ -118,6 +120,7 @@ export function GameViewer({ game }: GameViewerProps) {
       // success (if any) stays visible while the toast informs the user.
       showToast(message, 'error');
       setCoachLastFailed(text);
+      setCoachError(message);
       setCoachQuestion(text);
     } finally {
       setCoachLoading(false);
@@ -469,7 +472,7 @@ export function GameViewer({ game }: GameViewerProps) {
             gap: '8px', padding: '7px 10px', background: 'var(--cm-error-dim)',
             border: '1px solid rgba(232,85,74,0.25)', borderRadius: '8px',
           }}>
-            <span style={{ fontSize: '11px', color: 'var(--cm-error)' }}>Request failed.</span>
+            <span style={{ fontSize: '11px', color: 'var(--cm-error)' }}>{coachError || 'Request failed.'}</span>
             <button
               type="button"
               onClick={handleRetryCoach}
