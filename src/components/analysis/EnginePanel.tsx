@@ -14,6 +14,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Chess } from 'chess.js';
+import type { Square, PieceSymbol } from 'chess.js';
 import { StockfishEngine } from '../../lib/stockfish';
 import type { StockfishAnalysis } from '../../lib/stockfish';
 import {
@@ -33,10 +34,15 @@ function pvToSan(startFen: string, pvUci: string[]): string[] {
     const result: string[] = [];
     for (const uci of pvUci) {
       if (uci.length < 4) break;
+      // chess.js types `from`/`to` as the `Square` union literal and the
+      // promotion as the `PieceSymbol` union. Slicing a string yields the
+      // wider `string`, so we narrow at the boundary — invalid moves are
+      // rejected by chess.js at runtime and broken via the `if (!move)`
+      // guard below.
       const move = chess.move({
-        from: uci.slice(0, 2) as any,
-        to: uci.slice(2, 4) as any,
-        promotion: uci.length > 4 ? (uci[4] as any) : undefined,
+        from: uci.slice(0, 2) as Square,
+        to: uci.slice(2, 4) as Square,
+        promotion: uci.length > 4 ? (uci[4] as PieceSymbol) : undefined,
       });
       if (!move) break;
       result.push(move.san);

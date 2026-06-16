@@ -8,8 +8,14 @@ import { PrivacyPage } from '../legal/PrivacyPage';
 import { PasswordResetRequest } from './PasswordResetRequest';
 import { isValidEmail, isValidPassword, isValidDisplayName } from '../../utils/validation';
 import { handleError, logError } from '../../utils/errorHandling';
+import { oauthProviders, anyOAuthEnabled, explainOAuthError } from '../../lib/oauthProviders';
 
-export function AuthForm() {
+interface AuthFormProps {
+  /** When provided, render a back-arrow link to the landing page. */
+  onBackToLanding?: () => void;
+}
+
+export function AuthForm({ onBackToLanding }: AuthFormProps = {}) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,9 +86,9 @@ export function AuthForm() {
     } catch (err) {
       logError(err, `AuthForm.handleOAuthSignIn.${provider}`);
       const errorInfo = handleError(err);
-
-      setError(errorInfo.message);
-      showToast(errorInfo.message, 'error');
+      const friendly = explainOAuthError(provider, errorInfo.message);
+      setError(friendly);
+      showToast(friendly, 'error');
       setLoading(false);
     }
   };
@@ -97,6 +103,30 @@ export function AuthForm() {
       padding: '24px',
     }}>
       <div className="fade-up" style={{ width: '100%', maxWidth: '400px' }}>
+        {onBackToLanding && (
+          <button
+            type="button"
+            onClick={onBackToLanding}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '4px 0',
+              marginBottom: '8px',
+              cursor: 'pointer',
+              color: 'var(--cm-text-muted)',
+              fontSize: '12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cm-text-primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cm-text-muted)')}
+            aria-label="Back to home"
+          >
+            ← Back to home
+          </button>
+        )}
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
@@ -253,17 +283,21 @@ export function AuthForm() {
             </Button>
           </form>
 
-          {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--cm-border-subtle)' }} />
-            <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              or
-            </span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--cm-border-subtle)' }} />
-          </div>
+          {/* Divider (only when at least one OAuth provider is enabled) */}
+          {anyOAuthEnabled() && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--cm-border-subtle)' }} />
+              <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                or
+              </span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--cm-border-subtle)' }} />
+            </div>
+          )}
 
-          {/* OAuth buttons */}
+          {/* OAuth buttons — each gated by its own env flag so an un-configured
+              provider never appears as a clickable, guaranteed-to-fail button. */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {oauthProviders.google && (
             <button
               onClick={() => handleOAuthSignIn('google')}
               disabled={loading}
@@ -295,7 +329,9 @@ export function AuthForm() {
               </svg>
               Continue with Google
             </button>
+            )}
 
+            {oauthProviders.github && (
             <button
               onClick={() => handleOAuthSignIn('github')}
               disabled={loading}
@@ -324,6 +360,7 @@ export function AuthForm() {
               </svg>
               Continue with GitHub
             </button>
+            )}
           </div>
           </>
           )}
