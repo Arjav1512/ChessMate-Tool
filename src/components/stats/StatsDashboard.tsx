@@ -183,7 +183,7 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 2000,
+    zIndex: 50,
     padding: '16px',
   };
 
