@@ -6,6 +6,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePerformance } from '../../hooks/usePerformance';
 import { detectUserColor } from '../../lib/userColor';
+import { checkPgnSize } from '../../lib/pgnLimits';
 import type { Game } from '../../lib/supabase';
 import type { ParsedGame } from '../../workers/pgnWorker';
 
@@ -15,7 +16,6 @@ interface GameListProps {
 }
 
 const PAGE_SIZE = 50;
-const MAX_PGN_BYTES = 5 * 1024 * 1024; // 5 MB hard cap on a single upload/paste
 
 // Drive the off-main-thread parser. Resolves with the full parsed batch
 // once the worker finishes; reports progress via onProgress along the way.
@@ -240,11 +240,9 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > MAX_PGN_BYTES) {
-      showToast(
-        `That PGN is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is 5 MB — split it into smaller files and import them separately.`,
-        'error',
-      );
+    const sizeCheck = checkPgnSize(file, 'file');
+    if (!sizeCheck.ok) {
+      showToast(sizeCheck.message, 'error');
       e.target.value = '';
       return;
     }
@@ -273,12 +271,9 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
   const handlePasteSubmit = async () => {
     if (!pgnText.trim() || !user) return;
 
-    const byteSize = new Blob([pgnText]).size;
-    if (byteSize > MAX_PGN_BYTES) {
-      showToast(
-        `That PGN is ${(byteSize / 1024 / 1024).toFixed(1)} MB. The limit is 5 MB — paste fewer games or upload as a file split.`,
-        'error',
-      );
+    const sizeCheck = checkPgnSize(pgnText, 'pasted text');
+    if (!sizeCheck.ok) {
+      showToast(sizeCheck.message, 'error');
       return;
     }
 

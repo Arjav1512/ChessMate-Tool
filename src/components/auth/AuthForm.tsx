@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { ThemeToggle } from '../layout/ThemeToggle';
 import { PrivacyPage } from '../legal/PrivacyPage';
+import { PasswordResetRequest } from './PasswordResetRequest';
 import { isValidEmail, isValidPassword, isValidDisplayName } from '../../utils/validation';
 import { handleError, logError } from '../../utils/errorHandling';
 
@@ -16,6 +17,7 @@ export function AuthForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [legalView, setLegalView] = useState<'privacy' | 'terms' | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { signIn, signUp, signInWithGoogle, signInWithGitHub, authError, clearAuthError } = useAuth();
   const { showToast } = useToast();
 
@@ -132,37 +134,50 @@ export function AuthForm() {
           padding: '28px',
           boxShadow: '0 16px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
         }}>
-          {/* Tab switcher */}
-          <div style={{
-            display: 'flex',
-            background: 'var(--cm-bg-surface)',
-            borderRadius: '8px',
-            padding: '3px',
-            marginBottom: '24px',
-            border: '1px solid var(--cm-border-subtle)',
-          }}>
-            {['Sign In', 'Sign Up'].map((label, i) => (
-              <button
-                key={label}
-                onClick={() => { setIsLogin(i === 0); clearAuthError(); }}
-                style={{
-                  flex: 1,
-                  padding: '7px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  transition: 'all 0.15s',
-                  background: (i === 0) === isLogin ? 'var(--cm-bg-elevated)' : 'transparent',
-                  color: (i === 0) === isLogin ? 'var(--cm-text-primary)' : 'var(--cm-text-muted)',
-                  boxShadow: (i === 0) === isLogin ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {/* Tab switcher (hidden during password reset) */}
+          {!showForgotPassword && (
+            <div style={{
+              display: 'flex',
+              background: 'var(--cm-bg-surface)',
+              borderRadius: '8px',
+              padding: '3px',
+              marginBottom: '24px',
+              border: '1px solid var(--cm-border-subtle)',
+            }}>
+              {['Sign In', 'Sign Up'].map((label, i) => (
+                <button
+                  key={label}
+                  onClick={() => { setIsLogin(i === 0); clearAuthError(); }}
+                  style={{
+                    flex: 1,
+                    padding: '7px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    transition: 'all 0.15s',
+                    background: (i === 0) === isLogin ? 'var(--cm-bg-elevated)' : 'transparent',
+                    color: (i === 0) === isLogin ? 'var(--cm-text-primary)' : 'var(--cm-text-muted)',
+                    boxShadow: (i === 0) === isLogin ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {showForgotPassword && (
+            <PasswordResetRequest
+              initialEmail={email}
+              onBack={() => { setShowForgotPassword(false); setError(''); }}
+            />
+          )}
+
+          {!showForgotPassword && (
+          <>
+
 
           {/* Form */}
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -194,8 +209,30 @@ export function AuthForm() {
               placeholder="••••••••"
               required
               minLength={8}
+              autoComplete={isLogin ? 'current-password' : 'new-password'}
               fullWidth
             />
+
+            {isLogin && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-6px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowForgotPassword(true); setError(''); clearAuthError(); }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    color: 'var(--cm-accent)',
+                    fontSize: '12px',
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '2px',
+                  }}
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
 
             {(error || authError) && (
               <div style={{
@@ -288,6 +325,8 @@ export function AuthForm() {
               Continue with GitHub
             </button>
           </div>
+          </>
+          )}
         </div>
 
         {/* Theme toggle + legal links */}

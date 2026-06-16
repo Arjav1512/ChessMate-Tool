@@ -4,6 +4,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { supabaseConfigured } from './lib/supabase';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { AuthForm } from './components/auth/AuthForm';
+import { PasswordResetComplete } from './components/auth/PasswordResetComplete';
 import { GameList } from './components/game/GameList';
 import { GameViewer } from './components/game/GameViewer';
 import { ProgressBar } from './components/stats/ProgressBar';
@@ -113,7 +114,7 @@ function NavButton({ onClick, icon, label }: { onClick: () => void; icon: React.
 }
 
 function MainApp() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, passwordRecovery } = useAuth();
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [openModal, setOpenModal] = useState<ModalType>(null);
   const [showCompatibilityWarning, setShowCompatibilityWarning] = useState(true);
@@ -135,6 +136,13 @@ function MainApp() {
         <LoadingSpinner size="lg" />
       </div>
     );
+  }
+
+  // Password recovery takes precedence over the rest of the app: even though
+  // Supabase has signed the user in (so `user` is non-null), we should not
+  // let them touch the main UI until they've set a new password.
+  if (passwordRecovery) {
+    return <PasswordResetComplete />;
   }
 
   if (!user) {

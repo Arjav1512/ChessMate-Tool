@@ -4,7 +4,6 @@ import { GameViewer } from '../game/GameViewer';
 import { BulkAnalysis } from './BulkAnalysis';
 import { ErrorBoundary } from '../layout/ErrorBoundary';
 import { Microscope, List, X } from 'lucide-react';
-import { useResponsive } from '../../hooks/useResponsive';
 import type { Game } from '../../lib/supabase';
 
 interface AnalyzeGamesPageProps {
@@ -16,7 +15,6 @@ type ViewMode = 'board' | 'bulk';
 export function AnalyzeGamesPage({ onClose }: AnalyzeGamesPageProps) {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('board');
-  const { isMobile } = useResponsive();
 
   const tabBtnStyle = (active: boolean): React.CSSProperties => ({
     display: 'flex',

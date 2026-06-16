@@ -43,7 +43,6 @@ export function GameViewer({ game }: GameViewerProps) {
 
   // Full-game analysis results
   const [classifications, setClassifications] = useState<Map<number, MoveClassification>>(new Map());
-  const [gameEvals, setGameEvals] = useState<number[]>([]);
 
   // Ask Coach state
   const [coachQuestion, setCoachQuestion] = useState('');
@@ -76,7 +75,6 @@ export function GameViewer({ game }: GameViewerProps) {
       setCurrentMoveIndex(0);
       setEngineAnalysis(null);
       setClassifications(new Map());
-      setGameEvals([]);
     } catch (error) {
       console.error('Failed to parse PGN:', error);
     }
@@ -359,9 +357,8 @@ export function GameViewer({ game }: GameViewerProps) {
     pgnData,
     currentMoveIndex,
     onAnalysis: setEngineAnalysis,
-    onClassifications: (map: Map<number, MoveClassification>, evals: number[]) => {
+    onClassifications: (map: Map<number, MoveClassification>) => {
       setClassifications(map);
-      setGameEvals(evals);
     },
     onSeek: setCurrentMoveIndex,
   };
