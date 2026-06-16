@@ -321,7 +321,7 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
                   <AlertCircle size={16} style={{ color: 'var(--cm-warning)', flexShrink: 0, marginTop: '1px' }} />
                   <div style={{ flex: 1, fontSize: '12px', color: 'var(--cm-text-secondary)', lineHeight: 1.5 }}>
                     <strong style={{ color: 'var(--cm-text-primary)' }}>
-                      {extras.unresolved_color_count} game{extras.unresolved_color_count === 1 ? '' : 's'} have no detected color
+                      {extras.unresolved_color_count} game{extras.unresolved_color_count === 1 ? '' : 's'} {extras.unresolved_color_count === 1 ? 'has' : 'have'} no detected color
                     </strong>{' '}
                     — wins, losses, and color split exclude them. Set your display name in Profile to match the PGN player headers, then re-import or re-link the games to resolve.
                   </div>
