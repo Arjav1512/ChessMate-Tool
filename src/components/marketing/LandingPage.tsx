@@ -11,6 +11,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { ThemeToggle } from '../layout/ThemeToggle';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -48,6 +49,7 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
 // ─── Nav ────────────────────────────────────────────────────────────────────
 
 function NavBar({ onSignIn, onGetStarted }: { onSignIn: () => void; onGetStarted: () => void }) {
+  const { isMobile } = useResponsive();
   return (
     <nav
       style={{
@@ -64,11 +66,11 @@ function NavBar({ onSignIn, onGetStarted }: { onSignIn: () => void; onGetStarted
         style={{
           maxWidth: '1100px',
           margin: '0 auto',
-          padding: '14px 24px',
+          padding: isMobile ? '14px 16px' : '14px 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '16px',
+          gap: isMobile ? '8px' : '16px',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -89,9 +91,13 @@ function NavBar({ onSignIn, onGetStarted }: { onSignIn: () => void; onGetStarted
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <NavLink href="#features">Features</NavLink>
-          <NavLink href="#how-it-works">How it works</NavLink>
-          <NavLink href="#faq">FAQ</NavLink>
+          {!isMobile && (
+            <>
+              <NavLink href="#features">Features</NavLink>
+              <NavLink href="#how-it-works">How it works</NavLink>
+              <NavLink href="#faq">FAQ</NavLink>
+            </>
+          )}
           <ThemeToggle />
           <button
             onClick={onSignIn}
@@ -731,7 +737,7 @@ function ProgressPreview() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
               gap: '12px',
               marginTop: '14px',
             }}
