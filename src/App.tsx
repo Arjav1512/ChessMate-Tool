@@ -113,6 +113,7 @@ function MainApp() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cm-bg-base)', color: 'var(--cm-text-primary)' }}>
+      <h1 className="sr-only">ChessMate — chess analysis and coaching</h1>
       {/* Header */}
       <header className="app-header">
         {/* Logo */}

@@ -496,6 +496,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Search games..."
+              aria-label="Search games"
               style={{
                 width: '100%',
                 padding: '7px 10px',
