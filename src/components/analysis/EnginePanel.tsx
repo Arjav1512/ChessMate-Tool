@@ -1,134 +1,22 @@
 /**
  * EnginePanel — Lichess-style Stockfish analysis panel.
  *
- * Features:
- *   • Engine on/off toggle
- *   • Depth slider (1–30) + Infinite toggle
- *   • MultiPV selector (1–5 pill buttons)
- *   • Live streaming eval with depth & nps
- *   • PV lines in SAN notation (up to 5 lines)
- *   • "Analyze Full Game" with sequential per-position analysis + progress bar
- *   • Evaluation graph SVG (sparkline over all game positions)
- *   • Classification summary bar (★ / ! / ✓ / ?! / ? / ??)
+ * The engine lifecycle + analysis state now live in the `useStockfishAnalysis`
+ * hook so a single engine instance can feed the v2 tabbed right panel. This
+ * component is the original monolithic presentation, kept render-identical
+ * while the workspace is restructured around it.
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Chess } from 'chess.js';
-import type { Square, PieceSymbol } from 'chess.js';
-import { StockfishEngine } from '../../lib/stockfish';
-import type { StockfishAnalysis } from '../../lib/stockfish';
+import React from 'react';
 import {
-  classifyMove,
   MoveClassification,
   CLASSIFICATION,
-  summariseClassifications,
 } from '../../utils/moveClassifier';
+import type { StockfishAnalysis } from '../../lib/stockfish';
 import type { PGNData } from '../../lib/pgn';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
-
-// ─── UCI → SAN conversion ────────────────────────────────────────────────────
-
-function pvToSan(startFen: string, pvUci: string[]): string[] {
-  try {
-    const chess = new Chess(startFen);
-    const result: string[] = [];
-    for (const uci of pvUci) {
-      if (uci.length < 4) break;
-      // chess.js types `from`/`to` as the `Square` union literal and the
-      // promotion as the `PieceSymbol` union. Slicing a string yields the
-      // wider `string`, so we narrow at the boundary — invalid moves are
-      // rejected by chess.js at runtime and broken via the `if (!move)`
-      // guard below.
-      const move = chess.move({
-        from: uci.slice(0, 2) as Square,
-        to: uci.slice(2, 4) as Square,
-        promotion: uci.length > 4 ? (uci[4] as PieceSymbol) : undefined,
-      });
-      if (!move) break;
-      result.push(move.san);
-    }
-    return result;
-  } catch {
-    return pvUci; // fall back to UCI if conversion fails
-  }
-}
-
-// ─── Eval graph ──────────────────────────────────────────────────────────────
-
-interface EvalGraphProps {
-  evals: number[];          // one per position (0 = start, 1 = after move 1 …)
-  currentIndex: number;
-  onSeek?: (index: number) => void;
-}
-
-function EvalGraph({ evals, currentIndex, onSeek }: EvalGraphProps) {
-  const W = 260, H = 72;
-  if (evals.length < 2) return null;
-
-  const clamp = (v: number) => Math.max(-6, Math.min(6, v));
-  const yPct = (v: number) => 50 - (clamp(v) / 6) * 50; // percent from top
-
-  const pts = evals.map((e, i) => ({
-    x: (i / (evals.length - 1)) * W,
-    y: (yPct(e) / 100) * H,
-    e,
-  }));
-
-  // Build filled white path (above midline)
-  const midY = H / 2;
-  let whitePath = `M0,${midY}`;
-  pts.forEach(({ x, y }) => {
-    whitePath += ` L${x},${Math.min(y, midY)}`;
-  });
-  whitePath += ` L${W},${midY} Z`;
-
-  // Build filled black path (below midline)
-  let blackPath = `M0,${midY}`;
-  pts.forEach(({ x, y }) => {
-    blackPath += ` L${x},${Math.max(y, midY)}`;
-  });
-  blackPath += ` L${W},${midY} Z`;
-
-  // Overall outline
-  const linePath = pts.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ');
-
-  // Cursor position
-  const curX = currentIndex < evals.length
-    ? (currentIndex / (evals.length - 1)) * W
-    : W;
-
-  return (
-    <svg
-      width={W}
-      height={H}
-      style={{ display: 'block', cursor: onSeek ? 'pointer' : 'default', borderRadius: '4px', overflow: 'hidden' }}
-      onClick={onSeek ? (e) => {
-        const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
-        const relX = e.clientX - rect.left;
-        const idx = Math.round((relX / rect.width) * (evals.length - 1));
-        onSeek(Math.max(0, Math.min(evals.length - 1, idx)));
-      } : undefined}
-    >
-      {/* Background */}
-      <rect x={0} y={0} width={W} height={H} fill="var(--cm-bg-elevated)" />
-
-      {/* Black advantage area */}
-      <path d={blackPath} fill="rgba(20,20,30,0.85)" />
-
-      {/* White advantage area */}
-      <path d={whitePath} fill="rgba(230,230,240,0.85)" />
-
-      {/* Outline */}
-      <path d={linePath} fill="none" stroke="rgba(100,200,120,0.6)" strokeWidth={1.2} />
-
-      {/* Midline */}
-      <line x1={0} y1={midY} x2={W} y2={midY} stroke="var(--cm-border-subtle)" strokeWidth={0.8} />
-
-      {/* Current position cursor */}
-      <line x1={curX} y1={0} x2={curX} y2={H} stroke="var(--cm-accent)" strokeWidth={1.5} opacity={0.8} />
-    </svg>
-  );
-}
+import { EvalGraph } from './engine/EvalGraph';
+import { useStockfishAnalysis } from '../../hooks/useStockfishAnalysis';
 
 // ─── Classification summary bar ───────────────────────────────────────────────
 
@@ -196,194 +84,17 @@ export function EnginePanel({
   onSeek,
   autoAnalysis = true,
 }: EnginePanelProps) {
-  // ── Controls ────────────────────────────────────────────────────────────────
-  const [engineOn, setEngineOn] = useState(true);
-  const [depth, setDepth] = useState(20);
-  const [multiPV, setMultiPV] = useState(3);
-  const [infinite, setInfinite] = useState(false);
-
-  // ── Live analysis state ──────────────────────────────────────────────────────
-  const [liveResult, setLiveResult] = useState<StockfishAnalysis | null>(null);
-  const [engineReady, setEngineReady] = useState(false);
-  const [engineError, setEngineError] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-
-  // ── Full game analysis ────────────────────────────────────────────────────
-  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
-  const [bulkEvals, setBulkEvals] = useState<number[]>([]);
-  const [bulkAbort, setBulkAbort] = useState<AbortController | null>(null);
-  const [classMap, setClassMap] = useState<Map<number, MoveClassification>>(new Map());
-
-  // ── Engine instance ──────────────────────────────────────────────────────────
-  const [engine] = useState(() => new StockfishEngine());
-  const analysisPending = useRef(false);
-
-  // Terminate on unmount
-  useEffect(() => {
-    return () => {
-      engine.terminate();
-      setBulkAbort(prev => { prev?.abort(); return null; });
-    };
-  }, [engine]);
-
-  // ── Initialize engine ─────────────────────────────────────────────────────
-  const retryEngine = useCallback(() => {
-    setEngineError(null);
-    setEngineReady(false);
-    engine.terminate();
-    engine.initialize()
-      .then(() => setEngineReady(true))
-      .catch((err) => setEngineError(err instanceof Error ? err.message : String(err)));
-  }, [engine]);
-
-  useEffect(() => {
-    if (!engineOn) return;
-    let cancelled = false;
-    engine.initialize()
-      .then(() => { if (!cancelled) setEngineReady(true); })
-      .catch((err) => {
-        if (!cancelled) setEngineError(err instanceof Error ? err.message : String(err));
-      });
-    return () => { cancelled = true; };
-  }, [engine, engineOn]);
-
-  // ── Live analysis — triggered when fen / controls / engineOn changes ───────
-  const startLiveAnalysis = useCallback(async (targetFen: string) => {
-    if (!engineOn || !engineReady) return;
-    setAnalyzing(true);
-    analysisPending.current = true;
-    try {
-      const result = await engine.analyzePositionLive(
-        targetFen,
-        { depth, multiPV, infinite },
-        (partialResult) => {
-          if (!analysisPending.current) return;
-          setLiveResult(partialResult);
-          onAnalysis?.(partialResult);
-        },
-      );
-      if (analysisPending.current) {
-        setLiveResult(result);
-        onAnalysis?.(result);
-      }
-    } catch (err) {
-      console.error('EnginePanel: live analysis error', err);
-    } finally {
-      if (analysisPending.current) {
-        setAnalyzing(false);
-        analysisPending.current = false;
-      }
-    }
-  }, [engine, engineOn, engineReady, depth, multiPV, infinite, onAnalysis]);
-
-  // When engine turned off — clear results
-  useEffect(() => {
-    if (!engineOn) {
-      analysisPending.current = false;
-      engine.stopAnalysis();
-      setLiveResult(null);
-      setAnalyzing(false);
-      onAnalysis?.(null);
-    }
-  }, [engineOn, engine, onAnalysis]);
-
-  // Trigger analysis when fen or options change — only in auto mode
-  useEffect(() => {
-    if (!engineOn || !engineReady || !autoAnalysis) return;
-    analysisPending.current = false; // invalidate any in-flight call
-    engine.stopAnalysis();
-    const timer = setTimeout(() => startLiveAnalysis(fen), 80);
-    return () => clearTimeout(timer);
-  }, [fen, engineOn, engineReady, depth, multiPV, infinite, autoAnalysis, startLiveAnalysis, engine]);
-
-  // Manual analysis trigger (used when autoAnalysis=false)
-  const handleManualAnalyze = useCallback(() => {
-    if (!engineOn || !engineReady) return;
-    analysisPending.current = false;
-    engine.stopAnalysis();
-    setTimeout(() => startLiveAnalysis(fen), 40);
-  }, [engineOn, engineReady, engine, fen, startLiveAnalysis]);
-
-  // ── Full-game analysis ────────────────────────────────────────────────────
-
-  const startFullGameAnalysis = useCallback(async () => {
-    if (!pgnData || bulkProgress) return;
-
-    const ac = new AbortController();
-    setBulkAbort(ac);
-    setBulkProgress({ done: 0, total: pgnData.fen.length });
-    setBulkEvals([]);
-
-    // Pause live analysis
-    analysisPending.current = false;
-    engine.stopAnalysis();
-    setAnalyzing(false);
-
-    const collectedEvals: number[] = [];
-    const collectedMap = new Map<number, MoveClassification>();
-
-    try {
-      await engine.initialize();
-
-      for (let i = 0; i < pgnData.fen.length; i++) {
-        if (ac.signal.aborted) break;
-
-        const result = await engine.analyzePosition(pgnData.fen[i], 16, 1);
-        const evalNum = result.isMate
-          ? (result.evaluation.startsWith('-') ? -999 : 999)
-          : parseFloat(result.evaluation) || 0;
-
-        collectedEvals.push(evalNum);
-
-        // Classify move i (move i = pgnData.moves[i-1], positions: fen[i-1] → fen[i])
-        if (i > 0) {
-          const evalBefore = collectedEvals[i - 1] * 100; // to centipawns
-          const evalAfter = collectedEvals[i] * 100;
-          const isWhiteMove = (i - 1) % 2 === 0; // moves[0] is White's first move
-          const isBestMove = result.bestMove === (pgnData.moves[i - 1] ?? '');
-          collectedMap.set(i - 1, classifyMove(evalBefore, evalAfter, isWhiteMove, isBestMove));
-        }
-
-        setBulkProgress({ done: i + 1, total: pgnData.fen.length });
-        setBulkEvals([...collectedEvals]);
-      }
-
-      if (!ac.signal.aborted) {
-        setClassMap(collectedMap);
-        onClassifications?.(collectedMap, collectedEvals);
-      }
-    } catch (err) {
-      console.error('Full game analysis error', err);
-    } finally {
-      setBulkProgress(null);
-      setBulkAbort(null);
-      // Restart live analysis at current position
-      if (!ac.signal.aborted && engineOn) {
-        setTimeout(() => startLiveAnalysis(fen), 200);
-      }
-    }
-  }, [pgnData, engine, bulkProgress, engineOn, fen, startLiveAnalysis, onClassifications]);
-
-  const cancelFullGameAnalysis = useCallback(() => {
-    bulkAbort?.abort();
-    setBulkProgress(null);
-    setBulkAbort(null);
-  }, [bulkAbort]);
-
-  // ── Derived: SAN PV lines ─────────────────────────────────────────────────
-
-  const pvLines = useMemo(() => {
-    if (!liveResult) return [];
-    return liveResult.variations.map((v) => ({
-      ...v,
-      san: pvToSan(fen, v.pv),
-    }));
-  }, [liveResult, fen]);
-
-  const classSummary = useMemo(
-    () => summariseClassifications(classMap),
-    [classMap],
-  );
+  const {
+    engineOn, setEngineOn,
+    depth, setDepth,
+    multiPV, setMultiPV,
+    infinite, setInfinite,
+    liveResult, engineReady, engineError, analyzing,
+    bulkProgress, bulkEvals, classMap,
+    pvLines, classSummary,
+    retryEngine, handleManualAnalyze,
+    startFullGameAnalysis, cancelFullGameAnalysis,
+  } = useStockfishAnalysis({ fen, pgnData, onAnalysis, onClassifications, autoAnalysis });
 
   // ── Format helpers ────────────────────────────────────────────────────────
 
@@ -601,7 +312,6 @@ export function EnginePanel({
                 : line.score > 0
                 ? `+${line.score.toFixed(2)}`
                 : line.score.toFixed(2);
-              // First 5 SAN moves in the PV
               const preview = line.san.slice(0, 5).join(' ');
 
               return (
