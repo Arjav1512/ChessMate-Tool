@@ -108,7 +108,10 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
           .from('games')
           .select('*')
           .eq('user_id', user.id)
+          // Secondary sort on id keeps pagination stable when many games
+          // share the same uploaded_at (e.g. a bulk multi-game import).
           .order('uploaded_at', { ascending: false })
+          .order('id', { ascending: false })
           .range(0, PAGE_SIZE - 1);
 
         if (error) {
@@ -135,6 +138,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
         .select('*')
         .eq('user_id', user.id)
         .order('uploaded_at', { ascending: false })
+        .order('id', { ascending: false })
         .range(from, from + PAGE_SIZE - 1);
 
       if (error) {
@@ -142,7 +146,12 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
         return;
       }
       const rows = data || [];
-      setGames(prev => [...prev, ...rows]);
+      // Defensive de-dupe: even with a stable sort, a row inserted between
+      // pages could overlap the offset window. Never render the same id twice.
+      setGames(prev => {
+        const seen = new Set(prev.map(g => g.id));
+        return [...prev, ...rows.filter(r => !seen.has(r.id))];
+      });
       setHasMore(rows.length === PAGE_SIZE);
     } finally {
       setLoadingMore(false);
@@ -175,6 +184,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
         `white_player.ilike.${pattern},black_player.ilike.${pattern},event.ilike.${pattern}`,
       )
       .order('uploaded_at', { ascending: false })
+      .order('id', { ascending: false })
       .range(0, PAGE_SIZE - 1)
       .then(({ data, error }) => {
         if (cancelled) return;
