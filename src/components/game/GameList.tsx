@@ -84,6 +84,10 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [pgnText, setPgnText] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  // Server-side search results — searching must cover ALL games, not just the
+  // currently-loaded page (otherwise older games silently look like they're gone).
+  const [searchResults, setSearchResults] = useState<Game[]>([]);
+  const [searching, setSearching] = useState(false);
   const { user } = useAuth();
   const { showToast } = useToast();
   const { logRender, measureAsync } = usePerformance();
@@ -151,17 +155,47 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
     }
   }, [user, loadGames]);
 
-  // Memoize filtered games to avoid recalculating on every render
-  const filteredGames = useMemo(() => {
-    if (!debouncedSearchTerm) return games;
+  // When a search term is present, query the DB across all games (not just the
+  // loaded page). Falls back to the loaded list when the search box is empty.
+  useEffect(() => {
+    const term = debouncedSearchTerm.trim();
+    if (!term || !user) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    let cancelled = false;
+    setSearching(true);
+    const pattern = `%${term}%`;
+    supabase
+      .from('games')
+      .select('*')
+      .eq('user_id', user.id)
+      .or(
+        `white_player.ilike.${pattern},black_player.ilike.${pattern},event.ilike.${pattern}`,
+      )
+      .order('uploaded_at', { ascending: false })
+      .range(0, PAGE_SIZE - 1)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error('Error searching games:', error);
+          setSearchResults([]);
+        } else {
+          setSearchResults(data || []);
+        }
+        setSearching(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedSearchTerm, user]);
 
-    return games.filter(game =>
-      game.white_player?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-      game.black_player?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-      game.event?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-      game.result?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    );
-  }, [games, debouncedSearchTerm]);
+  // The list to render: server-side search results when searching, else the
+  // paginated loaded list.
+  const filteredGames = useMemo(() => {
+    return debouncedSearchTerm.trim() ? searchResults : games;
+  }, [games, searchResults, debouncedSearchTerm]);
 
   // Log render performance
   useEffect(() => {
@@ -562,7 +596,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
               <div style={{ textAlign: 'center', padding: '32px 16px' }}>
                 <FileText size={28} style={{ color: 'var(--cm-text-muted)', margin: '0 auto 10px', display: 'block' }} />
                 <p style={{ color: 'var(--cm-text-muted)', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
-                  No matching games
+                  {searching ? 'Searching…' : 'No matching games'}
                 </p>
               </div>
             ) : (
