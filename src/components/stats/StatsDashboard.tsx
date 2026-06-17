@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, Target, AlertCircle, CheckCircle, Zap, X } fr
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 interface UserStats {
   total_games_analyzed: number;
@@ -41,6 +42,7 @@ interface UserStatsExtras {
 
 export function StatsDashboard({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
+  const { containerRef, dialogProps } = useModalA11y(onClose);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [extras, setExtras] = useState<UserStatsExtras>({ unresolved_color_count: 0 });
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
@@ -227,6 +229,9 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
   return (
     <div style={backdropStyle} onClick={onClose}>
       <div
+        ref={containerRef}
+        {...dialogProps}
+        aria-label="Chess statistics"
         style={{
           background: 'var(--cm-bg-surface)',
           border: '1px solid var(--cm-border-default)',

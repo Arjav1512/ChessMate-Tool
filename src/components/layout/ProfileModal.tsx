@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 interface ProfileModalProps {
   onClose: () => void;
@@ -12,6 +13,7 @@ interface ProfileModalProps {
 export function ProfileModal({ onClose }: ProfileModalProps) {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { containerRef, dialogProps } = useModalA11y(onClose);
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -61,6 +63,9 @@ export function ProfileModal({ onClose }: ProfileModalProps) {
       onClick={onClose}
     >
       <div
+        ref={containerRef}
+        {...dialogProps}
+        aria-label="Your profile"
         style={{
           background: 'var(--cm-bg-surface)',
           border: '1px solid var(--cm-border-default)',
