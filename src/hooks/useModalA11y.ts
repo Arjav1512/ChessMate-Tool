@@ -16,33 +16,52 @@ const FOCUSABLE_SELECTOR = [
  *  - closes on Escape
  *  - restores focus to the previously focused element on close
  *
+ * Robust to dialogs that mount their container behind an async loading state:
+ * the keydown handler reads the container lazily, and initial focus is retried
+ * for a few frames until the real container appears.
+ *
  * Attach the returned ref to the dialog container and spread `dialogProps`
  * onto it so assistive tech announces it as a modal dialog.
  */
 export function useModalA11y(onClose: () => void) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
     const previouslyFocused = document.activeElement as HTMLElement | null;
+    let rafId = 0;
 
-    // Move focus into the dialog.
-    const focusables = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-    if (focusables.length > 0) {
-      focusables[0].focus();
-    } else {
-      container.focus();
-    }
+    // Move focus into the dialog as soon as its container is in the DOM.
+    // Some dialogs render a loading state first, so retry across a few frames.
+    let attempts = 0;
+    const focusIntoDialog = () => {
+      const container = containerRef.current;
+      if (container) {
+        const focusables = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+        if (focusables.length > 0) {
+          focusables[0].focus();
+        } else {
+          container.focus();
+        }
+        return;
+      }
+      if (attempts++ < 60) {
+        rafId = requestAnimationFrame(focusIntoDialog);
+      }
+    };
+    focusIntoDialog();
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab') return;
+
+      const container = containerRef.current;
+      if (!container) return;
 
       const items = Array.from(
         container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
@@ -72,13 +91,14 @@ export function useModalA11y(onClose: () => void) {
     document.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       document.removeEventListener('keydown', handleKeyDown, true);
       // Restore focus to whatever opened the dialog.
       if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
         previouslyFocused.focus();
       }
     };
-  }, [onClose]);
+  }, []);
 
   return {
     containerRef,
