@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, Target, AlertCircle, CheckCircle, Zap, X } fr
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 interface UserStats {
   total_games_analyzed: number;
@@ -41,6 +42,7 @@ interface UserStatsExtras {
 
 export function StatsDashboard({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
+  const { containerRef, dialogProps } = useModalA11y(onClose);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [extras, setExtras] = useState<UserStatsExtras>({ unresolved_color_count: 0 });
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
@@ -183,7 +185,7 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 2000,
+    zIndex: 50,
     padding: '16px',
   };
 
@@ -227,6 +229,9 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
   return (
     <div style={backdropStyle} onClick={onClose}>
       <div
+        ref={containerRef}
+        {...dialogProps}
+        aria-label="Chess statistics"
         style={{
           background: 'var(--cm-bg-surface)',
           border: '1px solid var(--cm-border-default)',
@@ -278,13 +283,34 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
           {!hasData ? (
             <div style={{ textAlign: 'center', padding: '48px 20px' }}>
               <Target size={40} style={{ color: 'var(--cm-text-muted)', margin: '0 auto 16px', display: 'block' }} />
-              <h3 style={{ fontSize: '17px', marginBottom: '8px', color: 'var(--cm-text-primary)' }}>No Data Yet</h3>
-              <p style={{ color: 'var(--cm-text-secondary)', fontSize: '14px' }}>
-                Analyze some games to see your statistics and track your progress!
+              <h3 style={{ fontSize: '17px', marginBottom: '8px', color: 'var(--cm-text-primary)' }}>No Games Imported Yet</h3>
+              <p style={{ color: 'var(--cm-text-secondary)', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
+                Import a PGN from the <strong>Import</strong> button in the nav bar, then run
+                {' '}<strong>Bulk Analysis</strong> in the Analyze tab to see your accuracy and stats here.
               </p>
             </div>
           ) : (
             <>
+              {stats.total_games_analyzed === 0 && hasAnyGames && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  padding: '12px 14px',
+                  marginBottom: '20px',
+                  background: 'rgba(74,222,128,0.08)',
+                  border: '1px solid rgba(74,222,128,0.2)',
+                  borderLeft: '3px solid var(--cm-success)',
+                  borderRadius: '8px',
+                }}>
+                  <Zap size={16} style={{ color: 'var(--cm-success)', flexShrink: 0, marginTop: '1px' }} />
+                  <div style={{ flex: 1, fontSize: '12px', color: 'var(--cm-text-secondary)', lineHeight: 1.5 }}>
+                    <strong style={{ color: 'var(--cm-text-primary)' }}>Games imported — run analysis to unlock full stats.</strong>
+                    {' '}Open <strong>Analyze</strong> → <strong>Bulk Analysis</strong> tab to get accuracy, mistake, and blunder counts for all your games.
+                  </div>
+                </div>
+              )}
+
               {extras.unresolved_color_count > 0 && (
                 <div style={{
                   display: 'flex',
@@ -300,7 +326,7 @@ export function StatsDashboard({ onClose }: { onClose: () => void }) {
                   <AlertCircle size={16} style={{ color: 'var(--cm-warning)', flexShrink: 0, marginTop: '1px' }} />
                   <div style={{ flex: 1, fontSize: '12px', color: 'var(--cm-text-secondary)', lineHeight: 1.5 }}>
                     <strong style={{ color: 'var(--cm-text-primary)' }}>
-                      {extras.unresolved_color_count} game{extras.unresolved_color_count === 1 ? '' : 's'} have no detected color
+                      {extras.unresolved_color_count} game{extras.unresolved_color_count === 1 ? '' : 's'} {extras.unresolved_color_count === 1 ? 'has' : 'have'} no detected color
                     </strong>{' '}
                     — wins, losses, and color split exclude them. Set your display name in Profile to match the PGN player headers, then re-import or re-link the games to resolve.
                   </div>

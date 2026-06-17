@@ -177,6 +177,12 @@ export interface EnginePanelProps {
   ) => void;
   /** Optional: jump to position (used by graph seek). */
   onSeek?: (index: number) => void;
+  /**
+   * When false the engine is initialised but does NOT auto-analyse on every
+   * FEN change — the user must click "Analyze" to trigger a one-shot eval.
+   * Controlled by the "Auto Analysis" toggle in DisplaySettings.
+   */
+  autoAnalysis?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -188,6 +194,7 @@ export function EnginePanel({
   onAnalysis,
   onClassifications,
   onSeek,
+  autoAnalysis = true,
 }: EnginePanelProps) {
   // ── Controls ────────────────────────────────────────────────────────────────
   const [engineOn, setEngineOn] = useState(true);
@@ -198,6 +205,7 @@ export function EnginePanel({
   // ── Live analysis state ──────────────────────────────────────────────────────
   const [liveResult, setLiveResult] = useState<StockfishAnalysis | null>(null);
   const [engineReady, setEngineReady] = useState(false);
+  const [engineError, setEngineError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
 
   // ── Full game analysis ────────────────────────────────────────────────────
@@ -219,12 +227,23 @@ export function EnginePanel({
   }, [engine]);
 
   // ── Initialize engine ─────────────────────────────────────────────────────
+  const retryEngine = useCallback(() => {
+    setEngineError(null);
+    setEngineReady(false);
+    engine.terminate();
+    engine.initialize()
+      .then(() => setEngineReady(true))
+      .catch((err) => setEngineError(err instanceof Error ? err.message : String(err)));
+  }, [engine]);
+
   useEffect(() => {
     if (!engineOn) return;
     let cancelled = false;
-    engine.initialize().then(() => {
-      if (!cancelled) setEngineReady(true);
-    }).catch(console.error);
+    engine.initialize()
+      .then(() => { if (!cancelled) setEngineReady(true); })
+      .catch((err) => {
+        if (!cancelled) setEngineError(err instanceof Error ? err.message : String(err));
+      });
     return () => { cancelled = true; };
   }, [engine, engineOn]);
 
@@ -268,14 +287,22 @@ export function EnginePanel({
     }
   }, [engineOn, engine, onAnalysis]);
 
-  // Trigger analysis when fen or options change
+  // Trigger analysis when fen or options change — only in auto mode
   useEffect(() => {
-    if (!engineOn || !engineReady) return;
+    if (!engineOn || !engineReady || !autoAnalysis) return;
     analysisPending.current = false; // invalidate any in-flight call
     engine.stopAnalysis();
     const timer = setTimeout(() => startLiveAnalysis(fen), 80);
     return () => clearTimeout(timer);
-  }, [fen, engineOn, engineReady, depth, multiPV, infinite, startLiveAnalysis, engine]);
+  }, [fen, engineOn, engineReady, depth, multiPV, infinite, autoAnalysis, startLiveAnalysis, engine]);
+
+  // Manual analysis trigger (used when autoAnalysis=false)
+  const handleManualAnalyze = useCallback(() => {
+    if (!engineOn || !engineReady) return;
+    analysisPending.current = false;
+    engine.stopAnalysis();
+    setTimeout(() => startLiveAnalysis(fen), 40);
+  }, [engineOn, engineReady, engine, fen, startLiveAnalysis]);
 
   // ── Full-game analysis ────────────────────────────────────────────────────
 
@@ -478,6 +505,30 @@ export function EnginePanel({
           </div>
         </div>
 
+        {/* Manual analysis banner when auto-analysis is disabled */}
+        {engineOn && engineReady && !autoAnalysis && !analyzing && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)' }}>
+              Auto analysis off
+            </span>
+            <button
+              onClick={handleManualAnalyze}
+              style={{
+                padding: '4px 10px',
+                background: 'var(--cm-accent)',
+                border: 'none',
+                borderRadius: '6px',
+                color: 'var(--cm-text-inverse)',
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Analyze
+            </button>
+          </div>
+        )}
+
         {/* Live eval display */}
         {engineOn && (
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minHeight: '28px' }}>
@@ -505,7 +556,29 @@ export function EnginePanel({
               </>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--cm-text-muted)', fontSize: '13px' }}>
-                {!engineReady && engineOn ? (
+                {engineError ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+                    <span style={{ color: 'var(--cm-error)', fontSize: '12px' }}>
+                      Engine failed to load
+                    </span>
+                    <button
+                      onClick={retryEngine}
+                      style={{
+                        padding: '5px 10px',
+                        background: 'var(--cm-accent)',
+                        border: 'none',
+                        borderRadius: '6px',
+                        color: 'var(--cm-text-inverse)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        alignSelf: 'flex-start',
+                      }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : !engineReady && engineOn ? (
                   <><LoadingSpinner size="sm" /><span>Loading engine…</span></>
                 ) : analyzing ? (
                   <><LoadingSpinner size="sm" /><span style={{ opacity: 0.8 }}>Analyzing…</span></>

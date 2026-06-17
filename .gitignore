@@ -31,3 +31,4 @@ test-results
 # linked project metadata, version pins). Never commit.
 supabase/.temp/
 supabase/.branches/
+.gstack/

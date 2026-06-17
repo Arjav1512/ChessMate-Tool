@@ -49,8 +49,10 @@ export function GameViewer({ game }: GameViewerProps) {
   const [coachQuestion, setCoachQuestion] = useState('');
   const [coachAnswer, setCoachAnswer] = useState<string | null>(null);
   const [coachLoading, setCoachLoading] = useState(false);
+  const [coachLastQuestion, setCoachLastQuestion] = useState<string | null>(null);
   // Last failed question — drives the Retry pill. Cleared on success.
   const [coachLastFailed, setCoachLastFailed] = useState<string | null>(null);
+  const [coachError, setCoachError] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
@@ -107,8 +109,10 @@ export function GameViewer({ game }: GameViewerProps) {
           : undefined,
       });
       setCoachAnswer(answer);
+      setCoachLastQuestion(text);
       setCoachQuestion('');
       setCoachLastFailed(null);
+      setCoachError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to get a response';
       // Surface as toast and remember the question for the Retry pill.
@@ -116,6 +120,7 @@ export function GameViewer({ game }: GameViewerProps) {
       // success (if any) stays visible while the toast informs the user.
       showToast(message, 'error');
       setCoachLastFailed(text);
+      setCoachError(message);
       setCoachQuestion(text);
     } finally {
       setCoachLoading(false);
@@ -189,179 +194,354 @@ export function GameViewer({ game }: GameViewerProps) {
 
   // ── Shared sub-components ──────────────────────────────────────────────────
 
-  // Move list (used in both desktop panel and mobile tab)
-  const MoveList = () => (
-    <div>
-      <div className="cm-section-label" style={{ margin: '0 0 8px' }}>Moves</div>
-      <div style={{ fontFamily: 'var(--font-family-mono)', fontSize: '13px' }}>
-        {pgnData.moves.map((_: string, index: number) => {
-          if (index % 2 !== 0) return null;
-          const moveNum  = Math.floor(index / 2) + 1;
-          const whiteMove = pgnData.moves[index];
-          const blackMove = pgnData.moves[index + 1];
-          const whiteCls  = classifications.get(index);
-          const blackCls  = blackMove ? classifications.get(index + 1) : undefined;
+  // Move list — respects showAnnotations and inlineNotation from displayOptions
+  const MoveList = () => {
+    const showAnnotations = displayOptions.showAnnotations;
+    const inline = displayOptions.inlineNotation;
 
-          const moveBtnStyle = (active: boolean, cls?: MoveClassification): React.CSSProperties => {
-            const info = cls ? CLASSIFICATION[cls] : null;
-            return {
-              background: active ? 'var(--cm-accent-dim)' : info ? info.dim : 'transparent',
-              border: 'none',
-              padding: '2px 5px',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              color: active ? 'var(--cm-accent)' : info ? info.color : 'var(--cm-text-primary)',
-              fontWeight: active ? 600 : 400,
-              fontFamily: 'var(--font-family-mono)',
-              fontSize: '13px',
-              transition: 'background 0.1s, color 0.1s',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '2px',
-            };
-          };
+    const moveBtnStyle = (active: boolean, cls?: MoveClassification): React.CSSProperties => {
+      const info = (showAnnotations && cls) ? CLASSIFICATION[cls] : null;
+      return {
+        background: active ? 'var(--cm-accent-dim)' : info ? info.dim : 'transparent',
+        border: 'none',
+        padding: inline ? '1px 4px' : '2px 5px',
+        borderRadius: '3px',
+        cursor: 'pointer',
+        color: active ? 'var(--cm-accent)' : info ? info.color : 'var(--cm-text-primary)',
+        fontWeight: active ? 600 : 400,
+        fontFamily: 'var(--font-family-mono)',
+        fontSize: '13px',
+        transition: 'background 0.1s, color 0.1s',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '2px',
+        outline: active ? '1px solid var(--cm-accent-ring)' : 'none',
+      };
+    };
 
-          return (
-            <div key={index} className="cm-move-row">
-              <span className="cm-move-num">{moveNum}.</span>
-              <button
-                onClick={() => setCurrentMoveIndex(index + 1)}
-                style={moveBtnStyle(currentMoveIndex === index + 1, whiteCls)}
-                title={whiteCls ? CLASSIFICATION[whiteCls].label : undefined}
-              >
-                {whiteMove}
-                {whiteCls && CLASSIFICATION[whiteCls].symbol && (
-                  <span style={{ fontSize: '10px' }}>{CLASSIFICATION[whiteCls].symbol}</span>
-                )}
-              </button>
-              {blackMove && (
+    if (inline) {
+      // Inline mode: all moves on one flowing paragraph
+      return (
+        <div>
+          <div className="cm-section-label" style={{ margin: '0 0 8px' }}>Moves</div>
+          <div style={{
+            fontFamily: 'var(--font-family-mono)',
+            fontSize: '13px',
+            lineHeight: 1.8,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '1px 0',
+          }}>
+            {pgnData.moves.map((move: string, index: number) => {
+              const cls = classifications.get(index);
+              const isWhite = index % 2 === 0;
+              const moveNum = Math.floor(index / 2) + 1;
+              return (
+                <span key={index} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  {isWhite && (
+                    <span style={{ color: 'var(--cm-text-muted)', marginRight: '2px', fontSize: '11px' }}>
+                      {moveNum}.
+                    </span>
+                  )}
+                  <button
+                    onClick={() => setCurrentMoveIndex(index + 1)}
+                    style={moveBtnStyle(currentMoveIndex === index + 1, cls)}
+                    title={showAnnotations && cls ? CLASSIFICATION[cls].label : undefined}
+                  >
+                    {move}
+                    {showAnnotations && cls && CLASSIFICATION[cls].symbol && (
+                      <span style={{ fontSize: '9px' }}>{CLASSIFICATION[cls].symbol}</span>
+                    )}
+                  </button>
+                  {!isWhite && <span style={{ width: '4px', display: 'inline-block' }} />}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // Table mode: one row per move pair (default)
+    return (
+      <div>
+        <div className="cm-section-label" style={{ margin: '0 0 8px' }}>Moves</div>
+        <div style={{ fontFamily: 'var(--font-family-mono)', fontSize: '13px' }}>
+          {pgnData.moves.map((_: string, index: number) => {
+            if (index % 2 !== 0) return null;
+            const moveNum   = Math.floor(index / 2) + 1;
+            const whiteMove = pgnData.moves[index];
+            const blackMove = pgnData.moves[index + 1];
+            const whiteCls  = classifications.get(index);
+            const blackCls  = blackMove ? classifications.get(index + 1) : undefined;
+
+            return (
+              <div key={index} className="cm-move-row">
+                <span className="cm-move-num">{moveNum}.</span>
                 <button
-                  onClick={() => setCurrentMoveIndex(index + 2)}
-                  style={moveBtnStyle(currentMoveIndex === index + 2, blackCls)}
-                  title={blackCls ? CLASSIFICATION[blackCls].label : undefined}
+                  onClick={() => setCurrentMoveIndex(index + 1)}
+                  style={moveBtnStyle(currentMoveIndex === index + 1, whiteCls)}
+                  title={showAnnotations && whiteCls ? CLASSIFICATION[whiteCls].label : undefined}
                 >
-                  {blackMove}
-                  {blackCls && CLASSIFICATION[blackCls].symbol && (
-                    <span style={{ fontSize: '10px' }}>{CLASSIFICATION[blackCls].symbol}</span>
+                  {whiteMove}
+                  {showAnnotations && whiteCls && CLASSIFICATION[whiteCls].symbol && (
+                    <span style={{ fontSize: '10px' }}>{CLASSIFICATION[whiteCls].symbol}</span>
                   )}
                 </button>
-              )}
-            </div>
-          );
-        })}
+                {blackMove && (
+                  <button
+                    onClick={() => setCurrentMoveIndex(index + 2)}
+                    style={moveBtnStyle(currentMoveIndex === index + 2, blackCls)}
+                    title={showAnnotations && blackCls ? CLASSIFICATION[blackCls].label : undefined}
+                  >
+                    {blackMove}
+                    {showAnnotations && blackCls && CLASSIFICATION[blackCls].symbol && (
+                      <span style={{ fontSize: '10px' }}>{CLASSIFICATION[blackCls].symbol}</span>
+                    )}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Ask Coach input (used in both desktop panel and mobile tab)
   const CoachPanel = () => (
-    <div>
-      <div className="cm-section-label" style={{ margin: '0 0 8px' }}>Ask Coach</div>
-      {coachAnswer && (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px' }}>
         <div style={{
-          marginBottom: '8px',
-          padding: '8px 10px',
-          background: 'var(--cm-bg-hover)',
-          border: '1px solid var(--cm-border-subtle)',
+          width: '22px',
+          height: '22px',
           borderRadius: '6px',
-          fontSize: '12px',
-          color: 'var(--cm-text-primary)',
-          lineHeight: 1.55,
-          maxHeight: '220px',
-          overflowY: 'auto',
-        }}>
-          <MarkdownRenderer content={coachAnswer} />
-        </div>
-      )}
-      {coachLastFailed && !coachLoading && (
-        <div style={{
+          background: 'linear-gradient(135deg, var(--cm-accent-dim) 0%, rgba(74,222,128,0.05) 100%)',
+          border: '1px solid var(--cm-accent)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '8px',
-          marginBottom: '8px',
-          padding: '6px 10px',
-          background: 'var(--cm-error-dim)',
-          border: '1px solid rgba(232,85,74,0.25)',
-          borderRadius: '6px',
+          justifyContent: 'center',
+          fontSize: '12px',
+          flexShrink: 0,
         }}>
-          <span style={{ fontSize: '11px', color: 'var(--cm-error)' }}>
-            Last question failed.
-          </span>
-          <button
-            type="button"
-            onClick={handleRetryCoach}
-            style={{
-              display: 'inline-flex',
+          ♟
+        </div>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--cm-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          Chess Coach
+        </span>
+        <span style={{
+          marginLeft: 'auto',
+          padding: '1px 6px',
+          background: 'rgba(74,222,128,0.1)',
+          border: '1px solid rgba(74,222,128,0.2)',
+          borderRadius: '999px',
+          fontSize: '9px',
+          color: 'rgba(74,222,128,0.8)',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+        }}>
+          Gemini AI
+        </span>
+      </div>
+
+      {/* Conversation area */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px', minHeight: '32px' }}>
+        {/* Loading state */}
+        {coachLoading && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '7px' }}>
+            <div style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              background: 'var(--cm-accent-dim)',
+              border: '1px solid var(--cm-accent)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '10px',
+              flexShrink: 0,
+              marginTop: '1px',
+            }}>
+              ♟
+            </div>
+            <div style={{
+              padding: '8px 11px',
+              background: 'var(--cm-bg-elevated)',
+              border: '1px solid var(--cm-border-subtle)',
+              borderRadius: '0 8px 8px 8px',
+              display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              padding: '3px 8px',
-              background: 'var(--cm-error)',
-              border: 'none',
-              borderRadius: '5px',
-              color: '#fff',
-              fontSize: '11px',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            <RotateCw size={10} />
-            Retry
-          </button>
-        </div>
-      )}
-      {!coachAnswer && !coachLoading && !coachLastFailed && (
-        <div style={{ marginBottom: '8px' }}>
-          <div
-            style={{
-              fontSize: '10px',
-              color: 'var(--cm-text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-              marginBottom: '6px',
-            }}
-          >
-            Try a starter prompt
+            }}>
+              {[0, 1, 2].map(i => (
+                <div
+                  key={i}
+                  style={{
+                    width: '5px',
+                    height: '5px',
+                    borderRadius: '50%',
+                    background: 'var(--cm-text-muted)',
+                    animation: `typingBounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+                  }}
+                />
+              ))}
+            </div>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-            {COACH_STARTER_PROMPTS.slice(0, 3).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => { setCoachQuestion(p); askCoach(p); }}
-                disabled={coachLoading}
-                style={{
-                  padding: '4px 8px',
-                  background: 'var(--cm-bg-hover)',
-                  border: '1px solid var(--cm-border-subtle)',
-                  borderRadius: '999px',
-                  color: 'var(--cm-text-secondary)',
-                  fontSize: '11px',
-                  cursor: coachLoading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.15s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--cm-accent)';
-                  e.currentTarget.style.color = 'var(--cm-accent)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--cm-border-subtle)';
-                  e.currentTarget.style.color = 'var(--cm-text-secondary)';
-                }}
-              >
-                {p}
-              </button>
-            ))}
+        )}
+
+        {/* Conversation pair: user question + coach answer */}
+        {!coachLoading && coachAnswer && coachLastQuestion && (
+          <>
+            {/* User bubble */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{
+                padding: '6px 10px',
+                background: 'var(--cm-accent-dim)',
+                border: '1px solid var(--cm-accent)',
+                borderRadius: '8px 0 8px 8px',
+                fontSize: '12px',
+                color: 'var(--cm-accent)',
+                maxWidth: '85%',
+                lineHeight: 1.4,
+              }}>
+                {coachLastQuestion}
+              </div>
+            </div>
+            {/* Coach bubble */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '7px' }}>
+              <div style={{
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
+                background: 'var(--cm-accent-dim)',
+                border: '1px solid var(--cm-accent)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+                flexShrink: 0,
+                marginTop: '1px',
+              }}>
+                ♟
+              </div>
+              <div style={{
+                padding: '8px 11px',
+                background: 'var(--cm-bg-elevated)',
+                border: '1px solid var(--cm-border-subtle)',
+                borderRadius: '0 8px 8px 8px',
+                fontSize: '12px',
+                color: 'var(--cm-text-primary)',
+                lineHeight: 1.55,
+                maxHeight: '200px',
+                overflowY: 'auto',
+                flex: 1,
+                minWidth: 0,
+              }}>
+                <MarkdownRenderer content={coachAnswer} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Answer without question (edge case) */}
+        {!coachLoading && coachAnswer && !coachLastQuestion && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '7px' }}>
+            <div style={{
+              width: '20px', height: '20px', borderRadius: '50%',
+              background: 'var(--cm-accent-dim)', border: '1px solid var(--cm-accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '10px', flexShrink: 0, marginTop: '1px',
+            }}>♟</div>
+            <div style={{
+              padding: '8px 11px', background: 'var(--cm-bg-elevated)',
+              border: '1px solid var(--cm-border-subtle)', borderRadius: '0 8px 8px 8px',
+              fontSize: '12px', color: 'var(--cm-text-primary)', lineHeight: 1.55,
+              maxHeight: '200px', overflowY: 'auto', flex: 1, minWidth: 0,
+            }}>
+              <MarkdownRenderer content={coachAnswer} />
+            </div>
           </div>
-        </div>
-      )}
-      <div style={{ display: 'flex', gap: '6px' }}>
+        )}
+
+        {/* Error state */}
+        {coachLastFailed && !coachLoading && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: '8px', padding: '7px 10px', background: 'var(--cm-error-dim)',
+            border: '1px solid rgba(232,85,74,0.25)', borderRadius: '8px',
+          }}>
+            <span style={{ fontSize: '11px', color: 'var(--cm-error)' }}>{coachError || 'Request failed.'}</span>
+            <button
+              type="button"
+              onClick={handleRetryCoach}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                padding: '3px 8px', background: 'var(--cm-error)',
+                border: 'none', borderRadius: '5px',
+                color: '#fff', fontSize: '11px', fontWeight: 500, cursor: 'pointer',
+              }}
+            >
+              <RotateCw size={10} />
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Starter prompts — shown when idle and no conversation yet */}
+        {!coachAnswer && !coachLoading && !coachLastFailed && (
+          <div>
+            <div style={{ fontSize: '10px', color: 'var(--cm-text-muted)', letterSpacing: '0.5px', marginBottom: '6px' }}>
+              Try asking…
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+              {COACH_STARTER_PROMPTS.slice(0, 3).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => { setCoachQuestion(p); askCoach(p); }}
+                  disabled={coachLoading}
+                  style={{
+                    padding: '4px 9px',
+                    background: 'var(--cm-bg-elevated)',
+                    border: '1px solid var(--cm-border-subtle)',
+                    borderRadius: '999px',
+                    color: 'var(--cm-text-secondary)',
+                    fontSize: '11px',
+                    cursor: coachLoading ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--cm-accent)';
+                    e.currentTarget.style.color = 'var(--cm-accent)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--cm-border-subtle)';
+                    e.currentTarget.style.color = 'var(--cm-text-secondary)';
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Input row */}
+      <div style={{
+        display: 'flex',
+        gap: '6px',
+        paddingTop: (coachAnswer || coachLoading || coachLastFailed) ? '8px' : '0',
+        borderTop: (coachAnswer || coachLoading || coachLastFailed) ? '1px solid var(--cm-border-subtle)' : 'none',
+      }}>
         <input
           type="text"
           value={coachQuestion}
           onChange={e => setCoachQuestion(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') handleAskCoach(); }}
-          placeholder="Ask about this position…"
+          placeholder={coachAnswer ? 'Ask a follow-up…' : 'Ask about this position…'}
           disabled={coachLoading}
           className="cm-text-input"
           style={{ flex: 1, minWidth: 0 }}
@@ -408,6 +588,7 @@ export function GameViewer({ game }: GameViewerProps) {
       setClassifications(map);
     },
     onSeek: setCurrentMoveIndex,
+    autoAnalysis: displayOptions.showFishnetAnalysis,
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -416,45 +597,113 @@ export function GameViewer({ game }: GameViewerProps) {
     <div className="gv-layout">
       {/* ── Game header ───────────────────────────────────────────────────── */}
       <div style={{
-        padding: isMobile ? '12px 14px' : '14px 20px',
+        padding: isMobile ? '10px 14px' : '12px 20px',
         borderBottom: '1px solid var(--cm-border-subtle)',
         background: 'var(--cm-bg-surface)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
-          <div style={{ minWidth: 0 }}>
-            <h2 style={{
-              fontSize: isMobile ? '14px' : '16px',
-              fontWeight: 600,
-              marginBottom: '2px',
-              color: 'var(--cm-text-primary)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}>
-              {game.white_player || 'White'}
-              {' '}
-              <span style={{ color: 'var(--cm-text-muted)', fontWeight: 400 }}>vs</span>
-              {' '}
-              {game.black_player || 'Black'}
-            </h2>
-            <p style={{ fontSize: '11px', color: 'var(--cm-text-muted)', margin: 0 }}>
-              {[game.event, game.date, game.result ? `Result: ${game.result}` : null]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+          {/* Players */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            {([
+              { colorKey: 'black', name: game.black_player || 'Black', isUser: game.user_color === 'black' },
+              { colorKey: 'white', name: game.white_player || 'White', isUser: game.user_color === 'white' },
+            ] as const).map(({ colorKey, name, isUser }) => (
+              <div key={colorKey} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '13px',
+                  height: '13px',
+                  borderRadius: '3px',
+                  background: colorKey === 'white' ? '#ede8e0' : '#1c1c2a',
+                  border: '1.5px solid var(--cm-border-default)',
+                  flexShrink: 0,
+                }} />
+                <span style={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: 'var(--cm-text-primary)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: isMobile ? '120px' : '180px',
+                }}>
+                  {name}
+                </span>
+                {isUser && (
+                  <span style={{
+                    padding: '1px 6px',
+                    background: 'var(--cm-accent-dim)',
+                    border: '1px solid var(--cm-accent)',
+                    borderRadius: '999px',
+                    fontSize: '10px',
+                    color: 'var(--cm-accent)',
+                    fontWeight: 600,
+                    flexShrink: 0,
+                    lineHeight: '14px',
+                  }}>
+                    You
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Right column: result + opening badge */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px', flexShrink: 0 }}>
+            {(() => {
+              const resultMap: Record<string, { label: string; color: string; bg: string }> = {
+                '1-0':     { label: '1-0',  color: '#4ade80', bg: 'rgba(74,222,128,0.12)' },
+                '0-1':     { label: '0-1',  color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+                '1/2-1/2': { label: '½-½',  color: 'var(--cm-warning)', bg: 'rgba(240,168,64,0.12)' },
+              };
+              const r = game.result ? resultMap[game.result] : null;
+              return r ? (
+                <span style={{
+                  padding: '3px 10px',
+                  background: r.bg,
+                  border: `1px solid ${r.color}50`,
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: r.color,
+                  fontFamily: 'var(--font-family-mono)',
+                  letterSpacing: '0.5px',
+                }}>
+                  {r.label}
+                </span>
+              ) : null;
+            })()}
             {opening && (
-              <p style={{
-                fontSize: '11px',
-                color: 'var(--cm-accent)',
-                margin: '3px 0 0',
+              <span style={{
+                padding: '2px 8px',
+                background: 'rgba(74,222,128,0.07)',
+                border: '1px solid rgba(74,222,128,0.18)',
+                borderRadius: '999px',
+                fontSize: '10px',
+                color: 'rgba(74,222,128,0.75)',
                 fontWeight: 500,
+                maxWidth: isMobile ? '130px' : '190px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                textAlign: 'right',
               }}>
-                <span style={{ color: 'var(--cm-text-muted)', fontWeight: 400 }}>{opening.eco} · </span>
-                {opening.name}
-              </p>
+                {opening.eco} · {opening.name}
+              </span>
             )}
           </div>
         </div>
+
+        {/* Metadata row */}
+        {(game.event || game.date) && (
+          <div style={{ display: 'flex', gap: '8px', marginTop: '7px', flexWrap: 'wrap' }}>
+            {game.event && game.event !== '?' && (
+              <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)' }}>{game.event}</span>
+            )}
+            {game.date && game.date !== '????.??.??' && (
+              <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)' }}>{game.date}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Mobile eval bar ───────────────────────────────────────────────── */}
@@ -548,24 +797,41 @@ export function GameViewer({ game }: GameViewerProps) {
           <EnginePanel {...enginePanelProps} />
 
           {/* Navigator */}
-          <div className="cm-panel">
-            <div className="cm-section-label">Navigator</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-              <button onClick={goToStart}    disabled={atStart} className="cm-icon-btn"><SkipBack size={14} /></button>
-              <button onClick={goToPrevious} disabled={atStart} className="cm-icon-btn"><ChevronLeft size={14} /></button>
-              <button onClick={goToNext}     disabled={atEnd}   className="cm-icon-btn"><ChevronRight size={14} /></button>
-              <button onClick={goToEnd}      disabled={atEnd}   className="cm-icon-btn"><SkipForward size={14} /></button>
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--cm-text-secondary)', textAlign: 'center' }}>
-              Move {currentMoveIndex} / {pgnData.moves.length}
-              {currentMove && (
-                <span style={{ color: 'var(--cm-accent)', marginLeft: '6px', fontWeight: 600, fontFamily: 'var(--font-family-mono)' }}>
-                  {currentMove}
+          <div className="cm-panel" style={{ padding: '10px 12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button onClick={goToStart}    disabled={atStart} className="cm-icon-btn" title="Start"><SkipBack size={13} /></button>
+              <button onClick={goToPrevious} disabled={atStart} className="cm-icon-btn" title="Previous (←)"><ChevronLeft size={13} /></button>
+              {/* Move counter */}
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                {currentMove ? (
+                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: 'var(--cm-accent)' }}>
+                    {currentMove}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)' }}>Start</span>
+                )}
+                <span style={{ fontSize: '10px', color: 'var(--cm-text-muted)', marginLeft: '6px' }}>
+                  {currentMoveIndex}/{pgnData.moves.length}
                 </span>
-              )}
+              </div>
+              <button onClick={goToNext}     disabled={atEnd}   className="cm-icon-btn" title="Next (→)"><ChevronRight size={13} /></button>
+              <button onClick={goToEnd}      disabled={atEnd}   className="cm-icon-btn" title="End"><SkipForward size={13} /></button>
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--cm-text-muted)', textAlign: 'center', marginTop: '4px' }}>
-              ← → keys to navigate
+            {/* Position progress bar */}
+            <div style={{
+              marginTop: '8px',
+              height: '3px',
+              background: 'var(--cm-bg-hover)',
+              borderRadius: '2px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                width: pgnData.moves.length > 0 ? `${(currentMoveIndex / pgnData.moves.length) * 100}%` : '0%',
+                height: '100%',
+                background: 'var(--cm-accent)',
+                borderRadius: '2px',
+                transition: 'width 0.15s ease',
+              }} />
             </div>
           </div>
 

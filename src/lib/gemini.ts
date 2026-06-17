@@ -44,29 +44,38 @@ export async function askChessMentor(
   }
   const token = session.access_token;
 
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      question,
-      context,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ question, context }),
+    });
+  } catch {
+    throw new Error(
+      'AI coach is unreachable. Make sure the chess-mentor edge function is deployed ' +
+      'and GEMINI_API_KEY is set in your Supabase project secrets.',
+    );
+  }
 
   if (!response.ok) {
-    const errorText = await response.text();
+    const errorText = await response.text().catch(() => '');
 
-    let errorData;
-    try {
-      errorData = JSON.parse(errorText);
-    } catch {
-      throw new Error(`Request failed with status ${response.status}: ${errorText}`);
+    let errorData: { error?: string; message?: string } = {};
+    try { errorData = JSON.parse(errorText); } catch { /* use raw text */ }
+
+    const detail = errorData.error || errorData.message || errorText || `HTTP ${response.status}`;
+
+    if (response.status === 429) {
+      throw new Error('Rate limit reached (10 requests/min). Try again in a moment.');
     }
-
-    throw new Error(errorData.error || errorData.message || `Request failed with status ${response.status}`);
+    if (response.status === 500 && detail.includes('GEMINI_API_KEY')) {
+      throw new Error('AI coach is not configured — GEMINI_API_KEY missing in edge function secrets.');
+    }
+    throw new Error(detail);
   }
 
   const data = await response.json();
