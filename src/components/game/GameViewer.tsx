@@ -3,10 +3,13 @@ import { ChessBoard } from '../chess/ChessBoard';
 import { BoardArrows } from '../chess/BoardArrows';
 import { EvaluationGauge } from '../chess/EvaluationGauge';
 import { DisplaySettings, DisplayOptions } from '../analysis/DisplaySettings';
-import { EnginePanel } from '../analysis/EnginePanel';
+import { useStockfishAnalysis } from '../../hooks/useStockfishAnalysis';
+import { EvalGraph } from '../analysis/engine/EvalGraph';
+import { EngineEval, PvLines, EngineControls, MoveQualitySummary, FullGameAnalysis } from '../analysis/engine/EngineSections';
+import { SegmentedControl } from '../ui/SegmentedControl';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
-import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send, Zap, List, MessageCircle, RotateCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send, Zap, List, MessageCircle, RotateCw, Sparkles } from 'lucide-react';
 import type { Game } from '../../lib/supabase';
 import { parsePGN, PGNData } from '../../lib/pgn';
 import type { StockfishAnalysis } from '../../lib/stockfish';
@@ -17,8 +20,8 @@ import { detectOpening } from '../../lib/openings';
 import { useBreakpoint } from '../../hooks/useResponsive';
 import { useToast } from '../../contexts/ToastContext';
 
-// ─── Mobile tab type ────────────────────────────────────────────────────────
-type MobileTab = 'engine' | 'moves' | 'coach';
+// ─── Right-panel tab type (shared desktop + mobile) ─────────────────────────
+type RightTab = 'insights' | 'coach' | 'moves' | 'lines';
 
 interface GameViewerProps {
   game: Game;
@@ -37,9 +40,9 @@ export function GameViewer({ game }: GameViewerProps) {
 
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [pgnData, setPgnData] = useState<PGNData | null>(null);
-  const [mobileTab, setMobileTab] = useState<MobileTab>('engine');
+  const [rightTab, setRightTab] = useState<RightTab>('insights');
 
-  // Engine analysis results — driven by EnginePanel via onAnalysis callback
+  // Engine analysis results — fed by the useStockfishAnalysis hook (below).
   const [engineAnalysis, setEngineAnalysis] = useState<StockfishAnalysis | null>(null);
 
   // Full-game analysis results
@@ -86,6 +89,18 @@ export function GameViewer({ game }: GameViewerProps) {
   // Current FEN from precomputed array
   const currentFen = pgnData?.fen[currentMoveIndex]
     ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+  // Single Stockfish instance owned here so every right-panel tab reads the
+  // same engine state — switching tabs never remounts the engine or
+  // re-triggers analysis. Feeds the existing engineAnalysis/classifications
+  // state used by the eval bar, gauge, arrows, and move list.
+  const engine = useStockfishAnalysis({
+    fen: currentFen,
+    pgnData,
+    onAnalysis: setEngineAnalysis,
+    onClassifications: (map) => setClassifications(map),
+    autoAnalysis: displayOptions.showFishnetAnalysis,
+  });
 
   // ── Ask Coach ──────────────────────────────────────────────────────────────
 
@@ -577,19 +592,67 @@ export function GameViewer({ game }: GameViewerProps) {
     ? '#ef4444'
     : 'var(--cm-text-primary)';
 
-  // ── Shared engine panel props ──────────────────────────────────────────────
+  // ── Right-panel tabs (Insights → Coach → Moves → Lines) ────────────────────
 
-  const enginePanelProps = {
-    fen: currentFen,
-    pgnData,
-    currentMoveIndex,
-    onAnalysis: setEngineAnalysis,
-    onClassifications: (map: Map<number, MoveClassification>) => {
-      setClassifications(map);
-    },
-    onSeek: setCurrentMoveIndex,
-    autoAnalysis: displayOptions.showFishnetAnalysis,
+  const rightTabItems = [
+    { id: 'insights', label: 'Insights', icon: <Sparkles size={13} /> },
+    { id: 'coach',    label: 'Coach',    icon: <MessageCircle size={13} /> },
+    { id: 'moves',    label: 'Moves',    icon: <List size={13} /> },
+    { id: 'lines',    label: 'Lines',    icon: <Zap size={13} /> },
+  ];
+
+  const renderTabContent = (tab: RightTab) => {
+    switch (tab) {
+      case 'insights':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <EngineEval engine={engine} autoAnalysis={displayOptions.showFishnetAnalysis} />
+            <FullGameAnalysis engine={engine} pgnData={pgnData} />
+            <MoveQualitySummary engine={engine} />
+            {engine.bulkEvals.length > 1 && (
+              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div className="cm-section-label">Evaluation Graph</div>
+                <EvalGraph evals={engine.bulkEvals} currentIndex={currentMoveIndex} onSeek={setCurrentMoveIndex} />
+              </div>
+            )}
+          </div>
+        );
+      case 'coach':
+        return <div className="cm-panel"><CoachPanel /></div>;
+      case 'moves':
+        return <div className="cm-panel" style={{ maxHeight: '460px', overflowY: 'auto' }}><MoveList /></div>;
+      case 'lines':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <EngineEval engine={engine} autoAnalysis={displayOptions.showFishnetAnalysis} />
+            <PvLines engine={engine} />
+            <EngineControls engine={engine} />
+            <DisplaySettings options={displayOptions} onChange={setDisplayOptions} />
+          </div>
+        );
+    }
   };
+
+  // Move navigation row — placed under the board (desktop) and as the mobile
+  // sticky bar. Shared markup so the two stay in sync.
+  const navControls = (size: number) => (
+    <>
+      <button onClick={goToStart}    disabled={atStart} className="cm-icon-btn" title="Start"><SkipBack size={size} /></button>
+      <button onClick={goToPrevious} disabled={atStart} className="cm-icon-btn" title="Previous (←)"><ChevronLeft size={size} /></button>
+      <div style={{ flex: 1, textAlign: 'center' }}>
+        {currentMove ? (
+          <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: 'var(--cm-accent)' }}>{currentMove}</span>
+        ) : (
+          <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)' }}>Start</span>
+        )}
+        <span style={{ fontSize: '10px', color: 'var(--cm-text-muted)', marginLeft: '6px' }}>
+          {currentMoveIndex}/{pgnData.moves.length}
+        </span>
+      </div>
+      <button onClick={goToNext} disabled={atEnd} className="cm-icon-btn" title="Next (→)"><ChevronRight size={size} /></button>
+      <button onClick={goToEnd}  disabled={atEnd} className="cm-icon-btn" title="End"><SkipForward size={size} /></button>
+    </>
+  );
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -782,67 +845,44 @@ export function GameViewer({ game }: GameViewerProps) {
           </div>
         )}
 
-        {/* Board */}
-        <div className="gv-board-wrap">
-          <ChessBoard
-            fen={currentFen}
-            squareSize={squareSize}
-            arrowOverlay={arrowOverlay}
-          />
-        </div>
-
-        {/* Right panel — desktop only */}
-        <div className="gv-right-panel">
-          <DisplaySettings options={displayOptions} onChange={setDisplayOptions} />
-          <EnginePanel {...enginePanelProps} />
-
-          {/* Navigator */}
-          <div className="cm-panel" style={{ padding: '10px 12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <button onClick={goToStart}    disabled={atStart} className="cm-icon-btn" title="Start"><SkipBack size={13} /></button>
-              <button onClick={goToPrevious} disabled={atStart} className="cm-icon-btn" title="Previous (←)"><ChevronLeft size={13} /></button>
-              {/* Move counter */}
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                {currentMove ? (
-                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: 'var(--cm-accent)' }}>
-                    {currentMove}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)' }}>Start</span>
-                )}
-                <span style={{ fontSize: '10px', color: 'var(--cm-text-muted)', marginLeft: '6px' }}>
-                  {currentMoveIndex}/{pgnData.moves.length}
-                </span>
+        {/* Board + move navigation directly beneath it (desktop) */}
+        <div className="gv-board-col">
+          <div className="gv-board-wrap">
+            <ChessBoard
+              fen={currentFen}
+              squareSize={squareSize}
+              arrowOverlay={arrowOverlay}
+            />
+          </div>
+          {!isMobile && (
+            <div className="gv-board-nav" style={{ width: boardPx, maxWidth: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {navControls(15)}
               </div>
-              <button onClick={goToNext}     disabled={atEnd}   className="cm-icon-btn" title="Next (→)"><ChevronRight size={13} /></button>
-              <button onClick={goToEnd}      disabled={atEnd}   className="cm-icon-btn" title="End"><SkipForward size={13} /></button>
+              <div style={{ marginTop: '8px', height: '3px', background: 'var(--cm-bg-hover)', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{
+                  width: pgnData.moves.length > 0 ? `${(currentMoveIndex / pgnData.moves.length) * 100}%` : '0%',
+                  height: '100%', background: 'var(--cm-accent)', borderRadius: '2px', transition: 'width 0.15s ease',
+                }} />
+              </div>
             </div>
-            {/* Position progress bar */}
-            <div style={{
-              marginTop: '8px',
-              height: '3px',
-              background: 'var(--cm-bg-hover)',
-              borderRadius: '2px',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                width: pgnData.moves.length > 0 ? `${(currentMoveIndex / pgnData.moves.length) * 100}%` : '0%',
-                height: '100%',
-                background: 'var(--cm-accent)',
-                borderRadius: '2px',
-                transition: 'width 0.15s ease',
-              }} />
-            </div>
-          </div>
-
-          {/* Ask Coach */}
-          <div className="cm-panel"><CoachPanel /></div>
-
-          {/* Move list */}
-          <div className="cm-panel" style={{ maxHeight: '260px', overflowY: 'auto' }}>
-            <MoveList />
-          </div>
+          )}
         </div>
+
+        {/* Right panel — desktop only: one contextual panel, tabbed */}
+        {!isMobile && (
+          <div className="gv-right-panel">
+            <div style={{ padding: '2px 2px 10px' }}>
+              <SegmentedControl
+                items={rightTabItems}
+                value={rightTab}
+                onChange={id => setRightTab(id as RightTab)}
+                ariaLabel="Analysis panel"
+              />
+            </div>
+            {renderTabContent(rightTab)}
+          </div>
+        )}
       </div>
 
       {/* ── Mobile: sticky nav bar below board ────────────────────────────── */}
@@ -863,41 +903,19 @@ export function GameViewer({ game }: GameViewerProps) {
         </div>
       )}
 
-      {/* ── Mobile: tab strip ─────────────────────────────────────────────── */}
+      {/* ── Mobile: same tabbed panel (Insights → Coach → Moves → Lines) ──── */}
       {isMobile && (
         <>
-          <div className="gv-tabs">
-            {([
-              { id: 'engine' as MobileTab, label: 'Engine', icon: <Zap size={14} /> },
-              { id: 'moves'  as MobileTab, label: 'Moves',  icon: <List size={14} /> },
-              { id: 'coach'  as MobileTab, label: 'Coach',  icon: <MessageCircle size={14} /> },
-            ] as const).map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setMobileTab(tab.id)}
-                className={`gv-tab-btn${mobileTab === tab.id ? ' gv-tab-btn--active' : ''}`}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
+          <div className="gv-tabs" style={{ padding: '0 14px' }}>
+            <SegmentedControl
+              items={rightTabItems}
+              value={rightTab}
+              onChange={id => setRightTab(id as RightTab)}
+              ariaLabel="Analysis panel"
+            />
           </div>
-
-          {/* Mobile tab content */}
           <div className="gv-tab-content">
-            {mobileTab === 'engine' && (
-              <EnginePanel {...enginePanelProps} />
-            )}
-            {mobileTab === 'moves' && (
-              <div className="cm-panel" style={{ maxHeight: 'none' }}>
-                <MoveList />
-              </div>
-            )}
-            {mobileTab === 'coach' && (
-              <div className="cm-panel">
-                <CoachPanel />
-              </div>
-            )}
+            {renderTabContent(rightTab)}
           </div>
         </>
       )}
