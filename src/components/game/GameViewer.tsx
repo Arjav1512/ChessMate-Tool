@@ -5,9 +5,9 @@ import { EvaluationGauge } from '../chess/EvaluationGauge';
 import { DisplaySettings, DisplayOptions } from '../analysis/DisplaySettings';
 import { useStockfishAnalysis } from '../../hooks/useStockfishAnalysis';
 import { EvalGraph } from '../analysis/engine/EvalGraph';
-import { EngineEval, PvLines, EngineControls, MoveQualitySummary, FullGameAnalysis } from '../analysis/engine/EngineSections';
-import { InsightCard } from '../analysis/engine/InsightCards';
-import { deriveInsights, type GameInsight } from '../../utils/gameInsights';
+import { EngineEval, PvLines, EngineControls, MoveQualitySummary } from '../analysis/engine/EngineSections';
+import { InsightCard, StudyRecommendation } from '../analysis/engine/InsightCards';
+import { deriveInsights, buildStudyPlan } from '../../utils/gameInsights';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { Drawer } from '../ui/Drawer';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
@@ -106,10 +106,14 @@ export function GameViewer({ game }: GameViewerProps) {
     autoAnalysis: displayOptions.showFishnetAnalysis,
   });
 
-  // Derived game insights (from full-game classifications + evals). Declared
-  // here — above any early return — to satisfy the rules of hooks.
+  // Derived game insights + study plan (from full-game classifications +
+  // evals only). Declared here — above any early return — for rules of hooks.
   const gameInsights = useMemo(
-    () => deriveInsights(pgnData?.moves ?? [], engine.classMap, engine.bulkEvals, game.user_color),
+    () => deriveInsights(pgnData?.moves ?? [], engine.classMap, engine.bulkEvals, game.user_color, opening),
+    [pgnData?.moves, engine.classMap, engine.bulkEvals, game.user_color, opening],
+  );
+  const studyPlan = useMemo(
+    () => buildStudyPlan(pgnData?.moves ?? [], engine.classMap, engine.bulkEvals, game.user_color),
     [pgnData?.moves, engine.classMap, engine.bulkEvals, game.user_color],
   );
 
@@ -617,70 +621,77 @@ export function GameViewer({ game }: GameViewerProps) {
     setCoachQuestion(question);
     setRightTab('coach');
   };
-  const insightQuestion = (ins: GameInsight) => {
-    if (ins.kind === 'biggest-mistake') return `Why was ${ins.move} a mistake, and what should I have played instead?`;
-    if (ins.kind === 'turning-point') return `Why was ${ins.move} the turning point of this game?`;
-    return `Why was ${ins.move} a strong move here?`;
-  };
   const showPosition = (moveIndex: number) => setCurrentMoveIndex(moveIndex + 1);
-  const jumpToMove = (moveIndex: number) => { setCurrentMoveIndex(moveIndex + 1); setRightTab('moves'); };
+  const showMoveContext = (moveIndex: number) => { setCurrentMoveIndex(moveIndex + 1); setRightTab('moves'); };
 
   const renderTabContent = (tab: RightTab) => {
     switch (tab) {
-      case 'insights':
+      case 'insights': {
+        const analyzed = engine.classMap.size > 0;
+        const analyzing = !!engine.bulkProgress;
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {/* Opening insight — available as soon as the opening is detected */}
-            {opening && (
-              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: 'var(--radius-lg)', padding: '12px 13px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginBottom: '6px' }}>
-                  <span style={{ width: '28px', height: '28px', borderRadius: '8px', display: 'grid', placeItems: 'center', background: 'var(--cm-accent-dim)', color: 'var(--cm-accent-bright)', flexShrink: 0 }}><Sparkles size={15} /></span>
-                  <span style={{ fontSize: '13.5px', fontWeight: 700 }}>Opening</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-family-mono)', fontSize: '11px', color: 'var(--cm-accent-bright)', background: 'var(--cm-accent-dim)', padding: '3px 8px', borderRadius: '6px' }}>{opening.eco}</span>
-                </div>
-                <p style={{ margin: '0 0 10px', fontSize: '12.8px', lineHeight: 1.55, color: 'var(--cm-text-secondary)' }}>
-                  You played the <b style={{ color: 'var(--cm-text-primary)' }}>{opening.name}</b>.
+            {/* Interpretation layer, in fixed order:
+                Opening → Critical Blunder(s) → Turning Point → Best Move → Pattern */}
+            {gameInsights.map((ins, idx) => (
+              <InsightCard
+                key={idx}
+                insight={ins}
+                onAskCoach={() => askCoachAbout(ins.coachQuestion)}
+                onShowPosition={ins.moveIndex != null ? () => showPosition(ins.moveIndex!) : undefined}
+                onShowMoveContext={ins.moveIndex != null ? () => showMoveContext(ins.moveIndex!) : undefined}
+              />
+            ))}
+
+            {/* Before analysis — a single human CTA, not an engine panel */}
+            {!analyzed && !analyzing && (
+              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: 'var(--radius-lg)', padding: '16px 14px', textAlign: 'center' }}>
+                <p style={{ margin: '0 0 12px', fontSize: '13px', lineHeight: 1.55, color: 'var(--cm-text-secondary)' }}>
+                  Analyze this game to unlock your <b style={{ color: 'var(--cm-text-primary)' }}>critical mistakes</b>, the <b style={{ color: 'var(--cm-text-primary)' }}>turning point</b>, your <b style={{ color: 'var(--cm-text-primary)' }}>best move</b>, and a <b style={{ color: 'var(--cm-text-primary)' }}>personal study plan</b>.
                 </p>
                 <button
-                  onClick={() => askCoachAbout(`Tell me about the ${opening.name} opening and how well I handled it in this game.`)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', fontWeight: 600, color: 'var(--cm-accent-bright)', background: 'var(--cm-accent-dim)', border: 'none', borderRadius: '8px', padding: '6px 11px', cursor: 'pointer' }}
+                  onClick={engine.startFullGameAnalysis}
+                  disabled={!pgnData.moves.length}
+                  style={{ width: '100%', padding: '10px', background: 'var(--cm-accent)', border: 'none', borderRadius: '9px', color: 'var(--cm-text-inverse)', fontSize: '13.5px', fontWeight: 600, cursor: pgnData.moves.length ? 'pointer' : 'not-allowed', boxShadow: 'var(--shadow-primary-glow)' }}
                 >
-                  <MessageCircle size={12} /> Ask Coach About This
+                  ⚡ Analyze this game
                 </button>
               </div>
             )}
 
-            {/* Derived insight cards — the lead content once a game is analyzed */}
-            {gameInsights.map(ins => (
-              <InsightCard
-                key={ins.kind}
-                insight={ins}
-                onExplain={() => askCoachAbout(insightQuestion(ins))}
-                onShowPosition={() => showPosition(ins.moveIndex)}
-                onJumpToMove={() => jumpToMove(ins.moveIndex)}
+            {/* During analysis — progress */}
+            {analyzing && engine.bulkProgress && (
+              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: 'var(--radius-lg)', padding: '14px 13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ height: '6px', background: 'var(--cm-bg-hover)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: `${(engine.bulkProgress.done / engine.bulkProgress.total) * 100}%`, height: '100%', background: 'var(--cm-accent)', borderRadius: '3px', transition: 'width 0.2s' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--cm-text-secondary)' }}>Reading your game… {engine.bulkProgress.done}/{engine.bulkProgress.total}</span>
+                  <button onClick={engine.cancelFullGameAnalysis} style={{ padding: '3px 8px', background: 'var(--cm-error-dim)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '5px', color: 'var(--cm-error)', fontSize: '11px', cursor: 'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {/* Study recommendation — fixed bottom section */}
+            {analyzed && studyPlan && (
+              <StudyRecommendation
+                plan={studyPlan}
+                onAskCoach={() => askCoachAbout('Based on the mistakes and strengths in this game, what should my training plan look like over the next few weeks?')}
               />
-            ))}
-
-            {/* Empty state — guide the user to unlock insights */}
-            {engine.classMap.size === 0 && !engine.bulkProgress && (
-              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px dashed var(--cm-border-default)', borderRadius: 'var(--radius-lg)', padding: '14px 13px', textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: '12.5px', lineHeight: 1.55, color: 'var(--cm-text-secondary)' }}>
-                  Run a full-game analysis to surface your <b style={{ color: 'var(--cm-text-primary)' }}>biggest mistake</b>, the <b style={{ color: 'var(--cm-text-primary)' }}>turning point</b>, and your <b style={{ color: 'var(--cm-text-primary)' }}>best move</b>.
-                </p>
-              </div>
             )}
 
-            <FullGameAnalysis engine={engine} pgnData={pgnData} />
-            <MoveQualitySummary engine={engine} />
-            {engine.bulkEvals.length > 1 && (
-              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div className="cm-section-label">Evaluation Graph</div>
-                <EvalGraph evals={engine.bulkEvals} currentIndex={currentMoveIndex} onSeek={setCurrentMoveIndex} />
-              </div>
+            {/* Subtle re-analyze */}
+            {analyzed && !analyzing && (
+              <button
+                onClick={engine.startFullGameAnalysis}
+                style={{ alignSelf: 'center', display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', color: 'var(--cm-text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+              >
+                ↺ Re-analyze game
+              </button>
             )}
-            <EngineEval engine={engine} autoAnalysis={displayOptions.showFishnetAnalysis} />
           </div>
         );
+      }
       case 'coach':
         return <div className="cm-panel"><CoachPanel /></div>;
       case 'moves':
@@ -690,6 +701,13 @@ export function GameViewer({ game }: GameViewerProps) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <EngineEval engine={engine} autoAnalysis={displayOptions.showFishnetAnalysis} />
             <PvLines engine={engine} />
+            <MoveQualitySummary engine={engine} />
+            {engine.bulkEvals.length > 1 && (
+              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div className="cm-section-label">Evaluation Graph</div>
+                <EvalGraph evals={engine.bulkEvals} currentIndex={currentMoveIndex} onSeek={setCurrentMoveIndex} />
+              </div>
+            )}
             <button
               onClick={() => setSettingsOpen(true)}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: '8px', color: 'var(--cm-text-secondary)', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}

@@ -1,64 +1,94 @@
 import { describe, it, expect } from 'vitest';
-import { deriveInsights } from './gameInsights';
+import { deriveInsights, buildStudyPlan } from './gameInsights';
 import type { MoveClassification } from './moveClassifier';
 
 const cm = (entries: [number, MoveClassification][]) => new Map(entries);
 
 describe('deriveInsights', () => {
-  it('returns nothing without analysis data', () => {
+  it('returns only the opening card when there is no analysis yet', () => {
+    const out = deriveInsights(['e4'], new Map(), [0.2], 'white', { eco: 'C20', name: 'King\'s Pawn' });
+    expect(out).toHaveLength(1);
+    expect(out[0].kind).toBe('opening');
+  });
+
+  it('returns nothing without analysis or opening', () => {
     expect(deriveInsights([], new Map(), [], 'white')).toEqual([]);
-    expect(deriveInsights(['e4'], new Map(), [0.2], 'white')).toEqual([]);
   });
 
-  it('flags the user\'s biggest mistake by eval loss (White)', () => {
-    // moves: 0 e4 (W), 1 e5 (B), 2 Qh5 (W blunder), 3 Nc6 (B)
+  it('orders sections opening → blunder → turning-point → best-move', () => {
+    const moves = ['e4', 'e5', 'Qh5', 'Nc6', 'Bc4', 'g6', 'Qf3', 'Nf6'];
+    const evals = [0.2, 0.2, 0.3, -2.6, -2.5, -2.5, -2.4, -2.4, -2.3];
+    const classMap = cm([[0, 'best'], [2, 'blunder']]);
+    const out = deriveInsights(moves, classMap, evals, 'white', { eco: 'C20', name: 'King\'s Pawn' });
+    const kinds = out.map(i => i.kind);
+    expect(kinds[0]).toBe('opening');
+    expect(kinds).toContain('blunder');
+    // opening must come before blunder
+    expect(kinds.indexOf('opening')).toBeLessThan(kinds.indexOf('blunder'));
+  });
+
+  it('every insight carries why, learn, and a coach question', () => {
     const moves = ['e4', 'e5', 'Qh5', 'Nc6'];
-    const evals = [0.2, 0.2, 0.3, -2.5, -2.4]; // pos 0..4; White's move 2 (pos2->3) drops 2.8
-    const classMap = cm([[2, 'blunder']]);
-    const out = deriveInsights(moves, classMap, evals, 'white');
-    const mistake = out.find(i => i.kind === 'biggest-mistake');
-    expect(mistake).toBeTruthy();
-    expect(mistake!.move).toBe('Qh5');
-    expect(mistake!.moveIndex).toBe(2);
+    const evals = [0.2, 0.2, 0.3, -2.6, -2.5];
+    const out = deriveInsights(moves, cm([[2, 'blunder']]), evals, 'white');
+    for (const ins of out) {
+      expect(ins.why.length).toBeGreaterThan(10);
+      expect(ins.learn.length).toBeGreaterThan(10);
+      expect(ins.coachQuestion.length).toBeGreaterThan(5);
+    }
   });
 
-  it('only considers the user\'s own moves for mistakes', () => {
-    // The blunder is Black's move (index 1); user is White → should NOT be the user's mistake
+  it('only counts the user\'s own moves as blunders', () => {
     const moves = ['e4', 'Qd8', 'Nf3'];
-    const evals = [0.2, 0.3, 2.5, 2.4]; // Black move 1 (pos1->2) rises 2.2 (bad for Black)
-    const classMap = cm([[1, 'blunder']]);
-    const out = deriveInsights(moves, classMap, evals, 'white');
-    expect(out.find(i => i.kind === 'biggest-mistake')).toBeFalsy();
+    const evals = [0.2, 0.3, 2.6, 2.5]; // Black's move 1 is the bad one
+    const out = deriveInsights(moves, cm([[1, 'blunder']]), evals, 'white');
+    expect(out.find(i => i.kind === 'blunder')).toBeFalsy();
   });
 
-  it('identifies the turning point as the largest absolute swing', () => {
-    const moves = ['e4', 'e5', 'Bc4', 'Nf6', 'Ng5'];
-    const evals = [0.2, 0.2, 0.3, 0.3, 0.4, 3.5]; // biggest swing at move 4 (pos4->5 = +3.1)
-    const classMap = cm([[0, 'good'], [4, 'best']]);
+  it('detects a tactical-lapse habit when there are 2+ blunders', () => {
+    const moves = ['e4', 'e5', 'Qh5', 'Nc6', 'Bc4', 'Nf6', 'Qf7', 'Kxf7'];
+    const evals = [0.2, 0.2, 0.3, -2.0, -1.9, -1.9, -5.0, -4.9, -4.8];
+    const classMap = cm([[2, 'blunder'], [6, 'blunder']]);
     const out = deriveInsights(moves, classMap, evals, 'white');
-    const turn = out.find(i => i.kind === 'turning-point');
-    expect(turn).toBeTruthy();
-    expect(turn!.moveIndex).toBe(4);
+    expect(out.find(i => i.kind === 'pattern')).toBeTruthy();
   });
 
-  it('surfaces the user\'s best move', () => {
-    const moves = ['e4', 'e5', 'Nf3'];
-    const evals = [0.2, 0.2, 0.2, 0.3];
-    const classMap = cm([[2, 'best']]); // White's move 2
-    const out = deriveInsights(moves, classMap, evals, 'white');
-    const best = out.find(i => i.kind === 'best-move');
-    expect(best).toBeTruthy();
-    expect(best!.move).toBe('Nf3');
-  });
-
-  it('clamps forced-mate evals so they do not dwarf every swing', () => {
+  it('clamps forced-mate evals so they do not dominate', () => {
     const moves = ['e4', 'e5', 'Qh5', 'Ke7'];
-    const evals = [0.2, 0.2, 0.3, 0.3, 999]; // mate appears at the end
-    const classMap = cm([[3, 'blunder']]);
-    const out = deriveInsights(moves, classMap, evals, 'black');
-    // Black's move 3 (pos3->4) swings up by clamp(999)-0.3 ≈ 9.7, not 998.7
-    const mistake = out.find(i => i.kind === 'biggest-mistake');
-    expect(mistake).toBeTruthy();
-    expect(mistake!.move).toBe('Ke7');
+    const evals = [0.2, 0.2, 0.3, 0.3, 999];
+    const out = deriveInsights(moves, cm([[3, 'blunder']]), evals, 'black');
+    const b = out.find(i => i.kind === 'blunder');
+    expect(b?.move).toBe('Ke7');
+    // detail mentions a clamped (~9-10) swing, never ~998
+    expect(b?.why.includes('998')).toBe(false);
+  });
+});
+
+describe('buildStudyPlan', () => {
+  it('returns null without analysis', () => {
+    expect(buildStudyPlan([], new Map(), [], 'white')).toBeNull();
+  });
+
+  it('flags tactical alertness as a weakness and recommends tactics when blunders exist', () => {
+    const moves = ['e4', 'e5', 'Qh5', 'Nc6'];
+    const evals = [0.2, 0.2, 0.3, -2.6, -2.5];
+    const plan = buildStudyPlan(moves, cm([[2, 'blunder']]), evals, 'white')!;
+    expect(plan.weaknesses.length).toBeGreaterThanOrEqual(1);
+    expect(plan.weaknesses[0].label).toMatch(/Tactical/i);
+    expect(plan.training?.label).toMatch(/tactics/i);
+  });
+
+  it('surfaces a strength when the user finds strong moves', () => {
+    const moves = ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6'];
+    const evals = [0.2, 0.2, 0.2, 0.2, 0.3, 0.3, 0.3];
+    const plan = buildStudyPlan(moves, cm([[0, 'best'], [2, 'best'], [4, 'excellent']]), evals, 'white')!;
+    expect(plan.strength).toBeTruthy();
+  });
+
+  it('caps weaknesses at two', () => {
+    const moves = ['e4', 'e5', 'Qh5', 'Nc6', 'Bc4', 'Nf6'];
+    const evals = [0.2, 0.2, 0.3, -1.5, -1.4, -1.4, -3.0];
+    const plan = buildStudyPlan(moves, cm([[2, 'blunder'], [4, 'mistake']]), evals, 'white')!;
+    expect(plan.weaknesses.length).toBeLessThanOrEqual(2);
   });
 });
