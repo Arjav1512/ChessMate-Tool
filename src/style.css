@@ -1408,8 +1408,8 @@ select.form-control {
 /* Right panel column */
 .gv-right-panel {
   flex: 1;
-  min-width: 240px;
-  max-width: 320px;
+  min-width: 260px;
+  max-width: 360px;
   display: flex;
   flex-direction: column;
   gap: 10px;

@@ -6,10 +6,13 @@ import { DisplaySettings, DisplayOptions } from '../analysis/DisplaySettings';
 import { useStockfishAnalysis } from '../../hooks/useStockfishAnalysis';
 import { EvalGraph } from '../analysis/engine/EvalGraph';
 import { EngineEval, PvLines, EngineControls, MoveQualitySummary, FullGameAnalysis } from '../analysis/engine/EngineSections';
+import { InsightCard } from '../analysis/engine/InsightCards';
+import { deriveInsights, type GameInsight } from '../../utils/gameInsights';
 import { SegmentedControl } from '../ui/SegmentedControl';
+import { Drawer } from '../ui/Drawer';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
-import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send, Zap, List, MessageCircle, RotateCw, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send, Zap, List, MessageCircle, RotateCw, Sparkles, Settings } from 'lucide-react';
 import type { Game } from '../../lib/supabase';
 import { parsePGN, PGNData } from '../../lib/pgn';
 import type { StockfishAnalysis } from '../../lib/stockfish';
@@ -41,6 +44,7 @@ export function GameViewer({ game }: GameViewerProps) {
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [pgnData, setPgnData] = useState<PGNData | null>(null);
   const [rightTab, setRightTab] = useState<RightTab>('insights');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Engine analysis results — fed by the useStockfishAnalysis hook (below).
   const [engineAnalysis, setEngineAnalysis] = useState<StockfishAnalysis | null>(null);
@@ -101,6 +105,13 @@ export function GameViewer({ game }: GameViewerProps) {
     onClassifications: (map) => setClassifications(map),
     autoAnalysis: displayOptions.showFishnetAnalysis,
   });
+
+  // Derived game insights (from full-game classifications + evals). Declared
+  // here — above any early return — to satisfy the rules of hooks.
+  const gameInsights = useMemo(
+    () => deriveInsights(pgnData?.moves ?? [], engine.classMap, engine.bulkEvals, game.user_color),
+    [pgnData?.moves, engine.classMap, engine.bulkEvals, game.user_color],
+  );
 
   // ── Ask Coach ──────────────────────────────────────────────────────────────
 
@@ -601,12 +612,64 @@ export function GameViewer({ game }: GameViewerProps) {
     { id: 'lines',    label: 'Lines',    icon: <Zap size={13} /> },
   ];
 
+  // Insight-card actions.
+  const askCoachAbout = (question: string) => {
+    setCoachQuestion(question);
+    setRightTab('coach');
+  };
+  const insightQuestion = (ins: GameInsight) => {
+    if (ins.kind === 'biggest-mistake') return `Why was ${ins.move} a mistake, and what should I have played instead?`;
+    if (ins.kind === 'turning-point') return `Why was ${ins.move} the turning point of this game?`;
+    return `Why was ${ins.move} a strong move here?`;
+  };
+  const showPosition = (moveIndex: number) => setCurrentMoveIndex(moveIndex + 1);
+  const jumpToMove = (moveIndex: number) => { setCurrentMoveIndex(moveIndex + 1); setRightTab('moves'); };
+
   const renderTabContent = (tab: RightTab) => {
     switch (tab) {
       case 'insights':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <EngineEval engine={engine} autoAnalysis={displayOptions.showFishnetAnalysis} />
+            {/* Opening insight — available as soon as the opening is detected */}
+            {opening && (
+              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: 'var(--radius-lg)', padding: '12px 13px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginBottom: '6px' }}>
+                  <span style={{ width: '28px', height: '28px', borderRadius: '8px', display: 'grid', placeItems: 'center', background: 'var(--cm-accent-dim)', color: 'var(--cm-accent-bright)', flexShrink: 0 }}><Sparkles size={15} /></span>
+                  <span style={{ fontSize: '13.5px', fontWeight: 700 }}>Opening</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-family-mono)', fontSize: '11px', color: 'var(--cm-accent-bright)', background: 'var(--cm-accent-dim)', padding: '3px 8px', borderRadius: '6px' }}>{opening.eco}</span>
+                </div>
+                <p style={{ margin: '0 0 10px', fontSize: '12.8px', lineHeight: 1.55, color: 'var(--cm-text-secondary)' }}>
+                  You played the <b style={{ color: 'var(--cm-text-primary)' }}>{opening.name}</b>.
+                </p>
+                <button
+                  onClick={() => askCoachAbout(`Tell me about the ${opening.name} opening and how well I handled it in this game.`)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', fontWeight: 600, color: 'var(--cm-accent-bright)', background: 'var(--cm-accent-dim)', border: 'none', borderRadius: '8px', padding: '6px 11px', cursor: 'pointer' }}
+                >
+                  <MessageCircle size={12} /> Ask Coach About This
+                </button>
+              </div>
+            )}
+
+            {/* Derived insight cards — the lead content once a game is analyzed */}
+            {gameInsights.map(ins => (
+              <InsightCard
+                key={ins.kind}
+                insight={ins}
+                onExplain={() => askCoachAbout(insightQuestion(ins))}
+                onShowPosition={() => showPosition(ins.moveIndex)}
+                onJumpToMove={() => jumpToMove(ins.moveIndex)}
+              />
+            ))}
+
+            {/* Empty state — guide the user to unlock insights */}
+            {engine.classMap.size === 0 && !engine.bulkProgress && (
+              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px dashed var(--cm-border-default)', borderRadius: 'var(--radius-lg)', padding: '14px 13px', textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: '12.5px', lineHeight: 1.55, color: 'var(--cm-text-secondary)' }}>
+                  Run a full-game analysis to surface your <b style={{ color: 'var(--cm-text-primary)' }}>biggest mistake</b>, the <b style={{ color: 'var(--cm-text-primary)' }}>turning point</b>, and your <b style={{ color: 'var(--cm-text-primary)' }}>best move</b>.
+                </p>
+              </div>
+            )}
+
             <FullGameAnalysis engine={engine} pgnData={pgnData} />
             <MoveQualitySummary engine={engine} />
             {engine.bulkEvals.length > 1 && (
@@ -615,6 +678,7 @@ export function GameViewer({ game }: GameViewerProps) {
                 <EvalGraph evals={engine.bulkEvals} currentIndex={currentMoveIndex} onSeek={setCurrentMoveIndex} />
               </div>
             )}
+            <EngineEval engine={engine} autoAnalysis={displayOptions.showFishnetAnalysis} />
           </div>
         );
       case 'coach':
@@ -626,8 +690,12 @@ export function GameViewer({ game }: GameViewerProps) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <EngineEval engine={engine} autoAnalysis={displayOptions.showFishnetAnalysis} />
             <PvLines engine={engine} />
-            <EngineControls engine={engine} />
-            <DisplaySettings options={displayOptions} onChange={setDisplayOptions} />
+            <button
+              onClick={() => setSettingsOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: '8px', color: 'var(--cm-text-secondary)', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}
+            >
+              <Settings size={13} /> Engine depth, lines &amp; display options
+            </button>
           </div>
         );
     }
@@ -872,13 +940,25 @@ export function GameViewer({ game }: GameViewerProps) {
         {/* Right panel — desktop only: one contextual panel, tabbed */}
         {!isMobile && (
           <div className="gv-right-panel">
-            <div style={{ padding: '2px 2px 10px' }}>
-              <SegmentedControl
-                items={rightTabItems}
-                value={rightTab}
-                onChange={id => setRightTab(id as RightTab)}
-                ariaLabel="Analysis panel"
-              />
+            <div style={{ padding: '2px 2px 10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <SegmentedControl
+                  items={rightTabItems}
+                  value={rightTab}
+                  onChange={id => setRightTab(id as RightTab)}
+                  ariaLabel="Analysis panel"
+                  size="sm"
+                />
+              </div>
+              <button
+                onClick={() => setSettingsOpen(true)}
+                aria-label="Analysis settings"
+                title="Analysis settings"
+                className="cm-icon-btn"
+                style={{ flexShrink: 0 }}
+              >
+                <Settings size={15} />
+              </button>
             </div>
             {renderTabContent(rightTab)}
           </div>
@@ -906,19 +986,38 @@ export function GameViewer({ game }: GameViewerProps) {
       {/* ── Mobile: same tabbed panel (Insights → Coach → Moves → Lines) ──── */}
       {isMobile && (
         <>
-          <div className="gv-tabs" style={{ padding: '0 14px' }}>
-            <SegmentedControl
-              items={rightTabItems}
-              value={rightTab}
-              onChange={id => setRightTab(id as RightTab)}
-              ariaLabel="Analysis panel"
-            />
+          <div className="gv-tabs" style={{ padding: '0 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <SegmentedControl
+                items={rightTabItems}
+                value={rightTab}
+                onChange={id => setRightTab(id as RightTab)}
+                ariaLabel="Analysis panel"
+              />
+            </div>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Analysis settings"
+              title="Analysis settings"
+              className="cm-icon-btn"
+              style={{ flexShrink: 0 }}
+            >
+              <Settings size={16} />
+            </button>
           </div>
           <div className="gv-tab-content">
             {renderTabContent(rightTab)}
           </div>
         </>
       )}
+
+      {/* ── Analysis settings drawer (display options + engine controls) ───── */}
+      <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Analysis settings">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <EngineControls engine={engine} />
+          <DisplaySettings options={displayOptions} onChange={setDisplayOptions} />
+        </div>
+      </Drawer>
     </div>
   );
 }
