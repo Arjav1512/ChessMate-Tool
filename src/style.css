@@ -1390,11 +1390,26 @@ select.form-control {
   align-items: flex-start;
 }
 
+/* Board + under-board move navigation (keeps the board the visual anchor) */
+.gv-board-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.gv-board-nav {
+  background: var(--cm-bg-surface);
+  border: 1px solid var(--cm-border-subtle);
+  border-radius: 10px;
+  padding: 8px 10px;
+  align-self: center;
+}
+
 /* Right panel column */
 .gv-right-panel {
   flex: 1;
-  min-width: 240px;
-  max-width: 320px;
+  min-width: 260px;
+  max-width: 360px;
   display: flex;
   flex-direction: column;
   gap: 10px;

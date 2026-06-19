@@ -3,10 +3,16 @@ import { ChessBoard } from '../chess/ChessBoard';
 import { BoardArrows } from '../chess/BoardArrows';
 import { EvaluationGauge } from '../chess/EvaluationGauge';
 import { DisplaySettings, DisplayOptions } from '../analysis/DisplaySettings';
-import { EnginePanel } from '../analysis/EnginePanel';
+import { useStockfishAnalysis } from '../../hooks/useStockfishAnalysis';
+import { EvalGraph } from '../analysis/engine/EvalGraph';
+import { EngineEval, PvLines, EngineControls, MoveQualitySummary } from '../analysis/engine/EngineSections';
+import { InsightCard, StudyRecommendation } from '../analysis/engine/InsightCards';
+import { deriveInsights, buildStudyPlan } from '../../utils/gameInsights';
+import { SegmentedControl } from '../ui/SegmentedControl';
+import { Drawer } from '../ui/Drawer';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
-import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send, Zap, List, MessageCircle, RotateCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send, Zap, List, MessageCircle, RotateCw, Sparkles, Settings } from 'lucide-react';
 import type { Game } from '../../lib/supabase';
 import { parsePGN, PGNData } from '../../lib/pgn';
 import type { StockfishAnalysis } from '../../lib/stockfish';
@@ -17,8 +23,8 @@ import { detectOpening } from '../../lib/openings';
 import { useBreakpoint } from '../../hooks/useResponsive';
 import { useToast } from '../../contexts/ToastContext';
 
-// ─── Mobile tab type ────────────────────────────────────────────────────────
-type MobileTab = 'engine' | 'moves' | 'coach';
+// ─── Right-panel tab type (shared desktop + mobile) ─────────────────────────
+type RightTab = 'insights' | 'coach' | 'moves' | 'lines';
 
 interface GameViewerProps {
   game: Game;
@@ -37,9 +43,10 @@ export function GameViewer({ game }: GameViewerProps) {
 
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [pgnData, setPgnData] = useState<PGNData | null>(null);
-  const [mobileTab, setMobileTab] = useState<MobileTab>('engine');
+  const [rightTab, setRightTab] = useState<RightTab>('insights');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Engine analysis results — driven by EnginePanel via onAnalysis callback
+  // Engine analysis results — fed by the useStockfishAnalysis hook (below).
   const [engineAnalysis, setEngineAnalysis] = useState<StockfishAnalysis | null>(null);
 
   // Full-game analysis results
@@ -86,6 +93,29 @@ export function GameViewer({ game }: GameViewerProps) {
   // Current FEN from precomputed array
   const currentFen = pgnData?.fen[currentMoveIndex]
     ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+  // Single Stockfish instance owned here so every right-panel tab reads the
+  // same engine state — switching tabs never remounts the engine or
+  // re-triggers analysis. Feeds the existing engineAnalysis/classifications
+  // state used by the eval bar, gauge, arrows, and move list.
+  const engine = useStockfishAnalysis({
+    fen: currentFen,
+    pgnData,
+    onAnalysis: setEngineAnalysis,
+    onClassifications: (map) => setClassifications(map),
+    autoAnalysis: displayOptions.showFishnetAnalysis,
+  });
+
+  // Derived game insights + study plan (from full-game classifications +
+  // evals only). Declared here — above any early return — for rules of hooks.
+  const gameInsights = useMemo(
+    () => deriveInsights(pgnData?.moves ?? [], engine.classMap, engine.bulkEvals, game.user_color, opening),
+    [pgnData?.moves, engine.classMap, engine.bulkEvals, game.user_color, opening],
+  );
+  const studyPlan = useMemo(
+    () => buildStudyPlan(pgnData?.moves ?? [], engine.classMap, engine.bulkEvals, game.user_color),
+    [pgnData?.moves, engine.classMap, engine.bulkEvals, game.user_color],
+  );
 
   // ── Ask Coach ──────────────────────────────────────────────────────────────
 
@@ -577,19 +607,138 @@ export function GameViewer({ game }: GameViewerProps) {
     ? '#ef4444'
     : 'var(--cm-text-primary)';
 
-  // ── Shared engine panel props ──────────────────────────────────────────────
+  // ── Right-panel tabs (Insights → Coach → Moves → Lines) ────────────────────
 
-  const enginePanelProps = {
-    fen: currentFen,
-    pgnData,
-    currentMoveIndex,
-    onAnalysis: setEngineAnalysis,
-    onClassifications: (map: Map<number, MoveClassification>) => {
-      setClassifications(map);
-    },
-    onSeek: setCurrentMoveIndex,
-    autoAnalysis: displayOptions.showFishnetAnalysis,
+  const rightTabItems = [
+    { id: 'insights', label: 'Insights', icon: <Sparkles size={13} /> },
+    { id: 'coach',    label: 'Coach',    icon: <MessageCircle size={13} /> },
+    { id: 'moves',    label: 'Moves',    icon: <List size={13} /> },
+    { id: 'lines',    label: 'Lines',    icon: <Zap size={13} /> },
+  ];
+
+  // Insight-card actions.
+  const askCoachAbout = (question: string) => {
+    setCoachQuestion(question);
+    setRightTab('coach');
   };
+  const showPosition = (moveIndex: number) => setCurrentMoveIndex(moveIndex + 1);
+  const showMoveContext = (moveIndex: number) => { setCurrentMoveIndex(moveIndex + 1); setRightTab('moves'); };
+
+  const renderTabContent = (tab: RightTab) => {
+    switch (tab) {
+      case 'insights': {
+        const analyzed = engine.classMap.size > 0;
+        const analyzing = !!engine.bulkProgress;
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Interpretation layer, in fixed order:
+                Opening → Critical Blunder(s) → Turning Point → Best Move → Pattern */}
+            {gameInsights.map((ins, idx) => (
+              <InsightCard
+                key={idx}
+                insight={ins}
+                onAskCoach={() => askCoachAbout(ins.coachQuestion)}
+                onShowPosition={ins.moveIndex != null ? () => showPosition(ins.moveIndex!) : undefined}
+                onShowMoveContext={ins.moveIndex != null ? () => showMoveContext(ins.moveIndex!) : undefined}
+              />
+            ))}
+
+            {/* Before analysis — a single human CTA, not an engine panel */}
+            {!analyzed && !analyzing && (
+              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: 'var(--radius-lg)', padding: '16px 14px', textAlign: 'center' }}>
+                <p style={{ margin: '0 0 12px', fontSize: '13px', lineHeight: 1.55, color: 'var(--cm-text-secondary)' }}>
+                  Analyze this game to unlock your <b style={{ color: 'var(--cm-text-primary)' }}>critical mistakes</b>, the <b style={{ color: 'var(--cm-text-primary)' }}>turning point</b>, your <b style={{ color: 'var(--cm-text-primary)' }}>best move</b>, and a <b style={{ color: 'var(--cm-text-primary)' }}>personal study plan</b>.
+                </p>
+                <button
+                  onClick={engine.startFullGameAnalysis}
+                  disabled={!pgnData.moves.length}
+                  style={{ width: '100%', padding: '10px', background: 'var(--cm-accent)', border: 'none', borderRadius: '9px', color: 'var(--cm-text-inverse)', fontSize: '13.5px', fontWeight: 600, cursor: pgnData.moves.length ? 'pointer' : 'not-allowed', boxShadow: 'var(--shadow-primary-glow)' }}
+                >
+                  ⚡ Analyze this game
+                </button>
+              </div>
+            )}
+
+            {/* During analysis — progress */}
+            {analyzing && engine.bulkProgress && (
+              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: 'var(--radius-lg)', padding: '14px 13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ height: '6px', background: 'var(--cm-bg-hover)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: `${(engine.bulkProgress.done / engine.bulkProgress.total) * 100}%`, height: '100%', background: 'var(--cm-accent)', borderRadius: '3px', transition: 'width 0.2s' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--cm-text-secondary)' }}>Reading your game… {engine.bulkProgress.done}/{engine.bulkProgress.total}</span>
+                  <button onClick={engine.cancelFullGameAnalysis} style={{ padding: '3px 8px', background: 'var(--cm-error-dim)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '5px', color: 'var(--cm-error)', fontSize: '11px', cursor: 'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {/* Study recommendation — fixed bottom section */}
+            {analyzed && studyPlan && (
+              <StudyRecommendation
+                plan={studyPlan}
+                onAskCoach={() => askCoachAbout('Based on the mistakes and strengths in this game, what should my training plan look like over the next few weeks?')}
+              />
+            )}
+
+            {/* Subtle re-analyze */}
+            {analyzed && !analyzing && (
+              <button
+                onClick={engine.startFullGameAnalysis}
+                style={{ alignSelf: 'center', display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', color: 'var(--cm-text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+              >
+                ↺ Re-analyze game
+              </button>
+            )}
+          </div>
+        );
+      }
+      case 'coach':
+        return <div className="cm-panel"><CoachPanel /></div>;
+      case 'moves':
+        return <div className="cm-panel" style={{ maxHeight: '460px', overflowY: 'auto' }}><MoveList /></div>;
+      case 'lines':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <EngineEval engine={engine} autoAnalysis={displayOptions.showFishnetAnalysis} />
+            <PvLines engine={engine} />
+            <MoveQualitySummary engine={engine} />
+            {engine.bulkEvals.length > 1 && (
+              <div style={{ background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div className="cm-section-label">Evaluation Graph</div>
+                <EvalGraph evals={engine.bulkEvals} currentIndex={currentMoveIndex} onSeek={setCurrentMoveIndex} />
+              </div>
+            )}
+            <button
+              onClick={() => setSettingsOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', background: 'var(--cm-bg-elevated)', border: '1px solid var(--cm-border-subtle)', borderRadius: '8px', color: 'var(--cm-text-secondary)', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}
+            >
+              <Settings size={13} /> Engine depth, lines &amp; display options
+            </button>
+          </div>
+        );
+    }
+  };
+
+  // Move navigation row — placed under the board (desktop) and as the mobile
+  // sticky bar. Shared markup so the two stay in sync.
+  const navControls = (size: number) => (
+    <>
+      <button onClick={goToStart}    disabled={atStart} className="cm-icon-btn" title="Start"><SkipBack size={size} /></button>
+      <button onClick={goToPrevious} disabled={atStart} className="cm-icon-btn" title="Previous (←)"><ChevronLeft size={size} /></button>
+      <div style={{ flex: 1, textAlign: 'center' }}>
+        {currentMove ? (
+          <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: 'var(--cm-accent)' }}>{currentMove}</span>
+        ) : (
+          <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)' }}>Start</span>
+        )}
+        <span style={{ fontSize: '10px', color: 'var(--cm-text-muted)', marginLeft: '6px' }}>
+          {currentMoveIndex}/{pgnData.moves.length}
+        </span>
+      </div>
+      <button onClick={goToNext} disabled={atEnd} className="cm-icon-btn" title="Next (→)"><ChevronRight size={size} /></button>
+      <button onClick={goToEnd}  disabled={atEnd} className="cm-icon-btn" title="End"><SkipForward size={size} /></button>
+    </>
+  );
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -782,67 +931,56 @@ export function GameViewer({ game }: GameViewerProps) {
           </div>
         )}
 
-        {/* Board */}
-        <div className="gv-board-wrap">
-          <ChessBoard
-            fen={currentFen}
-            squareSize={squareSize}
-            arrowOverlay={arrowOverlay}
-          />
-        </div>
-
-        {/* Right panel — desktop only */}
-        <div className="gv-right-panel">
-          <DisplaySettings options={displayOptions} onChange={setDisplayOptions} />
-          <EnginePanel {...enginePanelProps} />
-
-          {/* Navigator */}
-          <div className="cm-panel" style={{ padding: '10px 12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <button onClick={goToStart}    disabled={atStart} className="cm-icon-btn" title="Start"><SkipBack size={13} /></button>
-              <button onClick={goToPrevious} disabled={atStart} className="cm-icon-btn" title="Previous (←)"><ChevronLeft size={13} /></button>
-              {/* Move counter */}
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                {currentMove ? (
-                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: 'var(--cm-accent)' }}>
-                    {currentMove}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: '11px', color: 'var(--cm-text-muted)' }}>Start</span>
-                )}
-                <span style={{ fontSize: '10px', color: 'var(--cm-text-muted)', marginLeft: '6px' }}>
-                  {currentMoveIndex}/{pgnData.moves.length}
-                </span>
+        {/* Board + move navigation directly beneath it (desktop) */}
+        <div className="gv-board-col">
+          <div className="gv-board-wrap">
+            <ChessBoard
+              fen={currentFen}
+              squareSize={squareSize}
+              arrowOverlay={arrowOverlay}
+            />
+          </div>
+          {!isMobile && (
+            <div className="gv-board-nav" style={{ width: boardPx, maxWidth: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {navControls(15)}
               </div>
-              <button onClick={goToNext}     disabled={atEnd}   className="cm-icon-btn" title="Next (→)"><ChevronRight size={13} /></button>
-              <button onClick={goToEnd}      disabled={atEnd}   className="cm-icon-btn" title="End"><SkipForward size={13} /></button>
+              <div style={{ marginTop: '8px', height: '3px', background: 'var(--cm-bg-hover)', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{
+                  width: pgnData.moves.length > 0 ? `${(currentMoveIndex / pgnData.moves.length) * 100}%` : '0%',
+                  height: '100%', background: 'var(--cm-accent)', borderRadius: '2px', transition: 'width 0.15s ease',
+                }} />
+              </div>
             </div>
-            {/* Position progress bar */}
-            <div style={{
-              marginTop: '8px',
-              height: '3px',
-              background: 'var(--cm-bg-hover)',
-              borderRadius: '2px',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                width: pgnData.moves.length > 0 ? `${(currentMoveIndex / pgnData.moves.length) * 100}%` : '0%',
-                height: '100%',
-                background: 'var(--cm-accent)',
-                borderRadius: '2px',
-                transition: 'width 0.15s ease',
-              }} />
-            </div>
-          </div>
-
-          {/* Ask Coach */}
-          <div className="cm-panel"><CoachPanel /></div>
-
-          {/* Move list */}
-          <div className="cm-panel" style={{ maxHeight: '260px', overflowY: 'auto' }}>
-            <MoveList />
-          </div>
+          )}
         </div>
+
+        {/* Right panel — desktop only: one contextual panel, tabbed */}
+        {!isMobile && (
+          <div className="gv-right-panel">
+            <div style={{ padding: '2px 2px 10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <SegmentedControl
+                  items={rightTabItems}
+                  value={rightTab}
+                  onChange={id => setRightTab(id as RightTab)}
+                  ariaLabel="Analysis panel"
+                  size="sm"
+                />
+              </div>
+              <button
+                onClick={() => setSettingsOpen(true)}
+                aria-label="Analysis settings"
+                title="Analysis settings"
+                className="cm-icon-btn"
+                style={{ flexShrink: 0 }}
+              >
+                <Settings size={15} />
+              </button>
+            </div>
+            {renderTabContent(rightTab)}
+          </div>
+        )}
       </div>
 
       {/* ── Mobile: sticky nav bar below board ────────────────────────────── */}
@@ -863,44 +1001,41 @@ export function GameViewer({ game }: GameViewerProps) {
         </div>
       )}
 
-      {/* ── Mobile: tab strip ─────────────────────────────────────────────── */}
+      {/* ── Mobile: same tabbed panel (Insights → Coach → Moves → Lines) ──── */}
       {isMobile && (
         <>
-          <div className="gv-tabs">
-            {([
-              { id: 'engine' as MobileTab, label: 'Engine', icon: <Zap size={14} /> },
-              { id: 'moves'  as MobileTab, label: 'Moves',  icon: <List size={14} /> },
-              { id: 'coach'  as MobileTab, label: 'Coach',  icon: <MessageCircle size={14} /> },
-            ] as const).map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setMobileTab(tab.id)}
-                className={`gv-tab-btn${mobileTab === tab.id ? ' gv-tab-btn--active' : ''}`}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
+          <div className="gv-tabs" style={{ padding: '0 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <SegmentedControl
+                items={rightTabItems}
+                value={rightTab}
+                onChange={id => setRightTab(id as RightTab)}
+                ariaLabel="Analysis panel"
+              />
+            </div>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Analysis settings"
+              title="Analysis settings"
+              className="cm-icon-btn"
+              style={{ flexShrink: 0 }}
+            >
+              <Settings size={16} />
+            </button>
           </div>
-
-          {/* Mobile tab content */}
           <div className="gv-tab-content">
-            {mobileTab === 'engine' && (
-              <EnginePanel {...enginePanelProps} />
-            )}
-            {mobileTab === 'moves' && (
-              <div className="cm-panel" style={{ maxHeight: 'none' }}>
-                <MoveList />
-              </div>
-            )}
-            {mobileTab === 'coach' && (
-              <div className="cm-panel">
-                <CoachPanel />
-              </div>
-            )}
+            {renderTabContent(rightTab)}
           </div>
         </>
       )}
+
+      {/* ── Analysis settings drawer (display options + engine controls) ───── */}
+      <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Analysis settings">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <EngineControls engine={engine} />
+          <DisplaySettings options={displayOptions} onChange={setDisplayOptions} />
+        </div>
+      </Drawer>
     </div>
   );
 }
