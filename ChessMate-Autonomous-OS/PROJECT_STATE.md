@@ -2,11 +2,25 @@
 
 _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 
-## Current Phase
-**Phase 2 — Sprint 1 (Production Safety & Trust): in PR #10, review fixes applied.**
+## Operating Mode
+**Product-to-Production** (per `PRODUCT_ACCEPTANCE_CRITERIA.md`): drive to Production Score ≥85,
+every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
+VALID review comments. Do not stop at sprint boundaries.
+
+## Production Score: **~75 / 100** (audit 70 → Sprint 1 73 → a11y/test-gate loop 75)
+
+## Active loop — Accessibility & Test-Gate (branch `prod/accessibility-aa-and-test-gate`, stacked on PR #10)
+**Closes AUD-21/22/23.**
+- WCAG **AA contrast** passes on the landing page — axe **0 violations** in both default (`:root`)
+  and explicit-dark states. Brand-preserving: `--cm-accent-strong` (button fill), `--cm-error-bright`
+  (error chips), accent-text → `--cm-accent-bright`, `:root` inverse fix; **disabled the dead
+  "coming soon" pricing CTAs** (also a Product-Quality fix).
+- **e2e gate restored:** chromium **28 passed / 0 failed / 13 skipped** (was 26/2/13).
+- Gates: typecheck ✅ · lint ✅ 0 err · unit ✅ 76/76 · build ✅ · e2e ✅.
+
+## Phase 2 — Sprint 1 (Production Safety & Trust): in PR #10, review fixes applied.
 All 8 items + CodeRabbit fixes landed on `sprint-1/production-safety-and-trust` (rebased onto
-`origin/main`). **MERGE_READY pending:** (1) CodeRabbit incremental re-review (rate-limited ~50 min)
-to confirm the action-pinning fix; (2) human approval/merge. Phase 1 audit complete; OS docs initialized.
+`origin/main`). **MERGE_READY pending** human approval/merge. CodeRabbit check passed.
 
 ### Mid-sprint discoveries (handled)
 - **Deploy target is Netlify, not Vercel.** `vercel.json` headers were dead config — the live
