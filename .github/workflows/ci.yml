@@ -7,6 +7,26 @@ on:
     branches: [main]
 
 jobs:
+  # ─── Lint ──────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
   # ─── Type-check + Build ────────────────────────────────────────────────────
   build:
     name: Type-check & Build
@@ -60,8 +80,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm test -- --reporter=verbose
+      - name: Run unit tests with coverage
+        run: npm run test:coverage -- --reporter=verbose
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
 
   # ─── E2E Tests (auth-gated tests skipped without credentials) ─────────────
   e2e:
