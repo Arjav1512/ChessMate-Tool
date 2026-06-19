@@ -515,7 +515,7 @@ export function EnginePanel({
               onClick={handleManualAnalyze}
               style={{
                 padding: '4px 10px',
-                background: 'var(--cm-accent)',
+                background: 'var(--cm-accent-strong)',
                 border: 'none',
                 borderRadius: '6px',
                 color: 'var(--cm-text-inverse)',
@@ -565,7 +565,7 @@ export function EnginePanel({
                       onClick={retryEngine}
                       style={{
                         padding: '5px 10px',
-                        background: 'var(--cm-accent)',
+                        background: 'var(--cm-accent-strong)',
                         border: 'none',
                         borderRadius: '6px',
                         color: 'var(--cm-text-inverse)',
@@ -737,7 +737,7 @@ export function EnginePanel({
                 <div style={{
                   width: `${(bulkProgress.done / bulkProgress.total) * 100}%`,
                   height: '100%',
-                  background: 'var(--cm-accent)',
+                  background: 'var(--cm-accent-strong)',
                   borderRadius: '3px',
                   transition: 'width 0.2s',
                 }} />

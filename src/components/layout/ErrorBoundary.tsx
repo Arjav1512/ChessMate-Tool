@@ -148,7 +148,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   alignItems: 'center',
                   gap: '6px',
                   padding: '8px 16px',
-                  background: 'var(--cm-accent)',
+                  background: 'var(--cm-accent-strong)',
                   border: '1px solid transparent',
                   borderRadius: '7px',
                   color: 'var(--cm-text-inverse)',

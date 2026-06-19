@@ -351,7 +351,7 @@ export function BulkAnalysis() {
               }}>
                 <div style={{
                   height: '100%',
-                  background: 'var(--cm-accent)',
+                  background: 'var(--cm-accent-strong)',
                   width: `${(analysis.analyzed / analysis.positions) * 100}%`,
                   transition: 'width 0.3s ease',
                   borderRadius: '2px',

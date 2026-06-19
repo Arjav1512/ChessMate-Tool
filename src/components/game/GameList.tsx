@@ -581,7 +581,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
                 <div style={{
                   width: `${(progress.done / Math.max(progress.total, 1)) * 100}%`,
                   height: '100%',
-                  background: 'var(--cm-accent)',
+                  background: 'var(--cm-accent-strong)',
                   borderRadius: '2px',
                   transition: 'width 0.15s',
                 }} />
@@ -640,7 +640,7 @@ function GameListComponent({ onSelectGame, selectedGameId }: GameListProps) {
                     disabled={uploading}
                     style={{
                       padding: '8px 12px',
-                      background: 'var(--cm-accent)',
+                      background: 'var(--cm-accent-strong)',
                       border: '1px solid transparent',
                       borderRadius: '7px',
                       color: 'var(--cm-text-inverse)',

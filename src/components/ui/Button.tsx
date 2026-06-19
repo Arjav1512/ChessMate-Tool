@@ -12,7 +12,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<string, React.CSSProperties> = {
   primary: {
-    background: 'var(--cm-accent)',
+    background: 'var(--cm-accent-strong)',
     color: 'var(--cm-text-inverse)',
     border: '1px solid transparent',
   },

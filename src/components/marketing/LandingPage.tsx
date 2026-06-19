@@ -383,7 +383,7 @@ function DemoInsights() {
           lineHeight: 1.55,
         }}
       >
-        <span style={{ color: 'var(--cm-accent)', fontWeight: 600 }}>Coach:</span>{' '}
+        <span style={{ color: 'var(--cm-accent-bright)', fontWeight: 600 }}>Coach:</span>{' '}
         After 12.Qd2 you abandon the d-file. The follow-up Nxe5 forks queen and
         knight — try 12.Bg5 instead, pinning the f6 knight.
       </div>
@@ -393,7 +393,7 @@ function DemoInsights() {
 
 function InsightLine({ value, label, tone }: { value: string; label: string; tone: 'good' | 'warn' | 'bad' }) {
   const color =
-    tone === 'good' ? 'var(--cm-success)' : tone === 'warn' ? 'var(--cm-warning)' : 'var(--cm-error)';
+    tone === 'good' ? 'var(--cm-success)' : tone === 'warn' ? 'var(--cm-warning)' : 'var(--cm-error-bright)';
   const dim =
     tone === 'good' ? 'var(--cm-success-dim)' : tone === 'warn' ? 'var(--cm-warning-dim)' : 'var(--cm-error-dim)';
   return (
@@ -439,7 +439,7 @@ function Pill({ icon, label }: { icon: React.ReactNode; label: string }) {
         background: 'var(--cm-accent-dim)',
         border: '1px solid var(--cm-accent-ring)',
         borderRadius: '999px',
-        color: 'var(--cm-accent)',
+        color: 'var(--cm-accent-bright)',
         fontSize: '11px',
         fontWeight: 500,
       }}
@@ -930,7 +930,7 @@ function PricingSection({ onGetStarted }: { onGetStarted: () => void }) {
                   top: '-11px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: 'var(--cm-accent)',
+                  background: 'var(--cm-accent-strong)',
                   color: 'var(--cm-text-inverse)',
                   fontSize: '10px',
                   fontWeight: 700,
@@ -968,15 +968,17 @@ function PricingSection({ onGetStarted }: { onGetStarted: () => void }) {
 
               <button
                 onClick={plan.name === 'Free' ? onGetStarted : undefined}
+                disabled={plan.name !== 'Free'}
+                aria-label={plan.name === 'Free' ? undefined : `${plan.cta} (${plan.name} plan — coming soon)`}
                 style={{
                   padding: '10px 16px',
-                  background: plan.highlight ? 'var(--cm-accent)' : 'var(--cm-bg-hover)',
+                  background: plan.highlight ? 'var(--cm-accent-strong)' : 'var(--cm-bg-hover)',
                   border: `1px solid ${plan.highlight ? 'transparent' : 'var(--cm-border-default)'}`,
                   borderRadius: '8px',
                   color: plan.highlight ? 'var(--cm-text-inverse)' : 'var(--cm-text-secondary)',
                   fontSize: '13px',
                   fontWeight: 600,
-                  cursor: plan.name === 'Free' ? 'pointer' : 'default',
+                  cursor: plan.name === 'Free' ? 'pointer' : 'not-allowed',
                   opacity: plan.name !== 'Free' ? 0.6 : 1,
                   textAlign: 'center',
                 }}
@@ -1175,7 +1177,7 @@ const primaryBtn: React.CSSProperties = {
   alignItems: 'center',
   gap: '8px',
   padding: '8px 14px',
-  background: 'var(--cm-accent)',
+  background: 'var(--cm-accent-strong)',
   border: '1px solid transparent',
   borderRadius: '8px',
   color: 'var(--cm-text-inverse)',
