@@ -120,17 +120,15 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Start dev server in background
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'placeholder_anon_key' }}
-        run: |
-          npm run dev &
-          npx wait-on http://localhost:5173 --timeout 30000
-
+      # Playwright's own webServer (playwright.config.ts) starts `npm run dev`
+      # and waits for :5173. We must NOT also start the dev server here — doing
+      # both makes the second binder fail with "port already in use", which is
+      # what kept the e2e job red. Vite reads the VITE_* vars from the job env.
       - name: Run E2E tests
         env:
           CI: true
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'placeholder_anon_key' }}
           # Auth credentials for game-import tests (optional — tests auto-skip if absent)
           PLAYWRIGHT_TEST_USER: ${{ secrets.PLAYWRIGHT_TEST_USER }}
           PLAYWRIGHT_TEST_PASSWORD: ${{ secrets.PLAYWRIGHT_TEST_PASSWORD }}
