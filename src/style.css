@@ -22,10 +22,14 @@
   --cm-text-muted:     #828799;
   --cm-text-inverse:   #0C0E12;
 
-  --cm-accent:         #F0A840;
-  --cm-accent-hover:   #E8972A;
-  --cm-accent-dim:     rgba(240,168,64,0.12);
-  --cm-accent-ring:    rgba(240,168,64,0.35);
+  --cm-accent:         #7B6CF6;
+  --cm-accent-hover:   #6A5BF0;
+  --cm-accent-bright:  #9385FB;
+  --cm-accent-dim:     rgba(123,108,246,0.14);
+  --cm-accent-ring:    rgba(123,108,246,0.42);
+  --cm-secondary:      #F2A93B;
+  --cm-secondary-hover:#E89A2A;
+  --cm-secondary-dim:  rgba(242,169,59,0.14);
 
   --cm-success:        #3DB87A;
   --cm-success-dim:    rgba(61,184,122,0.12);
@@ -79,7 +83,7 @@
   --color-error-rgb:    232,85,74;
   --color-warning-rgb:  240,168,64;
   --color-info-rgb:     74,144,226;
-  --color-teal-300-rgb: 240,168,64;
+  --color-teal-300-rgb: 123,108,246;
   --color-red-400-rgb:  232,85,74;
   --color-orange-400-rgb:240,168,64;
 
@@ -143,10 +147,27 @@
   --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -2px rgba(0,0,0,0.15);
   --shadow-inset-sm: inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.15);
 
+  /* v2 elevation system (Direction B) */
+  --elevation-1: 0 1px 2px rgba(0,0,0,0.40), 0 8px 24px rgba(0,0,0,0.32);
+  --elevation-2: 0 24px 60px rgba(0,0,0,0.50);
+  --shadow-primary-glow: 0 6px 16px rgba(123,108,246,0.40);
+
+  /* v2 radius additions (cards/modals/board/pills) */
+  --radius-xl:  16px;
+  --radius-2xl: 22px;
+
   /* Animation */
   --duration-fast:   150ms;
   --duration-normal: 250ms;
   --ease-standard:   cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* v2 motion system (purposeful + playful) */
+  --dur-micro:     120ms;
+  --dur-base:      180ms;
+  --dur-panel:     240ms;
+  --dur-celebrate: 400ms;
+  --ease-out:      cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* Layout */
   --container-sm:  640px;
@@ -169,11 +190,15 @@
   --cm-text-secondary: #9499A5;
   /* WCAG AA on #1A1D24 — kept in sync with :root. */
   --cm-text-muted:     #828799;
-  --cm-text-inverse:   #0C0E12;
-  --cm-accent:         #F0A840;
-  --cm-accent-hover:   #E8972A;
-  --cm-accent-dim:     rgba(240,168,64,0.12);
-  --cm-accent-ring:    rgba(240,168,64,0.35);
+  --cm-text-inverse:   #FFFFFF;
+  --cm-accent:         #7B6CF6;
+  --cm-accent-hover:   #6A5BF0;
+  --cm-accent-bright:  #9385FB;
+  --cm-accent-dim:     rgba(123,108,246,0.14);
+  --cm-accent-ring:    rgba(123,108,246,0.42);
+  --cm-secondary:      #F2A93B;
+  --cm-secondary-hover:#E89A2A;
+  --cm-secondary-dim:  rgba(242,169,59,0.14);
   --cm-success:        #3DB87A;
   --cm-success-dim:    rgba(61,184,122,0.12);
   --cm-error:          #E8554A;
@@ -208,7 +233,7 @@
   --color-success-rgb:       61,184,122;
   --color-error-rgb:         232,85,74;
   --color-warning-rgb:       240,168,64;
-  --color-teal-300-rgb:      240,168,64;
+  --color-teal-300-rgb:      123,108,246;
   --shadow-inset-sm:         inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.15);
 }
 
@@ -226,13 +251,17 @@
   --cm-text-secondary: #4A4F5C;
   /* WCAG 2.1 AA: 4.5:1 on #F5F6F8. Previously #8C909A was 2.95. */
   --cm-text-muted:     #6A6E78;
-  /* Light-theme inverse used on amber CTAs — white-on-amber was 2.65; dark-on-amber
-     hits 5.6+ which clears WCAG AA. */
-  --cm-text-inverse:   #1A1D24;
-  --cm-accent:         #D4920A;
-  --cm-accent-hover:   #C07F05;
-  --cm-accent-dim:     rgba(212,146,10,0.10);
-  --cm-accent-ring:    rgba(212,146,10,0.30);
+  /* Light-theme inverse used on the indigo CTA — white-on-indigo (#5B54E8)
+     clears WCAG AA (≈5.3:1). */
+  --cm-text-inverse:   #FFFFFF;
+  --cm-accent:         #5B54E8;
+  --cm-accent-hover:   #4A43DC;
+  --cm-accent-bright:  #5B54E8;
+  --cm-accent-dim:     rgba(91,84,232,0.10);
+  --cm-accent-ring:    rgba(91,84,232,0.32);
+  --cm-secondary:      #E0922E;
+  --cm-secondary-hover:#C87E22;
+  --cm-secondary-dim:  rgba(224,146,46,0.12);
   --cm-success:        #27A363;
   --cm-success-dim:    rgba(39,163,99,0.10);
   --cm-error:          #D63B30;
@@ -272,7 +301,7 @@
   --color-success-rgb:       39,163,99;
   --color-error-rgb:         214,59,48;
   --color-warning-rgb:       212,146,10;
-  --color-teal-300-rgb:      212,146,10;
+  --color-teal-300-rgb:      91,84,232;
   --shadow-inset-sm:         inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.04);
 
   --select-caret-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230C0E12' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");

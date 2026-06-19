@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
-    // Check for saved theme preference or default to light mode
+    // v2 is dark-first (Direction B "Focused Arena"). Respect a saved
+    // preference if the user has chosen one; otherwise default to dark.
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    const initialTheme = savedTheme ?? 'dark';
     setTheme(initialTheme);
     applyTheme(initialTheme);
   }, []);
