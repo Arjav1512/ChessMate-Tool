@@ -1,0 +1,59 @@
+# Decision Log
+
+_Append-only. Record major approved decisions and open escalations._
+
+## Format
+`[DATE] [ID] STATUS — Decision · Rationale · Owner`
+STATUS ∈ DECIDED · OPEN · SUPERSEDED.
+
+---
+
+## Decided
+
+- **[2026-06-20] D-001 DECIDED** — Initialize the Autonomous Engineering OS and run
+  a non-destructive Phase-1 audit (no code, no PRs). _Rationale:_ establish a
+  governed baseline before any change. _Owner:_ Autonomous System.
+- **[2026-06-20] D-002 DECIDED** — Production Readiness Score set at **70/100
+  ("Advanced Beta")** with the category model in `PRODUCTION_SCORECARD.md`.
+  _Rationale:_ functionally complete + tested, gated on security/observability/UI.
+  _Owner:_ QA hat.
+
+## Sprint 1 implementation decisions (autonomous, confidence ≥ 80%, no escalation trigger)
+
+- **[2026-06-20] D-003 DECIDED** — AUD-01 fixed by verifying the caller via
+  `supabase.auth.getUser(token)` **and** pinning `verify_jwt=true` in `config.toml`
+  (defense-in-depth). Removed the unverified base64 decode entirely. _Tradeoff:_ one extra
+  GoTrue round-trip per request — negligible at 10 req/min/user; strictly more secure.
+- **[2026-06-20] D-004 DECIDED** — AUD-02 CSP uses `script-src 'self'` with **no** `eval`
+  directive. Verified safe: no inline scripts in built HTML; `stockfish.js` is asm.js
+  (no `eval`/`Function`/`WebAssembly`). Fonts/Supabase/Sentry origins explicitly allowed.
+  CSP applies on Vercel only (not the dev server), so it does not affect local e2e.
+- **[2026-06-20] D-005 DECIDED** — AUD-03 CORS fails closed: with no `ALLOWED_ORIGINS`,
+  only localhost origins are reflected; all others get `Access-Control-Allow-Origin: null`.
+- **[2026-06-20] D-006 DECIDED** — AUD-04 disclosure channel = GitHub private security
+  advisories (no personal email exposed). _Rationale:_ standard best-practice default.
+- **[2026-06-20] D-007 DECIDED** — AUD-05 coverage is **measured/uploaded without a failing
+  threshold** for now; a coverage gate is deferred to Sprint 2 to avoid a flaky gate on day one.
+- **[2026-06-20] D-008 NOTED** — Two pre-existing e2e failures (AUD-21 v2 landing contrast,
+  AUD-22 stale smoke test) are **not** in Sprint-1 scope and are tracked for the v2 track /
+  Sprint 2. The chromium e2e CI job stays red until then; this PR introduces no e2e regression.
+
+## Resolved Escalations
+
+- **[2026-06-20] E-1 DECIDED — Priority direction: PARALLEL.**
+  Run path-independent Sprint-1 security/CI hardening **now** against the current
+  base, while the **v2 redesign continues as a separate track** toward a clean
+  merge (no partial features land on the release path). _Owner:_ user.
+  _Effect:_ Sprint 1 proceeds immediately; AUD-10 (v2 cutover) stays a parallel
+  branch deliverable, not a blocker.
+
+- **[2026-06-20] E-2 DECIDED — Learning-system depth: DEFER.**
+  Keep v1 as **stats + AI coach**; revisit drills / spaced repetition / training
+  plans **after Sprint 1–2**, informed by usage signal. _Owner:_ user.
+  _Effect:_ AUD-20 deferred out of the committed Sprint-3 scope; revisit as a
+  scoping decision post-Sprint-2.
+
+## Notes
+- Escalation gates are governed by `ESCALATION_PROTOCOL.md`: pause for user input on
+  major product, architecture, business, or security decisions.
+- No production functionality was modified during Phase 1.
