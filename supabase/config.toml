@@ -1,0 +1,19 @@
+# Supabase project configuration.
+#
+# Only settings that differ from CLI defaults (or that we want to pin
+# explicitly for security) are declared here. The project ref is public —
+# it appears in the project URL — and is safe to commit. Secrets never live
+# in this file; they belong in Supabase secrets / `.env.local`.
+project_id = "fqlzrkmvhliyuwkpiosp"
+
+# ---------------------------------------------------------------------------
+# Edge Functions
+# ---------------------------------------------------------------------------
+# `verify_jwt = true` makes the platform reject requests without a valid,
+# unexpired Supabase JWT BEFORE the function runs. This is defense-in-depth:
+# the function ALSO verifies the caller via auth.getUser() and uses the
+# authenticated user id as the rate-limit key (see functions/chess-mentor).
+# Keeping both means a forged or anonymous token can neither reach Gemini
+# nor bypass per-user rate limiting.
+[functions.chess-mentor]
+verify_jwt = true

@@ -19,14 +19,29 @@ const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 
+/** True for localhost / loopback origins used during local development. */
+function isLocalhostOrigin(origin: string): boolean {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
 function getCorsHeaders(requestOrigin: string | null): Record<string, string> {
   const origin = requestOrigin ?? "";
   let allowed: string;
 
   if (ALLOWED_ORIGINS.length === 0) {
-    // No explicit allowlist — echo the incoming origin (dev-friendly, but
-    // set ALLOWED_ORIGINS in production to lock this down).
-    allowed = origin || "*";
+    // No allowlist configured. Fail CLOSED for deployed environments: permit
+    // only localhost (dev) and deny anything else, rather than echoing an
+    // attacker-controlled origin. Production MUST set ALLOWED_ORIGINS.
+    // "null" is a value no real browser origin matches, so the response is
+    // rejected as a CORS failure.
+    allowed = isLocalhostOrigin(origin) ? origin : "null";
   } else if (ALLOWED_ORIGINS.includes(origin)) {
     allowed = origin;
   } else {
@@ -44,19 +59,27 @@ function getCorsHeaders(requestOrigin: string | null): Record<string, string> {
 }
 
 // ---------------------------------------------------------------------------
-// Rate limiting — DB-backed so it survives cold starts and worker recycling.
-// Key: user UUID extracted from the JWT (no network round-trip to verify).
+// Authentication — the caller's JWT is VERIFIED against the Supabase auth
+// server (signature + expiry) via auth.getUser(token), and the authenticated
+// user id is used as the rate-limit key. We do NOT trust an unverified
+// base64 decode of the token: a forged `sub` could otherwise bypass per-user
+// rate limiting and run up Gemini cost. Defense-in-depth: supabase/config.toml
+// also pins `verify_jwt = true` so the platform rejects bad tokens before this
+// function even runs.
 // ---------------------------------------------------------------------------
 
-/** Extract the `sub` claim from a raw JWT without verifying the signature. */
-function getUserIdFromJWT(token: string): string | null {
+/**
+ * Verify the bearer token and return the authenticated user id, or null if the
+ * token is missing, expired, forged, or otherwise invalid.
+ */
+async function getVerifiedUserId(token: string): Promise<string | null> {
+  if (!token) return null;
   try {
-    const [, payloadB64] = token.split(".");
-    if (!payloadB64) return null;
-    const json = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
-    const payload = JSON.parse(json);
-    return typeof payload.sub === "string" ? payload.sub : null;
-  } catch {
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user) return null;
+    return data.user.id;
+  } catch (err) {
+    console.error("JWT verification failed:", err);
     return null;
   }
 }
@@ -120,11 +143,11 @@ Deno.serve(async (req: Request) => {
     const token = authHeader.startsWith("Bearer ")
       ? authHeader.slice(7)
       : authHeader;
-    const userId = getUserIdFromJWT(token);
+    const userId = await getVerifiedUserId(token);
 
-    // Reject unauthenticated callers — the anon key produces no `sub` claim,
-    // so without this any client could spam Gemini with the public anon key
-    // and bypass per-user rate limiting entirely.
+    // Reject unauthenticated callers. A verified user id is required so that
+    // per-user rate limiting cannot be bypassed with the public anon key or a
+    // forged token, which would let a caller run up Gemini cost.
     if (!userId) {
       return new Response(
         JSON.stringify({ error: "Authentication required." }),
