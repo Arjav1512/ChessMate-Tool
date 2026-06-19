@@ -120,8 +120,9 @@ the trigger never guesses. See migration `20260615030000_rewrite_stats_trigger_o
 6. **PGN cap** is a hard 5 MiB on both upload and paste paths (`checkPgnSize`).
 7. **MarkdownRenderer is XSS-safe** — React elements only, never `dangerouslySetInnerHTML`.
 8. **Password recovery** locks the UI until the new password is set (see `App.tsx` + `AuthContext`).
-9. **CSP/HSTS** are set in `vercel.json`; CSP is `script-src 'self'` (no eval — Stockfish is asm.js).
-   Adding an inline script or an `eval`-dependent dependency requires updating the CSP.
+9. **CSP/HSTS** are set in `public/_headers` (Netlify — the live deploy target) **and** `vercel.json`
+   (Vercel). CSP is `script-src 'self'` (no eval — Stockfish is asm.js). Adding an inline script or an
+   `eval`-dependent dependency requires updating **both** header configs.
 
 ---
 
@@ -151,9 +152,11 @@ Run before any PR: `npm run typecheck && npm run lint && npm test && npm run bui
 
 ## 9. Gotchas / sharp edges
 
-- **CSP is Vercel-only.** `vercel.json` headers do not apply to the local `vite` dev server, so
-  local e2e won't catch a CSP regression. Reason about CSP changes statically (allowed origins,
-  `script-src`), and remember Stockfish is asm.js (no eval needed).
+- **The live deploy target is Netlify** (`chess-mateapp`), so security headers must live in
+  `public/_headers` (copied into `dist/` by Vite). `vercel.json` is kept in sync for Vercel but is
+  ignored by Netlify. Neither applies to the local `vite` dev server, so local e2e won't catch a CSP
+  regression — verify on the Netlify deploy preview (`curl -I`) and reason about CSP changes
+  statically (allowed origins, `script-src`; Stockfish is asm.js, no eval needed).
 - **`drop_console: true`** strips all `console.*` from the production bundle — never rely on console
   for prod behavior, and never log auth payloads even in dev.
 - **`user_color = NULL`** silently removes a game from W/L/D and the color split. If stats "don't add

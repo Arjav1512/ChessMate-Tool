@@ -1,0 +1,19 @@
+# Netlify header rules. Vite copies public/_headers into the publish dir (dist/)
+# at build time, and Netlify applies these to matching responses. This mirrors
+# the header set in vercel.json so the security headers apply on the actual
+# deploy target (Netlify), not just on Vercel.
+#
+# CSP notes: script-src 'self' — there are no inline scripts in the built HTML,
+# and Stockfish is asm.js (no eval). Google Fonts, Supabase, and Sentry origins
+# are allowed explicitly. Keep this in sync with vercel.json.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; manifest-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://*.ingest.sentry.io; upgrade-insecure-requests
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
