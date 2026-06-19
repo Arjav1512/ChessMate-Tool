@@ -60,9 +60,12 @@ gates green (typecheck/lint/unit+coverage/build); in PR pending CodeRabbit + mer
 |----|:--:|------|-------|-------------|
 | AUD-21 | 🟠 | A11y/UI | v2 landing hero+nav has 91 axe **color-contrast** (WCAG AA) violations; e2e `accessibility` spec fails | Belongs to v2 track / **AUD-09** + Sprint-2 a11y (**AUD-11**). Pre-existing on base branch. |
 | AUD-22 | 🟡 | Test debt | `game-import` "sign-in form on landing" smoke test is stale vs the `LandingPage` marketing split | Update spec to the landing→auth flow; folds into **AUD-06** (e2e in CI). Pre-existing. |
+| AUD-23 | 🟠 | CI/Process | `main` CI has been **red for 5+ consecutive merges** (e2e job, via AUD-21/22) → the e2e gate is not currently enforced/trustworthy | Fix AUD-22 (cheap) + AUD-21, then treat e2e as a required check. Sprint 2. |
+| AUD-24 | 🟢 | Deploy (DONE) | Live deploy target is **Netlify**, which ignored `vercel.json` → security headers were not served | **Fixed in this PR:** added `public/_headers`; CSP/HSTS verified live on the deploy preview |
 
-> Note: these two e2e failures pre-date this branch's Sprint-1 work (the diff touches none of the
-> implicated files). They keep the chromium e2e job red until the v2 track / Sprint 2 addresses them.
+> Note: the two e2e failures (AUD-21/22) pre-exist on `main` itself — this PR's diff touches none of
+> the implicated files and introduces no e2e regression. They keep the chromium e2e job red until
+> Sprint 2 / the v2 track addresses them (AUD-23).
 
 ## Sprint 2 — Verify & Observe
 **Goal:** prove the security boundary in CI and gain production visibility + repeatable releases.

@@ -25,3 +25,22 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
 - **Result:** all 8 Sprint-1 items implemented and locally verified; the only red is two
   pre-existing v2 e2e failures untouched by this change (diff confirms). Committing → PR.
 - **Next loop:** open Sprint-1 PR → CodeRabbit triage → resolve → re-verify → MERGE_READY.
+
+---
+
+## 2026-06-20 · Sprint 1 — PR #10 review + deploy iteration
+- **Objective:** drive PR #10 to MERGE_READY; resolve CodeRabbit; verify headers on the real target.
+- **Change:**
+  - Rebased the 4 commits onto `origin/main` (clean — all touched files identical to base) so the
+    security fixes target production independently of the v2 track (per E-1). PR #10 opened to `main`.
+  - **Discovered** the live deploy is **Netlify** (vercel.json ignored → no CSP live). Added
+    `public/_headers`; verified CSP/HSTS/X-Frame/Referrer/Permissions live on the deploy preview.
+  - **CodeRabbit:** 2 findings (unpinned Actions). Triaged VALID; pinned all actions to verified v4
+    SHAs + `persist-credentials: false`; replied with classification.
+  - **Discovered** `main` CI red for 5+ merges (pre-existing e2e — AUD-21/22) → logged AUD-23.
+- **Verify:** CI on PR — Lint ✅ · Type-check & Build ✅ · Unit ✅ · CodeRabbit ✅ ·
+  E2E ⚠️ (pre-existing main failures, no regression). Live headers ✅ on deploy preview.
+- **Result:** all Sprint-1 scope complete + review fixes in. MERGE_READY pending CodeRabbit
+  incremental re-review (rate-limited ~50 min) and human approval/merge.
+- **Next loop:** re-check CodeRabbit after rate-limit clears; on human approval → merge → Sprint 2
+  (which absorbs AUD-21/22/23 to restore the e2e gate).

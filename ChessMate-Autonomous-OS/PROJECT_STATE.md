@@ -3,10 +3,20 @@
 _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 
 ## Current Phase
-**Phase 2 — Sprint 1 (Production Safety & Trust): IMPLEMENTED, in PR.**
-All 8 Sprint-1 items coded on `sprint-1/production-safety-and-trust`; local gates green.
-Driving to MERGE_READY (CodeRabbit triage → re-verify → human approval).
-Phase 1 audit complete; OS docs initialized.
+**Phase 2 — Sprint 1 (Production Safety & Trust): in PR #10, review fixes applied.**
+All 8 items + CodeRabbit fixes landed on `sprint-1/production-safety-and-trust` (rebased onto
+`origin/main`). **MERGE_READY pending:** (1) CodeRabbit incremental re-review (rate-limited ~50 min)
+to confirm the action-pinning fix; (2) human approval/merge. Phase 1 audit complete; OS docs initialized.
+
+### Mid-sprint discoveries (handled)
+- **Deploy target is Netlify, not Vercel.** `vercel.json` headers were dead config — the live
+  preview had no CSP. Added `public/_headers`; CSP/HSTS/X-Frame-Options/Referrer/Permissions now
+  **verified live** on the deploy preview (`curl -I`) with the app still loading. AUD-02 now effective.
+- **`main` CI has been red for 5+ consecutive merges** — the e2e job's 2 failures (AUD-21 contrast,
+  AUD-22 stale smoke test) pre-exist on `main`. This PR introduces no e2e regression, but the e2e
+  gate is currently untrustworthy → restore in Sprint 2 (AUD-22 cheap, AUD-21 = v2 a11y).
+- **CodeRabbit findings (2):** GitHub Actions unpinned → pinned all to verified v4 SHAs +
+  `persist-credentials: false`. Both resolved; CodeRabbit check passed.
 
 ## Sprint-1 Gate Results (2026-06-20)
 | Gate | Result |
