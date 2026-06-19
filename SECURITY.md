@@ -8,10 +8,15 @@ Edge Function — seriously.
 ## Reporting a Vulnerability
 
 **Please do not open a public GitHub issue for security reports.**
-Instead, email the maintainers privately at:
 
-> security@chessmate.local _(replace with the actual project security
-> contact before the first public release)_
+Report privately through GitHub's coordinated-disclosure channel:
+
+> **[Open a private security advisory](https://github.com/Arjav1512/ChessMate-Tool/security/advisories/new)**
+> (GitHub → repository **Security** tab → **Report a vulnerability**)
+
+This keeps the report confidential and visible only to the maintainers until
+a fix is published. If you cannot use GitHub advisories, reach the maintainer
+via the contact on their GitHub profile.
 
 Include:
 
