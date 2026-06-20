@@ -198,11 +198,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Google OAuth error:', error);
         throw new Error(`Google authentication failed: ${error.message}`);
       }
-      
-      // Log success for debugging
-      console.log('Google OAuth initiated successfully', data);
-      
-      // Handle successful redirect
+
+      // Handle successful redirect. We deliberately do not log the OAuth
+      // response — it can carry tokens / provider payloads we must not surface.
       if (data?.url) {
         window.location.href = data.url;
       }
@@ -225,11 +223,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('GitHub OAuth error:', error);
         throw new Error(`GitHub authentication failed: ${error.message}`);
       }
-      
-      // Log success for debugging
-      console.log('GitHub OAuth initiated successfully', data);
-      
-      // Handle successful redirect
+
+      // Handle successful redirect. We deliberately do not log the OAuth
+      // response — it can carry tokens / provider payloads we must not surface.
       if (data?.url) {
         window.location.href = data.url;
       }
