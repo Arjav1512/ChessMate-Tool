@@ -58,3 +58,20 @@ describe('supabase config — edge function JWT verification', () => {
     expect(CONFIG).toMatch(/verify_jwt\s*=\s*true/);
   });
 });
+
+describe('chess-mentor edge function — durable error capture (observability)', () => {
+  it('logs the unauthenticated and rate-limited rejections to api_logs', () => {
+    expect(FN_SRC).toMatch(/logRequest\([^)]*Unauthenticated/);
+    expect(FN_SRC).toMatch(/logRequest\(userId[^)]*Rate limit exceeded/);
+  });
+
+  it('logs the misconfiguration (missing GEMINI key) path', () => {
+    expect(FN_SRC).toMatch(/logRequest\(userId,\s*question,\s*false,\s*"GEMINI_API_KEY not configured"\)/);
+  });
+
+  it('attributes the catch-all error log to the caller (not null)', () => {
+    // The previous code logged logRequest(null, "", ...) and lost the user.
+    expect(FN_SRC).toMatch(/await logRequest\(userId,\s*question,\s*false,\s*errorMessage\)/);
+    expect(FN_SRC).not.toMatch(/await logRequest\(null,\s*"",\s*false,\s*errorMessage\)/);
+  });
+});

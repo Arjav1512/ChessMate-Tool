@@ -137,18 +137,24 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  // Hoisted so the catch block can attribute the durable error log to the
+  // caller and question instead of losing them to block scope.
+  let userId: string | null = null;
+  let question = "";
+
   try {
     // Extract user ID from the JWT for DB-backed rate limiting
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.startsWith("Bearer ")
       ? authHeader.slice(7)
       : authHeader;
-    const userId = await getVerifiedUserId(token);
+    userId = await getVerifiedUserId(token);
 
     // Reject unauthenticated callers. A verified user id is required so that
     // per-user rate limiting cannot be bypassed with the public anon key or a
     // forged token, which would let a caller run up Gemini cost.
     if (!userId) {
+      await logRequest(null, "", false, "Unauthenticated request (invalid or missing JWT)");
       return new Response(
         JSON.stringify({ error: "Authentication required." }),
         {
@@ -160,6 +166,7 @@ Deno.serve(async (req: Request) => {
 
     const allowed = await checkRateLimit(userId, 10, 60_000);
     if (!allowed) {
+      await logRequest(userId, "", false, "Rate limit exceeded");
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
         {
@@ -173,7 +180,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { question, context } = await req.json();
+    const body = await req.json();
+    question = typeof body?.question === "string" ? body.question : "";
+    const context = body?.context;
 
     if (!question) {
       await logRequest(userId, "", false, "Question missing");
@@ -187,6 +196,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!GEMINI_API_KEY) {
+      await logRequest(userId, question, false, "GEMINI_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "GEMINI_API_KEY not configured" }),
         {
@@ -257,7 +267,7 @@ Question: ${question}`;
 
     console.error("Error:", error);
 
-    await logRequest(null, "", false, errorMessage);
+    await logRequest(userId, question, false, errorMessage);
 
     console.error({
       timestamp: new Date().toISOString(),
