@@ -7,7 +7,13 @@ _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
 VALID review comments. Do not stop at sprint boundaries.
 
-## Production Score: **~75 / 100** (audit 70 → Sprint 1 73 → a11y/test-gate loop 75)
+## Production Score: **~79 / 100** (70 → 73 Sprint 1 → 75 a11y → 78 Lighthouse/SEO → 79 RLS integration)
+
+## Latest loop — RLS/auth integration tests (PR #12, stacked on #11)
+**Closes AUD-27; satisfies Security "RLS verified" + Testing "Integration tests pass."**
+Real DB-level test via **PGlite** (in-process Postgres WASM — no Docker/Supabase/cost): applies the
+actual migrations under a Supabase-auth shim and asserts cross-user isolation, WITH CHECK, and the
+stats trigger. `npm test` → **83 passed** (7 new). Security 84→87, Testing 80→87, DB 78→82.
 
 ## Completed loop — Accessibility & Test-Gate (PR #11, **all CI green incl. e2e**)
 **Closes AUD-21/22/23.** Verified green in CI on commit `4ef2468`.

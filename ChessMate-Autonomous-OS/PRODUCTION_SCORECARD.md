@@ -2,13 +2,13 @@
 
 _Last updated: 2026-06-20 · Auditor: Autonomous Engineering System (QA + Tech Lead hats)_
 
-## Headline Score: **~78 / 100 — "Release Candidate"**
+## Headline Score: **~79 / 100 — "Release Candidate"**
 
-_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y + test-gate) → 78 (Lighthouse/SEO)._ Target for
-Production Ready is **≥85** (`PRODUCT_ACCEPTANCE_CRITERIA.md`). **Acceptance sections now passing:**
-Accessibility, Performance, PR Quality, Chess Analysis; Security/Testing near threshold. Remaining
-gating gaps: design-system consolidation (UI), RLS/auth integration tests, monitoring alerting,
-Product-Quality audit. No P0 data-loss or auth-bypass.
+_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS integration)._
+Target for Production Ready is **≥85** (`PRODUCT_ACCEPTANCE_CRITERIA.md`). **Acceptance sections now
+passing:** Security (≥85), Testing (≥85), Accessibility, Performance, PR Quality, Chess Analysis, AI
+Coach. Remaining gaps to ≥85: design-system consolidation (UI 62), Monitoring alerting (needs Sentry
+DSN), AI-coach depth, Product-Quality audit. No P0 data-loss or auth-bypass.
 
 ### Lighthouse (production build, 2026-06-20)
 Performance **83** (≥80 ✅) · Accessibility **100** (≥80 ✅) · Best-Practices **100** (≥90 ✅) ·
@@ -19,10 +19,10 @@ shared runner — not representative of production._
 
 | # | Category | Weight | Score /100 | Notes |
 |---|---|:--:|:--:|---|
-| 1 | Security & Privacy | 15 | 84 | **Sprint 1:** JWT verified (`getUser` + `verify_jwt`), CSP/HSTS live on Netlify, CORS fail-closed, real disclosure channel, no client secrets, XSS-safe. _Left:_ RLS verified by tests |
+| 1 | Security & Privacy | 15 | 87 | JWT verified (`getUser` + `verify_jwt`), CSP/HSTS live on Netlify, CORS fail-closed, disclosure channel, no client secrets, XSS-safe; **RLS now verified by real integration tests** (PGlite) |
 | 2 | Architecture & Code Quality | 10 | 82 | Strict TS, clean hooks/workers, passing gates; some 1000+ line components & inline-style sprawl |
-| 3 | Database & Supabase | 8 | 78 | RLS on every user table, indexed, migration-tested; `cleanup_old_logs` unscheduled |
-| 4 | Testing & QA | 10 | 80 | **e2e gate green** (28/0/13), coverage + lint in CI; _left:_ RLS/auth integration tests, coverage threshold |
+| 3 | Database & Supabase | 8 | 82 | RLS on every user table, indexed; **migrations + RLS + stats trigger now executed in tests** (PGlite); `cleanup_old_logs` unscheduled |
+| 4 | Testing & QA | 10 | 87 | **e2e gate green & deterministic** (28/0/13), **RLS/auth integration tests** (PGlite), coverage + lint in CI; _left:_ coverage threshold |
 | 5 | Performance | 8 | 88 | **Lighthouse (prod build) all pass: Perf 83 / BP 100 / SEO 100 / A11y 100.** 89 KB gzip main, code-split, worker offload; SEO meta added |
 | 6 | Accessibility | 8 | 85 | **AA contrast passes** (axe 0 on landing, default+dark), focus-visible, focus traps, landmarks, alt; _left:_ authed-surface audit, more `aria-live` |
 | 7 | Mobile / Responsive | 6 | 76 | `useResponsive`, mobile bottom-sheet nav, 320px overflow fixed |
