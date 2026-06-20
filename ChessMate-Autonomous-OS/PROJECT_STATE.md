@@ -41,16 +41,15 @@ All 8 items + CodeRabbit fixes landed on `sprint-1/production-safety-and-trust` 
 | build | ✅ success (89 KB gzip main, unchanged) |
 | e2e (chromium) | ⚠️ 26 pass / 2 **pre-existing** fail / 13 skip — failures (AUD-21 landing contrast, AUD-22 stale smoke test) are untouched by this PR |
 
-## Branch / Repo State
-- Active branch: `v2/phase-2-analysis-workspace` (ahead of `main`).
+## Branch / Repo State (2026-06-20)
 - Remote: `github.com/Arjav1512/ChessMate-Tool`.
-- Open PRs: none detected.
-- Other branches in flight: `feat/sprint-2-stabilization-and-experience`,
-  `fix/user-color-consistency-and-cleanup`, `qa/production-readiness-audit`,
-  `v2/phase-1-design-system`.
-- **Note:** a v2 redesign is mid-flight on the current branch (design-system v2,
-  tabbed insights workspace, Stockfish hook extraction). Partial-feature risk —
-  see Escalation E-1.
+- **Open PRs:**
+  - **#10** `sprint-1/production-safety-and-trust` → `main` — security/CI/docs. CI green
+    (lint/build/unit/CodeRabbit); pending human merge.
+  - **#11** `prod/accessibility-aa-and-test-gate` → `main` (stacked on #10) — AA contrast +
+    e2e-gate fix. **All CI green incl. e2e**; CodeRabbit VALID comments resolved.
+- Working branch: `prod/accessibility-aa-and-test-gate`.
+- The v2 redesign (`v2/phase-2-analysis-workspace`) remains a parallel track per E-1.
 
 ## Quality Gates (verified 2026-06-20)
 | Gate | Command | Result |

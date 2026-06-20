@@ -4,7 +4,7 @@ _Append-only. Record major approved decisions and open escalations._
 
 ## Format
 `[DATE] [ID] STATUS — Decision · Rationale · Owner`
-STATUS ∈ DECIDED · OPEN · SUPERSEDED.
+STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) · RESOLVED (closes an OPEN item).
 
 ---
 
