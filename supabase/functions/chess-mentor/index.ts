@@ -223,6 +223,9 @@ Deno.serve(async (req: Request) => {
         `Evaluation: ${context.evaluation.evaluation} (${context.evaluation.isMate ? "Mate" : "centipawns"})`,
       );
     }
+    if (context?.weaknessSummary) {
+      contextInfo.push(`Player's known weaknesses: ${context.weaknessSummary}`);
+    }
 
     const systemPrompt = `You are ChessMate, an expert chess coach. Analyze the following question with clear, actionable insights.
 
@@ -236,6 +239,8 @@ Format your response with markdown:
 
 ### 💡 Recommendations
 - [Specific actionable advice]
+
+When the player's known weaknesses are provided, connect your advice to them where it is genuinely relevant — but do not force it.
 
 ${contextInfo.length > 0 ? `\nContext: ${contextInfo.join(" | ")}` : ""}
 

@@ -15,6 +15,7 @@ import { COACH_STARTER_PROMPTS } from '../../lib/sampleData';
 import { MoveClassification, CLASSIFICATION } from '../../utils/moveClassifier';
 import { detectOpening } from '../../lib/openings';
 import { useBreakpoint } from '../../hooks/useResponsive';
+import { useWeaknessProfile } from '../../hooks/useWeaknessProfile';
 import { useToast } from '../../contexts/ToastContext';
 
 // ─── Mobile tab type ────────────────────────────────────────────────────────
@@ -26,6 +27,8 @@ interface GameViewerProps {
 
 export function GameViewer({ game }: GameViewerProps) {
   const { isMobile, width: screenWidth } = useBreakpoint();
+  // Read-only weakness profile (session-cached) so the coach can personalize.
+  const weakness = useWeaknessProfile();
 
   // Compute square size: fill available width on mobile, 60px on desktop
   const squareSize = useMemo(() => {
@@ -107,6 +110,7 @@ export function GameViewer({ game }: GameViewerProps) {
         evaluation: engineAnalysis
           ? { evaluation: engineAnalysis.evaluation, isMate: engineAnalysis.isMate, bestMove: engineAnalysis.bestMove }
           : undefined,
+        weaknessSummary: weakness.profile?.summaryLine || undefined,
       });
       setCoachAnswer(answer);
       setCoachLastQuestion(text);
@@ -125,7 +129,7 @@ export function GameViewer({ game }: GameViewerProps) {
     } finally {
       setCoachLoading(false);
     }
-  }, [pgnData, game, currentFen, currentMoveIndex, engineAnalysis, showToast]);
+  }, [pgnData, game, currentFen, currentMoveIndex, engineAnalysis, showToast, weakness.profile?.summaryLine]);
 
   const handleAskCoach = useCallback(() => {
     askCoach(coachQuestion);
