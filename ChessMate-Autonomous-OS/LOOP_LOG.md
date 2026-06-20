@@ -93,3 +93,17 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
 - **Result:** Product Quality section addressed; Accessibility/UI nudged up. Score 79→~80.
 - **Next loop:** remaining levers to ≥85 — UI consolidation (visual, low autonomous confidence),
   Monitoring (needs Sentry DSN), AI-coach depth. Several need the user (merges, DSN).
+
+---
+
+## 2026-06-20 · Product-to-Production · Loop D — Design System Consolidation P0
+- **Objective:** raise UI Consistency & Design System (wt 8, biggest remaining lever) via
+  consolidation — no visual redesign.
+- **Change:** completed the `Button` primitive (per-variant hover via internal state; rest-state
+  unchanged), adopted it in WelcomeScreen + ErrorBoundary, authored `DESIGN_SYSTEM_AUDIT.md`
+  (P0–P5 plan). Verified via build/e2e/axe (Button is used in auth).
+- **Verify:** typecheck ✅ · lint ✅ · unit 83 ✅ · build ✅ · e2e 29/0/13 ✅ · auth axe-clean ✅.
+- **Result:** UI 62→66; foundational primitive completed so further adoption is regression-free.
+  Score ~80 (UI nudge). CI green, 0 CodeRabbit findings.
+- **Next loop:** DS P1 (Input adoption) / P2 (modal buttons) — autonomous; **P4 high-traffic visual
+  surfaces require human/visual QA** (escalation). Also pending: PR merges (#10–#14), Sentry DSN.

@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import * as Sentry from '@sentry/react';
+import { Button } from '../ui/Button';
 
 interface Props {
   children: ReactNode;
@@ -141,43 +142,17 @@ export class ErrorBoundary extends Component<Props, State> {
             )}
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <button
+              <Button
+                variant="primary"
+                leftIcon={<RefreshCw style={{ width: '14px', height: '14px' }} />}
                 onClick={this.handleReset}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 16px',
-                  background: 'var(--cm-accent-strong)',
-                  border: '1px solid transparent',
-                  borderRadius: '7px',
-                  color: 'var(--cm-text-inverse)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                }}
               >
-                <RefreshCw style={{ width: '14px', height: '14px' }} />
                 Try Again
-              </button>
+              </Button>
 
-              <button
-                onClick={() => { window.location.href = '/'; }}
-                style={{
-                  padding: '8px 16px',
-                  background: 'var(--cm-bg-elevated)',
-                  border: '1px solid var(--cm-border-default)',
-                  borderRadius: '7px',
-                  color: 'var(--cm-text-secondary)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                }}
-              >
+              <Button variant="secondary" onClick={() => { window.location.href = '/'; }}>
                 Go Home
-              </button>
+              </Button>
             </div>
 
             <p style={{

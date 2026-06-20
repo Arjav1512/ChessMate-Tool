@@ -26,7 +26,7 @@ shared runner — not representative of production._
 | 5 | Performance | 8 | 88 | **Lighthouse (prod build) all pass: Perf 83 / BP 100 / SEO 100 / A11y 100.** 89 KB gzip main, code-split, worker offload; SEO meta added |
 | 6 | Accessibility | 8 | 87 | **AA contrast passes** (axe 0 on landing + auth-with-error), Lighthouse a11y 100, focus traps, landmarks, alt, **accessible form errors** (`aria-invalid`/`describedby`/`role=alert`) |
 | 7 | Mobile / Responsive | 6 | 76 | `useResponsive`, mobile bottom-sheet nav, 320px overflow fixed |
-| 8 | UI Consistency & Design System | 8 | 62 | `--cm-accent-strong`/`-bright`/`-error-bright` tokens systematized; primitives still underused vs inline styles |
+| 8 | UI Consistency & Design System | 8 | 66 | **`Button` primitive completed** (hover/interaction states for all variants) + adoption started (WelcomeScreen, ErrorBoundary); tokens systematized. Audit + P1–P5 plan in `DESIGN_SYSTEM_AUDIT.md`; ~636 inline-style literals remain (P4 high-traffic surfaces need visual QA) |
 | 9 | Monitoring & Observability | 7 | 55 | Sentry optional/likely off, `api_logs` table; **no error tracking enabled** (acceptance criterion), no alerting/SLO |
 | 10 | Deployment & Release | 6 | 70 | CI lint/build/unit/e2e, headers live, release runbook drafted; no staging/rollback automation |
 | 11 | AI Coach | 6 | 66 | Context-aware, rate-limited, structured output; model hardcoded, no streaming/caching |

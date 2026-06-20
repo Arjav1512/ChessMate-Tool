@@ -66,6 +66,12 @@ STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) 
   (`role="alert"`), AA-contrast error UX; native popups can't be styled or wired to aria. UI/a11y
   only — no escalation. The shared `Input` primitive now carries `aria-invalid`/`aria-describedby`.
 
+- **[2026-06-20] D-014 DECIDED** — Design-system consolidation enhances the `Button` primitive with
+  hover via internal state (not CSS classes), because the primitive sets bg/border inline and a
+  `:hover` rule cannot override inline styles. Rest-state is unchanged; hover is additive. Adoption
+  proceeds on low-traffic surfaces autonomously; **high-traffic visual surfaces (P4) are escalated to
+  a visually-QA'd pass** (no-major-redesign constraint is unverifiable headless → confidence <80%).
+
 ## Resolved Escalations
 
 - **[2026-06-20] E-1 DECIDED — Priority direction: PARALLEL.**

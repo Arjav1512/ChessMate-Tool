@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LoadingSpinner } from './LoadingSpinner';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -9,6 +9,17 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
 }
+
+// Hover deltas mirror the .btn--{variant}:hover rules in style.css. Applied via
+// JS state so every variant gets hover feedback (inline styles can't use :hover),
+// centralizing the pattern that ad-hoc buttons across the app each re-implement.
+const hoverStyles: Record<string, React.CSSProperties> = {
+  primary: { filter: 'brightness(0.92)' },
+  secondary: { background: 'var(--cm-bg-hover)', borderColor: 'var(--cm-border-strong)' },
+  outline: { background: 'var(--cm-bg-hover)', borderColor: 'var(--cm-border-strong)' },
+  ghost: { background: 'var(--cm-bg-hover)', color: 'var(--cm-text-primary)' },
+  danger: { filter: 'brightness(1.1)' },
+};
 
 const variantStyles: Record<string, React.CSSProperties> = {
   primary: {
@@ -55,15 +66,20 @@ export function Button({
   className = '',
   disabled,
   style,
+  onMouseEnter,
+  onMouseLeave,
   ...props
 }: ButtonProps) {
+  const [hovered, setHovered] = useState(false);
+  const interactive = !(disabled || loading);
+
   const baseStyle: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontWeight: 500,
     lineHeight: 1.4,
-    cursor: (disabled || loading) ? 'not-allowed' : 'pointer',
+    cursor: interactive ? 'pointer' : 'not-allowed',
     transition: 'all 0.15s ease',
     outline: 'none',
     textDecoration: 'none',
@@ -72,6 +88,7 @@ export function Button({
     width: fullWidth ? '100%' : undefined,
     ...variantStyles[variant],
     ...sizeStyles[size],
+    ...(hovered && interactive ? hoverStyles[variant] : null),
     ...style,
   };
 
@@ -80,6 +97,8 @@ export function Button({
       style={baseStyle}
       className={className}
       disabled={disabled || loading}
+      onMouseEnter={(e) => { setHovered(true); onMouseEnter?.(e); }}
+      onMouseLeave={(e) => { setHovered(false); onMouseLeave?.(e); }}
       {...props}
     >
       {loading ? (
