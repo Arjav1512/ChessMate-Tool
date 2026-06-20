@@ -67,7 +67,7 @@ gates green (typecheck/lint/unit+coverage/build); in PR pending CodeRabbit + mer
 | ID | Sev | Area | Item | Why (acceptance criterion) |
 |----|:--:|------|------|-------|
 | AUD-25 | 🟠 | Monitoring | Enable Sentry/error tracking in prod + deployment monitoring | Monitoring section requires "Error tracking configured" — **next loop** |
-| AUD-26 | 🟠 | Performance | Run Lighthouse; meet Perf≥80 / BestPractices≥90 / SEO≥90 / A11y≥80 | Performance section is score-gated and currently unmeasured |
+| AUD-26 | 🟢 DONE | Performance | Lighthouse (prod build): Perf 83 / BP 100 / SEO 100 / A11y 100 | **Done:** added SEO meta; all four categories clear thresholds |
 | AUD-27 | 🟠 | Testing/Security | RLS/auth integration tests | Testing "Integration tests pass" + Security "RLS policies verified" |
 
 ## Sprint 2 — Verify & Observe
