@@ -1,0 +1,156 @@
+import { describe, it, expect } from 'vitest';
+import { buildWeaknessProfile, extractOpeningMoves, type WeaknessGame } from './weaknessProfile';
+
+let seq = 0;
+function mk(opts: Partial<WeaknessGame> & {
+  opening?: string; // SAN prefix, e.g. 'b3' or 'g4 d5'
+  result: string;
+  color: 'white' | 'black' | null;
+  blunders?: number;
+  moves?: number;
+  accuracy?: number;
+}): WeaknessGame {
+  seq += 1;
+  const pgn = `[White "W"]\n[Black "B"]\n\n1. ${opts.opening ?? 'b3'} *`;
+  return {
+    id: `g${seq}`,
+    result: opts.result,
+    user_color: opts.color,
+    pgn,
+    uploaded_at: new Date(2026, 0, 1, 0, 0, seq).toISOString(),
+    analysis:
+      opts.blunders !== undefined || opts.moves !== undefined || opts.accuracy !== undefined
+        ? {
+            accuracy: opts.accuracy ?? 70,
+            mistakes: 1,
+            inaccuracies: 2,
+            blunders: opts.blunders ?? 0,
+            total_moves: opts.moves ?? 30,
+          }
+        : null,
+  };
+}
+
+// User result helpers: as White, '1-0' = win, '0-1' = loss.
+const whiteWin = (opening: string) => mk({ opening, result: '1-0', color: 'white' });
+const whiteLoss = (opening: string) => mk({ opening, result: '0-1', color: 'white' });
+
+describe('extractOpeningMoves', () => {
+  it('strips headers, move numbers, comments and result; returns SAN tokens', () => {
+    const pgn = `[Event "x"]\n[White "a"]\n\n1. e4 {good} e5 2. Nf3 (2. Bc4) Nc6 3. Bb5 a6 1-0`;
+    expect(extractOpeningMoves(pgn, 6)).toEqual(['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6']);
+  });
+  it('returns empty for blank pgn', () => {
+    expect(extractOpeningMoves('')).toEqual([]);
+  });
+});
+
+describe('buildWeaknessProfile — opening weakness', () => {
+  it('flags an opening where the user scores well below baseline', () => {
+    const games = [
+      ...Array.from({ length: 6 }, () => whiteWin('g4')),   // Grob — strong
+      ...Array.from({ length: 5 }, () => whiteLoss('b3')),  // Nimzo-Larsen — weak
+    ];
+    const p = buildWeaknessProfile(games);
+    const op = p.weaknesses.find((w) => w.category === 'opening');
+    expect(op).toBeTruthy();
+    expect(op!.title).toMatch(/Nimzo-Larsen/i);
+    expect(op!.severity).toBeGreaterThan(40);
+    expect(op!.confidence).toBe('medium'); // 5 games
+    expect(op!.sampleSize).toBe(5);
+    expect(op!.evidence.length).toBeGreaterThan(0);
+  });
+
+  it('does not flag an opening below the minimum sample size', () => {
+    const games = [
+      ...Array.from({ length: 6 }, () => whiteWin('g4')),
+      whiteLoss('b3'), whiteLoss('b3'), // only 2 — below MIN_GROUP
+    ];
+    const p = buildWeaknessProfile(games);
+    expect(p.weaknesses.find((w) => w.category === 'opening')).toBeUndefined();
+  });
+});
+
+describe('buildWeaknessProfile — color weakness', () => {
+  it('flags the weaker color', () => {
+    const games = [
+      // all same opening so no opening group dominates; vary only color/result
+      mk({ opening: 'b3', result: '1-0', color: 'white' }),
+      mk({ opening: 'b3', result: '1-0', color: 'white' }),
+      mk({ opening: 'b3', result: '1-0', color: 'white' }),
+      mk({ opening: 'b3', result: '0-1', color: 'white' }),
+      // as black (result '1-0' = opponent White won = user loss)
+      mk({ opening: 'b3', result: '1-0', color: 'black' }),
+      mk({ opening: 'b3', result: '1-0', color: 'black' }),
+      mk({ opening: 'b3', result: '1-0', color: 'black' }),
+      mk({ opening: 'b3', result: '0-1', color: 'black' }),
+    ];
+    const p = buildWeaknessProfile(games);
+    const color = p.weaknesses.find((w) => w.category === 'color');
+    expect(color).toBeTruthy();
+    expect(color!.title).toMatch(/Black/);
+  });
+});
+
+describe('buildWeaknessProfile — recurring blunders', () => {
+  it('flags a high blunder rate', () => {
+    const games = [
+      mk({ result: '1-0', color: 'white', blunders: 2 }),
+      mk({ result: '0-1', color: 'white', blunders: 1 }),
+      mk({ result: '1-0', color: 'white', blunders: 1 }),
+      mk({ result: '0-1', color: 'white', blunders: 0 }),
+      mk({ result: '1-0', color: 'white', blunders: 3 }),
+    ];
+    const p = buildWeaknessProfile(games);
+    const rec = p.weaknesses.find((w) => w.category === 'recurring');
+    expect(rec).toBeTruthy();
+    expect(rec!.title).toMatch(/blunder/i);
+    expect(rec!.detail).toMatch(/%/);
+  });
+
+  it('does not flag when blunders are rare', () => {
+    const games = Array.from({ length: 6 }, () => mk({ result: '1-0', color: 'white', blunders: 0 }));
+    const p = buildWeaknessProfile(games);
+    expect(p.weaknesses.find((w) => w.category === 'recurring')).toBeUndefined();
+  });
+});
+
+describe('buildWeaknessProfile — phase proxy (low confidence)', () => {
+  it('flags long-game underperformance as a low-confidence proxy', () => {
+    const games = [
+      ...Array.from({ length: 6 }, () => mk({ opening: 'g4', result: '1-0', color: 'white', moves: 22 })),
+      ...Array.from({ length: 4 }, () => mk({ opening: 'g4', result: '0-1', color: 'white', moves: 55 })),
+    ];
+    const p = buildWeaknessProfile(games);
+    const phase = p.weaknesses.find((w) => w.category === 'phase');
+    expect(phase).toBeTruthy();
+    expect(phase!.confidence).toBe('low');
+    expect(phase!.evidence.join(' ')).toMatch(/proxy/i);
+  });
+});
+
+describe('buildWeaknessProfile — guards & summary', () => {
+  it('returns no weaknesses below the data floor', () => {
+    const p = buildWeaknessProfile([whiteWin('g4'), whiteLoss('b3')]);
+    expect(p.weaknesses).toEqual([]);
+    expect(p.summaryLine).toBe('');
+  });
+
+  it('ignores games with unknown user_color or undecided result for outcomes', () => {
+    const games = [
+      mk({ opening: 'g4', result: '*', color: 'white' }),
+      mk({ opening: 'g4', result: '1-0', color: null }),
+    ];
+    const p = buildWeaknessProfile(games);
+    expect(p.decidedGames).toBe(0);
+  });
+
+  it('produces a compact coach summary line when weaknesses exist', () => {
+    const games = [
+      ...Array.from({ length: 6 }, () => whiteWin('g4')),
+      ...Array.from({ length: 5 }, () => whiteLoss('b3')),
+    ];
+    const p = buildWeaknessProfile(games);
+    expect(p.summaryLine).toMatch(/Known weaknesses:/);
+  });
+});

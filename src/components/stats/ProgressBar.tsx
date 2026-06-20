@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { parsePGN } from '../../lib/pgn';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { WeaknessProfile } from './WeaknessProfile';
+import { useWeaknessProfile } from '../../hooks/useWeaknessProfile';
 
 interface AnalysisResult {
   game_id: string;
@@ -39,6 +41,7 @@ interface GameStats {
 
 export function ProgressBar() {
   const { user } = useAuth();
+  const weakness = useWeaknessProfile();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<GameStats>({
     totalGames: 0,
@@ -296,6 +299,11 @@ export function ProgressBar() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Weakness Profile — what to work on first (read-only, from your games) */}
+      <div style={sectionStyle}>
+        <WeaknessProfile profile={weakness.profile} loading={weakness.loading} error={weakness.error} />
+      </div>
+
       {/* Score Trend */}
       <div style={sectionStyle}>
         <h3 style={sectionTitleStyle}>Score Trend (cumulative W/L)</h3>

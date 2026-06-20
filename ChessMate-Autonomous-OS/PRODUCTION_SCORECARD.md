@@ -2,9 +2,9 @@
 
 _Last updated: 2026-06-20 · Auditor: Autonomous Engineering System (QA + Tech Lead hats)_
 
-## Headline Score: **~81 / 100 — "Release Candidate"**
+## Headline Score: **~82 / 100 — "Release Candidate"**
 
-_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality) → 81 (Observability)._
+_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality) → 81 (Observability) → 82 (Weakness Profile)._
 Target for Production Ready is **≥85** (`PRODUCT_ACCEPTANCE_CRITERIA.md`). **Acceptance sections now
 passing:** Security (≥85), Testing (≥85), Accessibility, Performance, PR Quality, Chess Analysis, AI
 Coach, Product Quality. Remaining gaps to ≥85: UI consolidation (66, biggest lever), Monitoring
@@ -29,11 +29,11 @@ shared runner — not representative of production._
 | 8 | UI Consistency & Design System | 8 | 66 | **`Button` primitive completed** (hover/interaction states for all variants) + adoption started (WelcomeScreen, ErrorBoundary); tokens systematized. Audit + P1–P5 plan in `DESIGN_SYSTEM_AUDIT.md`; ~636 inline-style literals remain (P4 high-traffic surfaces need visual QA) |
 | 9 | Monitoring & Observability | 7 | 72 | **Release/env-tagged Sentry + global error/rejection handlers**, **durable edge-error capture** (api_logs all paths), **smoke-test + hourly canary** (`deploy-verify.yml`), `MONITORING.md` runbook. _Credential-bound left:_ `VITE_SENTRY_DSN`, Sentry alerts, pg_cron |
 | 10 | Deployment & Release | 6 | 76 | CI + **post-deploy smoke test + uptime canary** verifying live status/shell/headers; headers live; runbook. _Left:_ staging, tag-on-merge automation |
-| 11 | AI Coach | 6 | 66 | Context-aware, rate-limited, structured output; model hardcoded, no streaming/caching |
+| 11 | AI Coach | 6 | 72 | Context-aware, rate-limited, structured output; **now personalized with the player's weakness profile**; model hardcoded, no streaming/caching |
 | 12 | Analysis Engine | 4 | 78 | Stockfish multi-PV, eval gauge, move classifier, insight cards — strong core |
-| 13 | Learning & Progress System | 4 | 58 | Stats + snapshots + color split honest; thin as a "learning" loop (no drills/plan) |
+| 13 | Learning & Progress System | 4 | 75 | **Weakness Detection Engine** (opening/color/recurring + low-conf phase proxy) in the Improve workflow with confidence + evidence + trend — the Personal-Improvement-System foundation. _Left:_ per-move phase, drills (later phases) |
 
-**Weighted total ≈ 81 / 100.**
+**Weighted total ≈ 82 / 100.**
 
 ## Scoring Rubric
 - **90–100** Production-ready: ship with monitoring.
@@ -48,7 +48,7 @@ Observability scaffolding ✅.
 - **UI 66→80** (wt 8, biggest remaining lever): DS P1–P5 — autonomous for low-traffic; **P4 high-traffic
   surfaces need visual QA** (`DESIGN_SYSTEM_AUDIT.md`).
 - **Monitoring 72→80** (wt 7): **owner** sets `VITE_SENTRY_DSN` + Sentry alerts + pg_cron (`MONITORING.md`).
-- **AI Coach 66→78** (wt 6): env-driven model + persist Q&A history (autonomous).
+- **AI Coach 72→80** (wt 6): env-driven model + persist Q&A history (autonomous).
 - **Mobile 76→85** (wt 6), **Deploy 76→82** (wt 6): responsive polish; staging + tag-on-merge.
-- **MERGE_READY:** human merge of PRs #10 → #11 → #12 → #13 → #14 → #15 (all CI-green).
+- **MERGE_READY:** human merge of PRs #10 → #11 → #12 → #13 → #14 → #15 → #16 (all CI-green).
 

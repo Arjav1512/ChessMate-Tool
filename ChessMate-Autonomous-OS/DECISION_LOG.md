@@ -79,6 +79,13 @@ STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) 
   **documented with step-by-step setup guides** and left for the owner — no escalation block; all
   other work proceeded. Verified without any external credential (91 unit tests, smoke vs prod+preview).
 
+- **[2026-06-21] D-016 / E-2 → APPROVED** — The deferred learning-depth escalation (E-2) is
+  **reopened and approved** by the user as a product-direction decision: build the **Weakness Profile**
+  (Phase 1, read-only) to move ChessMate from *analyzer* to *Personal Chess Improvement System*. Scope
+  is strictly existing-data aggregation (no schema/per-move/jobs/drills/retention). True phase
+  attribution is honestly deferred to a Phase-2 per-move-persistence item; the phase signal ships as a
+  labeled low-confidence game-length proxy. Confidence ≥80% — no schema/architecture change required.
+
 ## Resolved Escalations
 
 - **[2026-06-20] E-1 DECIDED — Priority direction: PARALLEL.**

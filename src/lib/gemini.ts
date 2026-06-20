@@ -30,6 +30,9 @@ export async function askChessMentor(
     moveHistory?: string[];
     evaluation?: EvaluationInfo;
     userHistory?: QuestionContext[];
+    /** Compact summary of the player's known weaknesses, so the coach can
+     *  personalize its explanations (see lib/weaknessProfile). */
+    weaknessSummary?: string;
   }
 ): Promise<string> {
   const apiUrl = `${SUPABASE_URL}/functions/v1/chess-mentor`;
