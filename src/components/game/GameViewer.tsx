@@ -828,7 +828,7 @@ export function GameViewer({ game }: GameViewerProps) {
               <div style={{
                 width: pgnData.moves.length > 0 ? `${(currentMoveIndex / pgnData.moves.length) * 100}%` : '0%',
                 height: '100%',
-                background: 'var(--cm-accent)',
+                background: 'var(--cm-accent-strong)',
                 borderRadius: '2px',
                 transition: 'width 0.15s ease',
               }} />

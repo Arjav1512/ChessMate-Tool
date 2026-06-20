@@ -2,11 +2,29 @@
 
 _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 
-## Current Phase
-**Phase 2 — Sprint 1 (Production Safety & Trust): in PR #10, review fixes applied.**
+## Operating Mode
+**Product-to-Production** (per `PRODUCT_ACCEPTANCE_CRITERIA.md`): drive to Production Score ≥85,
+every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
+VALID review comments. Do not stop at sprint boundaries.
+
+## Production Score: **~75 / 100** (audit 70 → Sprint 1 73 → a11y/test-gate loop 75)
+
+## Completed loop — Accessibility & Test-Gate (PR #11, **all CI green incl. e2e**)
+**Closes AUD-21/22/23.** Verified green in CI on commit `4ef2468`.
+- WCAG **AA contrast** passes — axe **0 violations** in both default (`:root`) and explicit-dark.
+  Brand-preserving tokens: `--cm-accent-strong` (button fill), `--cm-error-bright` (error chips),
+  accent-text → `--cm-accent-bright`, `:root` inverse fix; **disabled dead "coming soon" pricing CTAs**.
+- **e2e gate restored AND made trustworthy** by fixing two real root causes (not just the symptoms):
+  1. The job started `npm run dev` manually **and** Playwright's `webServer` did too →
+     port-5173 conflict erroring the job before any test ran (the true reason `main` was red 5+ merges).
+  2. The a11y specs `goto('/')` then `.count()` immediately, racing React's mount → flaky zero-button
+     failures. Added a `beforeEach` render-gate.
+- **CI: Lint ✅ · Type-check & Build ✅ · Unit ✅ · E2E ✅ (1m44s) · CodeRabbit ✅** (11 doc findings
+  triaged; 8 VALID fixed).
+
+## Phase 2 — Sprint 1 (Production Safety & Trust): in PR #10, review fixes applied.
 All 8 items + CodeRabbit fixes landed on `sprint-1/production-safety-and-trust` (rebased onto
-`origin/main`). **MERGE_READY pending:** (1) CodeRabbit incremental re-review (rate-limited ~50 min)
-to confirm the action-pinning fix; (2) human approval/merge. Phase 1 audit complete; OS docs initialized.
+`origin/main`). **MERGE_READY pending** human approval/merge. CodeRabbit check passed.
 
 ### Mid-sprint discoveries (handled)
 - **Deploy target is Netlify, not Vercel.** `vercel.json` headers were dead config — the live
@@ -27,16 +45,15 @@ to confirm the action-pinning fix; (2) human approval/merge. Phase 1 audit compl
 | build | ✅ success (89 KB gzip main, unchanged) |
 | e2e (chromium) | ⚠️ 26 pass / 2 **pre-existing** fail / 13 skip — failures (AUD-21 landing contrast, AUD-22 stale smoke test) are untouched by this PR |
 
-## Branch / Repo State
-- Active branch: `v2/phase-2-analysis-workspace` (ahead of `main`).
+## Branch / Repo State (2026-06-20)
 - Remote: `github.com/Arjav1512/ChessMate-Tool`.
-- Open PRs: none detected.
-- Other branches in flight: `feat/sprint-2-stabilization-and-experience`,
-  `fix/user-color-consistency-and-cleanup`, `qa/production-readiness-audit`,
-  `v2/phase-1-design-system`.
-- **Note:** a v2 redesign is mid-flight on the current branch (design-system v2,
-  tabbed insights workspace, Stockfish hook extraction). Partial-feature risk —
-  see Escalation E-1.
+- **Open PRs:**
+  - **#10** `sprint-1/production-safety-and-trust` → `main` — security/CI/docs. CI green
+    (lint/build/unit/CodeRabbit); pending human merge.
+  - **#11** `prod/accessibility-aa-and-test-gate` → `main` (stacked on #10) — AA contrast +
+    e2e-gate fix. **All CI green incl. e2e**; CodeRabbit VALID comments resolved.
+- Working branch: `prod/accessibility-aa-and-test-gate`.
+- The v2 redesign (`v2/phase-2-analysis-workspace`) remains a parallel track per E-1.
 
 ## Quality Gates (verified 2026-06-20)
 | Gate | Command | Result |

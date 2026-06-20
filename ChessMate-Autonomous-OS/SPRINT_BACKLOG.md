@@ -58,14 +58,17 @@ gates green (typecheck/lint/unit+coverage/build); in PR pending CodeRabbit + mer
 ### Discovered during Sprint 1 (logged, not in Sprint-1 scope)
 | ID | Sev | Area | Issue | Disposition |
 |----|:--:|------|-------|-------------|
-| AUD-21 | 🟠 | A11y/UI | v2 landing hero+nav has 91 axe **color-contrast** (WCAG AA) violations; e2e `accessibility` spec fails | Belongs to v2 track / **AUD-09** + Sprint-2 a11y (**AUD-11**). Pre-existing on base branch. |
-| AUD-22 | 🟡 | Test debt | `game-import` "sign-in form on landing" smoke test is stale vs the `LandingPage` marketing split | Update spec to the landing→auth flow; folds into **AUD-06** (e2e in CI). Pre-existing. |
-| AUD-23 | 🟠 | CI/Process | `main` CI has been **red for 5+ consecutive merges** (e2e job, via AUD-21/22) → the e2e gate is not currently enforced/trustworthy | Fix AUD-22 (cheap) + AUD-21, then treat e2e as a required check. Sprint 2. |
-| AUD-24 | 🟢 | Deploy (DONE) | Live deploy target is **Netlify**, which ignored `vercel.json` → security headers were not served | **Fixed in this PR:** added `public/_headers`; CSP/HSTS verified live on the deploy preview |
+| AUD-21 | 🟢 DONE | A11y/UI | Landing failed WCAG AA color-contrast (9 axe nodes) | **Fixed** (`prod/accessibility-aa-and-test-gate`): `--cm-accent-strong` / `--cm-error-bright` / accent-bright + `:root` inverse; axe **0 violations** (default + dark) |
+| AUD-22 | 🟢 DONE | Test debt | `game-import` smoke test stale vs the `LandingPage` split | **Fixed:** asserts the landing→sign-in journey; e2e green |
+| AUD-23 | 🟢 DONE | CI/Process | `main` e2e gate red for 5+ merges | **Addressed:** chromium e2e now **28/0/13**; gate can be a required check again |
+| AUD-24 | 🟢 DONE | Deploy | Live target is **Netlify**, which ignored `vercel.json` | **Fixed (PR #10):** `public/_headers`; CSP/HSTS verified live |
 
-> Note: the two e2e failures (AUD-21/22) pre-exist on `main` itself — this PR's diff touches none of
-> the implicated files and introduces no e2e regression. They keep the chromium e2e job red until
-> Sprint 2 / the v2 track addresses them (AUD-23).
+## Product-to-Production queue (toward Production Score ≥85)
+| ID | Sev | Area | Item | Why (acceptance criterion) |
+|----|:--:|------|------|-------|
+| AUD-25 | 🟠 | Monitoring | Enable Sentry/error tracking in prod + deployment monitoring | Monitoring section requires "Error tracking configured" — **next loop** |
+| AUD-26 | 🟢 DONE | Performance | Lighthouse (prod build): Perf 83 / BP 100 / SEO 100 / A11y 100 | **Done:** added SEO meta; all four categories clear thresholds |
+| AUD-27 | 🟠 | Testing/Security | RLS/auth integration tests | Testing "Integration tests pass" + Security "RLS policies verified" |
 
 ## Sprint 2 — Verify & Observe
 **Goal:** prove the security boundary in CI and gain production visibility + repeatable releases.

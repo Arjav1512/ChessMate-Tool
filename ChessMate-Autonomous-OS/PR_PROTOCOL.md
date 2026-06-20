@@ -9,7 +9,7 @@ How a change becomes a reviewable, evidence-backed pull request.
 
 ## Before opening
 Run the full gate suite and capture output:
-```
+```bash
 npm run typecheck
 npm run lint
 npm test            # or test:coverage

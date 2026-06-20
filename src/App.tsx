@@ -505,7 +505,7 @@ function WelcomeScreen({ onImport, onOpenAnalyze }: { onImport: () => void; onOp
             alignItems: 'center',
             gap: '8px',
             padding: '10px 18px',
-            background: 'var(--cm-accent)',
+            background: 'var(--cm-accent-strong)',
             border: '1px solid transparent',
             borderRadius: '8px',
             color: 'var(--cm-text-inverse)',

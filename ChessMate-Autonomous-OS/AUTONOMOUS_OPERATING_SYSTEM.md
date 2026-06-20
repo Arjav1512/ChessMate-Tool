@@ -5,7 +5,7 @@ change autonomously, stopping only at genuine decision gates.
 
 ## State machine
 
-```
+```text
 VISION ─► ROADMAP ─► SPRINT ─► IMPLEMENT ─► VERIFY ─► PR ─► REVIEW ─► MERGE_READY ─► RELEASE
    ▲                                                                                    │
    └──────────────────────── learnings feed back into VISION/ROADMAP ◄─────────────────┘

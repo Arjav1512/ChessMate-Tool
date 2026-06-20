@@ -20,11 +20,17 @@
   /* WCAG 2.1 AA: brightened from #5C6070 (2.7:1) to clear 4.5:1 on
      --cm-bg-elevated (#1A1D24) for small-text usage. */
   --cm-text-muted:     #828799;
-  --cm-text-inverse:   #0C0E12;
+  /* :root is the dark-first default (the pre-auth landing page renders here,
+     before ThemeToggle mounts). Inverse must be white so text on the indigo
+     button fill clears AA — kept in sync with [data-color-scheme="dark"]. */
+  --cm-text-inverse:   #FFFFFF;
 
   --cm-accent:         #7B6CF6;
   --cm-accent-hover:   #6A5BF0;
   --cm-accent-bright:  #9385FB;
+  /* Primary button FILL — white text clears WCAG AA (4.81:1). Kept separate from
+     --cm-accent (#7B6CF6) so accents/borders/icons stay vibrant. */
+  --cm-accent-strong:  #6A5BF0;
   --cm-accent-dim:     rgba(123,108,246,0.14);
   --cm-accent-ring:    rgba(123,108,246,0.42);
   --cm-secondary:      #F2A93B;
@@ -35,6 +41,9 @@
   --cm-success-dim:    rgba(61,184,122,0.12);
   --cm-error:          #E8554A;
   --cm-error-dim:      rgba(232,85,74,0.12);
+  /* Brighter red for error TEXT on error-dim chips — clears AA (4.85:1) where
+     the fill red (#E8554A) sits at 4.09. Fills/borders keep --cm-error. */
+  --cm-error-bright:   #F2685D;
   --cm-info:           #4A90E2;
   --cm-info-dim:       rgba(74,144,226,0.12);
   --cm-warning:        #F0A840;
@@ -194,6 +203,9 @@
   --cm-accent:         #7B6CF6;
   --cm-accent-hover:   #6A5BF0;
   --cm-accent-bright:  #9385FB;
+  /* Primary button FILL — white text clears WCAG AA (4.81:1). Kept separate from
+     --cm-accent (#7B6CF6) so accents/borders/icons stay vibrant. */
+  --cm-accent-strong:  #6A5BF0;
   --cm-accent-dim:     rgba(123,108,246,0.14);
   --cm-accent-ring:    rgba(123,108,246,0.42);
   --cm-secondary:      #F2A93B;
@@ -203,6 +215,9 @@
   --cm-success-dim:    rgba(61,184,122,0.12);
   --cm-error:          #E8554A;
   --cm-error-dim:      rgba(232,85,74,0.12);
+  /* Brighter red for error TEXT on error-dim chips — clears AA (4.85:1) where
+     the fill red (#E8554A) sits at 4.09. Fills/borders keep --cm-error. */
+  --cm-error-bright:   #F2685D;
   --cm-info:           #4A90E2;
   --cm-info-dim:       rgba(74,144,226,0.12);
 
@@ -257,6 +272,8 @@
   --cm-accent:         #5B54E8;
   --cm-accent-hover:   #4A43DC;
   --cm-accent-bright:  #5B54E8;
+  /* Light-theme primary button FILL — white-on-indigo #5B54E8 ≈ 5.4:1 (AA). */
+  --cm-accent-strong:  #5B54E8;
   --cm-accent-dim:     rgba(91,84,232,0.10);
   --cm-accent-ring:    rgba(91,84,232,0.32);
   --cm-secondary:      #E0922E;
@@ -266,6 +283,8 @@
   --cm-success-dim:    rgba(39,163,99,0.10);
   --cm-error:          #D63B30;
   --cm-error-dim:      rgba(214,59,48,0.10);
+  /* Light theme: error text on the near-white error-dim stays a dark red. */
+  --cm-error-bright:   #C0372B;
   --cm-info:           #2B76D4;
   --cm-info-dim:       rgba(43,118,212,0.10);
   --cm-warning:        #D4920A;
@@ -402,12 +421,12 @@ pre code { background: none; padding: 0; }
 }
 
 .btn--primary {
-  background: var(--cm-accent);
+  background: var(--cm-accent-strong);
   color: var(--cm-text-inverse);
   border: 1px solid transparent;
 }
-.btn--primary:hover { background: var(--cm-accent-hover); }
-.btn--primary:active { background: var(--cm-accent-hover); filter: brightness(0.9); }
+.btn--primary:hover { background: var(--cm-accent-strong); filter: brightness(0.92); }
+.btn--primary:active { background: var(--cm-accent-strong); filter: brightness(0.85); }
 
 .btn--secondary {
   background: var(--cm-bg-elevated);
@@ -748,7 +767,7 @@ select.form-control {
   top: 6px;
   bottom: 6px;
   width: 2px;
-  background: var(--cm-accent);
+  background: var(--cm-accent-strong);
   border-radius: 0 2px 2px 0;
 }
 
@@ -803,7 +822,7 @@ select.form-control {
 }
 
 .message.user .message-content {
-  background: var(--cm-accent);
+  background: var(--cm-accent-strong);
   color: var(--cm-text-inverse);
   border-radius: 12px 12px 2px 12px;
   max-width: 75%;
@@ -906,7 +925,7 @@ select.form-control {
 
 .progress-fill {
   height: 100%;
-  background: var(--cm-accent);
+  background: var(--cm-accent-strong);
   border-radius: var(--radius-full);
   transition: width var(--duration-normal) var(--ease-standard);
 }
@@ -1048,7 +1067,7 @@ select.form-control {
 }
 
 .nav-btn.active {
-  background: var(--cm-accent);
+  background: var(--cm-accent-strong);
   color: var(--cm-text-inverse);
   border-color: transparent;
 }
@@ -1245,7 +1264,7 @@ select.form-control {
   transition: background 0.2s;
   flex-shrink: 0;
 }
-.cm-toggle-track--on { background: var(--cm-accent); }
+.cm-toggle-track--on { background: var(--cm-accent-strong); }
 
 /* Toggle switch thumb */
 .cm-toggle-thumb {
@@ -1286,7 +1305,7 @@ select.form-control {
 /* Primary accent button */
 .cm-btn-primary {
   padding: 8px 14px;
-  background: var(--cm-accent);
+  background: var(--cm-accent-strong);
   border: 1px solid transparent;
   border-radius: 7px;
   color: var(--cm-text-inverse);

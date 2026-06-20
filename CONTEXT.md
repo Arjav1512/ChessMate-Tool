@@ -38,7 +38,7 @@ a serious analysis instrument, not a gamified app (see `PRODUCT.md` anti-referen
 
 ## 3. Directory map (the parts that matter)
 
-```
+```text
 src/
   App.tsx                 App shell: auth gate → password-recovery gate → main UI + modal routing
   main.tsx                React entry; initializes Sentry

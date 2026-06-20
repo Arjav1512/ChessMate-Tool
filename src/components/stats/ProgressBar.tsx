@@ -453,7 +453,7 @@ export function ProgressBar() {
                   <div style={{
                     width: `${area.score}%`,
                     height: '100%',
-                    background: 'var(--cm-accent)',
+                    background: 'var(--cm-accent-strong)',
                     borderRadius: '3px',
                     transition: 'width 0.4s ease',
                   }} />

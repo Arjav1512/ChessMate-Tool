@@ -4,6 +4,27 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
 
 ---
 
+## 2026-06-20 · Product-to-Production · Loop A — Accessibility & Test-Gate
+- **Objective:** satisfy the Accessibility acceptance criterion (AA contrast) and restore the
+  e2e/CI-green requirement. Highest leverage: AUD-21 contrast is the same root cause as the red e2e.
+- **Hypothesis:** AA can be met by shade-tuning that preserves the indigo brand (engineering, not a
+  product-direction change), so it proceeds autonomously (confidence ≥80%).
+- **Change:** measured 9 axe nodes precisely → added `--cm-accent-strong` (AA button fill),
+  `--cm-error-bright` (error chips), routed accent-text to `--cm-accent-bright`, fixed `:root`
+  inverse to `#FFFFFF`, **disabled dead "coming soon" pricing CTAs**, updated the stale landing
+  e2e smoke test. Verified the REAL default (`:root`) state, not just the test's forced-dark state.
+- **Verify:** axe **0 violations** (default + dark). typecheck ✅ · lint ✅ 0 err · unit ✅ 76/76 ·
+  build ✅ · e2e chromium **28 passed / 0 failed / 13 skipped** (was 26/2/13).
+- **Result:** Accessibility criterion met on the public surface; e2e gate green. Score 73 → ~75.
+  Closes AUD-21/22/23.
+- **Next loop:** **Monitoring** (enable Sentry/error tracking — acceptance req, weight 7) and
+  **Performance** (run Lighthouse to measure against the ≥80/90/90/80 thresholds).
+- **CI resolution (same loop):** getting PR #11's e2e green in CI surfaced two real defects beyond
+  the contrast work — (1) a dev-server **port conflict** (manual `npm run dev` + Playwright
+  `webServer` both binding :5173) that had kept `main`'s e2e red for 5+ merges; (2) **flaky** a11y
+  specs racing the SPA mount via immediate `.count()`. Both fixed → CI fully green on `4ef2468`
+  (lint/build/unit/e2e/CodeRabbit). 11 CodeRabbit doc findings triaged (8 VALID fixed, 3 OPTIONAL).
+
 ## 2026-06-20 · Sprint 1 — Production Safety & Trust
 - **Objective:** close the security/process gaps gating a trustworthy launch (AUD-01..05, 08, 15, 16).
 - **Hypothesis:** these are mostly additive hardening with no product/security tradeoff, so they

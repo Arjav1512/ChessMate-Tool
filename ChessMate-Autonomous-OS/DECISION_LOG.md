@@ -4,7 +4,7 @@ _Append-only. Record major approved decisions and open escalations._
 
 ## Format
 `[DATE] [ID] STATUS — Decision · Rationale · Owner`
-STATUS ∈ DECIDED · OPEN · SUPERSEDED.
+STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) · RESOLVED (closes an OPEN item).
 
 ---
 
@@ -37,6 +37,23 @@ STATUS ∈ DECIDED · OPEN · SUPERSEDED.
 - **[2026-06-20] D-008 NOTED** — Two pre-existing e2e failures (AUD-21 v2 landing contrast,
   AUD-22 stale smoke test) are **not** in Sprint-1 scope and are tracked for the v2 track /
   Sprint 2. The chromium e2e CI job stays red until then; this PR introduces no e2e regression.
+
+## Accessibility & test-gate loop decisions (product-to-production)
+
+- **[2026-06-20] D-009 DECIDED** — AUD-21 contrast fixed **without changing the brand palette**
+  (indigo stays `#7B6CF6`). Introduced `--cm-accent-strong` (#6A5BF0) for button FILLS where white
+  text needs 4.5:1, `--cm-error-bright` (#F2685D) for error TEXT on dim chips, and routed small
+  accent-text to the existing `--cm-accent-bright`. This is AA remediation (engineering), not a
+  product-direction change → no escalation. Verified by axe (0 violations, default + dark).
+- **[2026-06-20] D-010 DECIDED** — `:root` `--cm-text-inverse` corrected to `#FFFFFF`. The pre-auth
+  landing renders under `:root` (ThemeToggle only mounts in the authed app), so the dark default must
+  carry white button text to clear AA — previously `#0C0E12`, inconsistent with the dark block.
+- **[2026-06-20] D-011 DECIDED** — Non-Free pricing CTAs are now `disabled` + `aria-label`led
+  ("coming soon"). They had no `onClick` (**dead buttons**, Product-Quality violation) and failed
+  contrast at opacity 0.6. Disabling fixes both and is honest UI for roadmap plans.
+- **[2026-06-20] D-008 → RESOLVED** — AUD-21/22 are now fixed on branch
+  `prod/accessibility-aa-and-test-gate`; chromium e2e is green (28/0/13). AUD-23 (the e2e gate had
+  been red on `main`) is thereby addressed — e2e can become a trustworthy required check.
 
 ## Resolved Escalations
 

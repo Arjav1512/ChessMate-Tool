@@ -99,11 +99,20 @@ test.describe('Game Import Flow (requires auth)', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Auth page smoke test', () => {
-  test('should show sign-in form on landing', async ({ page }) => {
+  test('landing renders the marketing hero and routes to the sign-in form', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'ChessMate' })).toBeVisible();
-    await expect(page.getByLabel('Email')).toBeVisible();
-    // The Import button should NOT be visible when unauthenticated.
+
+    // The default unauthenticated surface is the marketing LandingPage: an H1
+    // hero and a primary "Get started" CTA, not the auth form directly.
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    const getStarted = page.getByRole('button', { name: /Get started/i }).first();
+    await expect(getStarted).toBeVisible();
+
+    // The Import button (authenticated-only) must not be visible to anonymous visitors.
     await expect(page.getByRole('button', { name: /^Import$/i })).not.toBeVisible();
+
+    // Clicking the CTA reveals the sign-in form with an Email field.
+    await getStarted.click();
+    await expect(page.getByLabel('Email')).toBeVisible();
   });
 });
