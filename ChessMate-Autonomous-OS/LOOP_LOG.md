@@ -120,3 +120,15 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
 - **Result:** Monitoring 55→72, Deploy 70→76; score ~81. Credential-bound items (DSN/alerts/pg_cron)
   documented with setup guides in MONITORING.md — owner action, not blocking.
 - **Next:** owner sets DSN/pg_cron to reach Monitoring ~80; remaining autonomous levers smaller.
+
+---
+
+## 2026-06-21 · Product-to-Production · Loop F — Weakness Profile (Personal Improvement System)
+- **Objective (approved product direction):** transform Analyzer → Personal Chess Improvement System
+  via a read-only Weakness Profile from existing data (E-2 reopened/approved).
+- **Change:** pure `weaknessProfile.ts` engine (opening/color/recurring + low-conf phase proxy, with
+  confidence/evidence/trend; 11 tests); `useWeaknessProfile` (session-cached); `WeaknessProfile` UI in
+  the Progress workflow; coach context personalization (gemini + edge prompt + GameViewer).
+- **Verify:** typecheck ✅ · lint ✅ · unit 102 ✅ · build ✅ · e2e 29/0/13 ✅. No schema/per-move/jobs.
+- **Result:** Learning 58→75, AI Coach 66→72; score ~82. Phase-2 (per-move phase, drills) honestly deferred.
+- **Next:** CodeRabbit triage on PR #16 → MERGE_READY. Owner-gated items (merges, Sentry DSN) still pending.

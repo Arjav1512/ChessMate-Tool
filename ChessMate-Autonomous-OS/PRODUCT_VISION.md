@@ -7,6 +7,10 @@ Help serious, improvement-minded chess players turn their own games into
 measurable skill gains — by pairing engine-grade analysis with an AI coach that
 explains _why_, not just _what_.
 
+## Direction (2026-06-21)
+Shifting from *chess analyzer* to **Personal Chess Improvement System**. Phase 1 (shipped, PR #16):
+a read-only **Weakness Profile** built from existing data — the foundation for later drills/training.
+
 ## Positioning
 A dedicated, dark-first **analysis-and-coaching workspace** for games you already
 played on chess.com / Lichess. Not a place to play; a place to understand.

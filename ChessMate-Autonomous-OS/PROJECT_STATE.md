@@ -7,7 +7,13 @@ _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
 VALID review comments. Do not stop at sprint boundaries.
 
-## Production Score: **~81 / 100** (… → 80 → 81 Observability)
+## Production Score: **~82 / 100** (… → 81 → 82 Weakness Profile)
+
+## Latest loop — Weakness Profile (PR #16): Analyzer → Personal Chess Improvement System
+Phase-1 **Weakness Detection Engine** (read-only, existing data): opening / color / recurring-blunder
+weaknesses + a low-confidence game-length phase proxy, each with confidence + evidence + trend.
+Surfaced in the **Progress (Improve)** workflow and fed into the **AI coach** context for personalized
+explanations. No schema/per-move/jobs. Learning 58→75, AI Coach 66→72. 11 engine unit tests; 102 total.
 
 ## Latest loop — Monitoring & Observability (PR #15, autonomous portion)
 Sentry **release/env tagging** + **global error/unhandledrejection handlers** (single `logError`
