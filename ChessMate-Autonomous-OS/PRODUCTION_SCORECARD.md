@@ -48,7 +48,7 @@ Observability scaffolding ✅.
 - **UI 66→80** (wt 8, biggest remaining lever): DS P1–P5 — autonomous for low-traffic; **P4 high-traffic
   surfaces need visual QA** (`DESIGN_SYSTEM_AUDIT.md`).
 - **Monitoring 72→80** (wt 7): **owner** sets `VITE_SENTRY_DSN` + Sentry alerts + pg_cron (`MONITORING.md`).
-- **AI Coach 66→78** (wt 6): env-driven model + persist Q&A history (autonomous).
+- **AI Coach 72→80** (wt 6): env-driven model + persist Q&A history (autonomous).
 - **Mobile 76→85** (wt 6), **Deploy 76→82** (wt 6): responsive polish; staging + tag-on-merge.
-- **MERGE_READY:** human merge of PRs #10 → #11 → #12 → #13 → #14 → #15 (all CI-green).
+- **MERGE_READY:** human merge of PRs #10 → #11 → #12 → #13 → #14 → #15 → #16 (all CI-green).
 
