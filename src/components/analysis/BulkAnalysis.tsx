@@ -388,7 +388,7 @@ export function BulkAnalysis() {
             )}
 
             {analysis.status === 'error' && analysis.error && (
-              <p style={{ fontSize: '12px', color: 'var(--cm-error)', margin: '8px 0 0', padding: '6px 10px', background: 'var(--cm-error-dim)', borderRadius: '6px' }}>
+              <p role="alert" style={{ fontSize: '12px', color: 'var(--cm-error-bright)', margin: '8px 0 0', padding: '6px 10px', background: 'var(--cm-error-dim)', borderRadius: '6px' }}>
                 {analysis.error}
               </p>
             )}

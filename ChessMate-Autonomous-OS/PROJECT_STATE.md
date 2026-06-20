@@ -7,7 +7,15 @@ _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
 VALID review comments. Do not stop at sprint boundaries.
 
-## Production Score: **~79 / 100** (70 → 73 Sprint 1 → 75 a11y → 78 Lighthouse/SEO → 79 RLS integration)
+## Production Score: **~80 / 100** (70 → 73 → 75 → 78 → 79 RLS → 80 Product Quality)
+
+## Latest loop — Product Quality audit (PR #13, stacked on #12)
+**Acceptance "Product Quality" section addressed.** Audit found the app mature (toggles consumed,
+empty/loading states present, no dead buttons beyond the already-fixed pricing CTAs). Fixed the one
+systemic gap — **error & validation UX**: `noValidate` on all 3 auth forms (consistent styled custom
+validation), `Input` primitive now `aria-invalid`/`aria-describedby`/`role="alert"`, error messages →
+`--cm-error-bright` (AA) + announced, auth accent links → `--cm-accent-bright`. Auth error state
+axe-clean; e2e 29/0/13 (new validation regression test).
 
 ## Latest loop — RLS/auth integration tests (PR #12, stacked on #11)
 **Closes AUD-27; satisfies Security "RLS verified" + Testing "Integration tests pass."**
@@ -61,15 +69,6 @@ All 8 items + CodeRabbit fixes landed on `sprint-1/production-safety-and-trust` 
 - Working branch: `prod/accessibility-aa-and-test-gate`.
 - The v2 redesign (`v2/phase-2-analysis-workspace`) remains a parallel track per E-1.
 
-## Quality Gates (verified 2026-06-20)
-| Gate | Command | Result |
-|---|---|---|
-| Type-check | `tsc --noEmit -p tsconfig.app.json` | ✅ clean |
-| Lint | `eslint .` | ✅ 0 errors, 5 `react-refresh/only-export-components` warnings |
-| Unit tests | `vitest run` | ✅ 82/82 passing (8 files) |
-| Build | `vite build` | ✅ success — main 355 KB (88.96 KB gzip), vendor 140 KB |
-| E2E | Playwright + axe | ⚠️ runs locally; auth-gated specs skip without seeded user |
-
 ## Architecture Snapshot
 - React 18 + TS 5.5 (strict), Vite 5 + PWA, Tailwind 3 + CSS-var token system.
 - Supabase: Postgres (RLS on all user tables), Auth (email + Google/GitHub OAuth +
@@ -79,25 +78,14 @@ All 8 items + CodeRabbit fixes landed on `sprint-1/production-safety-and-trust` 
 - 7 SQL migrations; stats maintained by a `SECURITY DEFINER` trigger reading
   `games.user_color`.
 
-## Production Readiness
-**Score: 70 / 100 — "Advanced Beta."** Functionally complete and well-tested at the
-unit level; gated on security headers, JWT-verification hardening, CI/observability
-maturity, and design-system consolidation. Full breakdown in `PRODUCTION_SCORECARD.md`.
-
 ## Escalations — RESOLVED (2026-06-20)
-- **E-1 → PARALLEL:** Sprint-1 security/CI hardening proceeds now on the current
-  base; v2 redesign continues as a separate track to a clean merge.
-- **E-2 → DEFER:** v1 stays stats + AI coach; revisit learning depth after Sprint 1–2.
-
-## Blockers / Risks
-- **R-1:** Edge Function trusts `sub` from an unverified JWT decode; no
-  `supabase/config.toml` pinning `verify_jwt=true`.
-- **R-2:** No CSP / HSTS; CORS falls back to echoing request origin when
-  `ALLOWED_ORIGINS` is unset.
-- **R-3:** Lint + RLS/auth integration not enforced in CI.
-- **R-4:** `CONTEXT.md` referenced by README/CONTRIBUTING but absent from repo.
+- **E-1 → PARALLEL:** Sprint-1 security/CI hardening proceeded on the current base; v2 redesign
+  continues as a separate track.
+- **E-2 → DEFER:** v1 stays stats + AI coach; revisit learning depth later.
+- _R-1..R-4 from the Phase-1 audit are all resolved_ (JWT verified, CSP/HSTS live, lint+RLS in CI, `CONTEXT.md` authored).
 
 ## Next Objective
-Open the Sprint-1 PR → CodeRabbit triage (`CODERABBIT_PROTOCOL.md`) → resolve comments →
-re-verify → MERGE_READY + human approval. Then **Sprint 2 — Verify & Observe**, which also
-absorbs the discovered AUD-21 (v2 contrast a11y) and AUD-22 (stale e2e smoke test).
+Open PRs are all CI-green (#10–#13) — **pending human merge** (sequence #10 → #11 → #12 → #13).
+Remaining autonomous levers to ≥85: UI consolidation (visual, low autonomous confidence), AI-coach
+depth, mobile/deploy polish. User-gated: PR merges, Sentry DSN (Monitoring). See
+`PRODUCTION_SCORECARD.md` "Remaining path to 85".

@@ -79,3 +79,17 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
 - **Result:** Security 84→87, Testing 80→87, DB 78→82; both acceptance sections now pass. Score 78→~79.
 - **Next loop:** next highest lever toward ≥85 — UI/design-system consolidation (wt 8, score 62) or
   Monitoring (alerting/cleanup); Product-Quality audit.
+
+---
+
+## 2026-06-20 · Product-to-Production · Loop C — Product Quality audit
+- **Objective:** complete the Product Quality acceptance section (dead buttons/toggles, journeys,
+  loading/error/empty states, edge cases, onboarding friction).
+- **Change:** audit found the app mature; the real gap was error/validation UX. Added `noValidate`
+  to 3 auth forms, made the `Input` primitive accessible (`aria-invalid`/`aria-describedby`/
+  `role="alert"`), routed error text to `--cm-error-bright` (AA) + announced it, fixed auth accent
+  links. Added an e2e validation regression test. Verified via dynamic Playwright probe + axe.
+- **Verify:** typecheck ✅ · lint ✅ · unit ✅ 83 · build ✅ · e2e ✅ 29/0/13 · auth error axe-clean.
+- **Result:** Product Quality section addressed; Accessibility/UI nudged up. Score 79→~80.
+- **Next loop:** remaining levers to ≥85 — UI consolidation (visual, low autonomous confidence),
+  Monitoring (needs Sentry DSN), AI-coach depth. Several need the user (merges, DSN).

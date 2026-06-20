@@ -467,12 +467,12 @@ export function GameViewer({ game }: GameViewerProps) {
 
         {/* Error state */}
         {coachLastFailed && !coachLoading && (
-          <div style={{
+          <div role="alert" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             gap: '8px', padding: '7px 10px', background: 'var(--cm-error-dim)',
             border: '1px solid rgba(232,85,74,0.25)', borderRadius: '8px',
           }}>
-            <span style={{ fontSize: '11px', color: 'var(--cm-error)' }}>{coachError || 'Request failed.'}</span>
+            <span style={{ fontSize: '11px', color: 'var(--cm-error-bright)' }}>{coachError || 'Request failed.'}</span>
             <button
               type="button"
               onClick={handleRetryCoach}

@@ -115,4 +115,18 @@ test.describe('Auth page smoke test', () => {
     await getStarted.click();
     await expect(page.getByLabel('Email')).toBeVisible();
   });
+
+  test('shows accessible custom validation on invalid submit', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: /Get started/i }).first().click();
+    await expect(page.getByLabel('Email')).toBeVisible();
+
+    // The form uses noValidate so our styled, announced validation runs instead
+    // of inconsistent browser-native popups. An invalid email must surface a
+    // role="alert" error, not silently no-op.
+    await page.getByLabel('Email').fill('not-an-email');
+    await page.getByLabel('Password').fill('x');
+    await page.getByRole('button', { name: /^Sign In$/i }).last().click();
+    await expect(page.getByRole('alert')).toContainText(/valid email/i);
+  });
 });

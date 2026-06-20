@@ -210,7 +210,9 @@ export function AuthForm({ onBackToLanding }: AuthFormProps = {}) {
 
 
           {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* noValidate: use our styled, accessible validation (isValidEmail /
+              isValidPassword) instead of inconsistent browser-native popups. */}
+          <form noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {!isLogin && (
               <Input
                 label="Name"
@@ -253,7 +255,7 @@ export function AuthForm({ onBackToLanding }: AuthFormProps = {}) {
                     border: 'none',
                     padding: 0,
                     cursor: 'pointer',
-                    color: 'var(--cm-accent)',
+                    color: 'var(--cm-accent-bright)',
                     fontSize: '12px',
                     textDecoration: 'underline',
                     textUnderlineOffset: '2px',
@@ -265,12 +267,12 @@ export function AuthForm({ onBackToLanding }: AuthFormProps = {}) {
             )}
 
             {(error || authError) && (
-              <div style={{
+              <div role="alert" style={{
                 padding: '10px 12px',
                 background: 'var(--cm-error-dim)',
                 border: '1px solid rgba(232,85,74,0.25)',
                 borderRadius: '6px',
-                color: 'var(--cm-error)',
+                color: 'var(--cm-error-bright)',
                 fontSize: '13px',
                 lineHeight: 1.4,
               }}>
@@ -378,7 +380,7 @@ export function AuthForm({ onBackToLanding }: AuthFormProps = {}) {
                 border: 'none',
                 padding: 0,
                 cursor: 'pointer',
-                color: 'var(--cm-accent)',
+                color: 'var(--cm-accent-bright)',
                 fontSize: '11px',
                 textDecoration: 'underline',
                 textUnderlineOffset: '2px',
@@ -394,7 +396,7 @@ export function AuthForm({ onBackToLanding }: AuthFormProps = {}) {
                 border: 'none',
                 padding: 0,
                 cursor: 'pointer',
-                color: 'var(--cm-accent)',
+                color: 'var(--cm-accent-bright)',
                 fontSize: '11px',
                 textDecoration: 'underline',
                 textUnderlineOffset: '2px',

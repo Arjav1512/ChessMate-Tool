@@ -61,6 +61,11 @@ STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) 
   needs no escalation (earlier flagged as possibly cost/secret-gated; PGlite removes that). A minimal
   `auth.uid()`/roles shim lets the unmodified migrations apply.
 
+- **[2026-06-20] D-013 DECIDED** — Forms adopt `noValidate` + the app's custom validation as the
+  single path (was: browser-native popups intercepting). Rationale: consistent, styled, announced
+  (`role="alert"`), AA-contrast error UX; native popups can't be styled or wired to aria. UI/a11y
+  only — no escalation. The shared `Input` primitive now carries `aria-invalid`/`aria-describedby`.
+
 ## Resolved Escalations
 
 - **[2026-06-20] E-1 DECIDED — Priority direction: PARALLEL.**
