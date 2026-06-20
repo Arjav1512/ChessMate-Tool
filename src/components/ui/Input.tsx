@@ -72,6 +72,8 @@ export function Input({
 
         <input
           id={id}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : helperText ? `${id}-help` : undefined}
           style={inputStyle}
           onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
           onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
@@ -92,13 +94,13 @@ export function Input({
       </div>
 
       {error && (
-        <p style={{ marginTop: '4px', fontSize: '12px', color: 'var(--cm-error)' }}>
+        <p id={`${id}-error`} role="alert" style={{ marginTop: '4px', fontSize: '12px', color: 'var(--cm-error-bright)' }}>
           {error}
         </p>
       )}
 
       {helperText && !error && (
-        <p style={{ marginTop: '4px', fontSize: '12px', color: 'var(--cm-text-muted)' }}>
+        <p id={`${id}-help`} style={{ marginTop: '4px', fontSize: '12px', color: 'var(--cm-text-muted)' }}>
           {helperText}
         </p>
       )}

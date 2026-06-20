@@ -156,6 +156,7 @@ export function PasswordResetComplete() {
             </div>
           ) : (
             <form
+              noValidate
               onSubmit={handleSubmit}
               style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
             >
@@ -190,7 +191,7 @@ export function PasswordResetComplete() {
                     background: 'var(--cm-error-dim)',
                     border: '1px solid rgba(232,85,74,0.25)',
                     borderRadius: '6px',
-                    color: 'var(--cm-error)',
+                    color: 'var(--cm-error-bright)',
                     fontSize: '13px',
                     lineHeight: 1.4,
                   }}
