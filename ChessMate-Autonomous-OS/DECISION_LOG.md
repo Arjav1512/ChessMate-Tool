@@ -72,6 +72,13 @@ STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) 
   proceeds on low-traffic surfaces autonomously; **high-traffic visual surfaces (P4) are escalated to
   a visually-QA'd pass** (no-major-redesign constraint is unverifiable headless → confidence <80%).
 
+- **[2026-06-20] D-015 DECIDED** — Monitoring loop ships the **autonomous** scaffolding only:
+  Sentry release/env tagging, global error/rejection handlers, durable edge-`api_logs` capture on
+  every failure path, a live-URL **smoke test + hourly canary**, and `MONITORING.md`. The three
+  credential-bound items (`VITE_SENTRY_DSN`, Sentry alerts, pg_cron for `cleanup_old_logs`) are
+  **documented with step-by-step setup guides** and left for the owner — no escalation block; all
+  other work proceeded. Verified without any external credential (91 unit tests, smoke vs prod+preview).
+
 ## Resolved Escalations
 
 - **[2026-06-20] E-1 DECIDED — Priority direction: PARALLEL.**

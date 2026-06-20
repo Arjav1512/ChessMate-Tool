@@ -7,7 +7,15 @@ _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
 VALID review comments. Do not stop at sprint boundaries.
 
-## Production Score: **~80 / 100** (70 → 73 → 75 → 78 → 79 → 80 → +DS P0)
+## Production Score: **~81 / 100** (… → 80 → 81 Observability)
+
+## Latest loop — Monitoring & Observability (PR #15, autonomous portion)
+Sentry **release/env tagging** + **global error/unhandledrejection handlers** (single `logError`
+funnel; prod strips console so this is the only error visibility); **durable edge-function error
+capture** (every `chess-mentor` failure → `api_logs`, attributed to caller); **post-deploy smoke
+test + hourly uptime canary** (`deploy-verify.yml`, verified vs prod+preview); `MONITORING.md`
+runbook. Monitoring 55→72, Deploy 70→76. **Credential-bound (documented, not blocking):**
+`VITE_SENTRY_DSN`, Sentry alerts, pg_cron.
 
 ## Latest loop — Design System Consolidation P0 (PR #14, stacked on #13)
 **Completed the `Button` primitive** with hover/interaction states for every variant (was missing —

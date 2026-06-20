@@ -1,14 +1,27 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import { existsSync, copyFileSync } from 'node:fs';
+import { existsSync, copyFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
+// Build a release identifier for Sentry: `chessmate@<version>+<commit>`. The
+// commit comes from the CI/host (Netlify `COMMIT_REF`, GitHub `GITHUB_SHA`) when
+// available, so prod errors map to an exact build even before a DSN is wired.
+const pkgVersion = JSON.parse(
+  readFileSync(resolve(__dirname, 'package.json'), 'utf-8'),
+).version as string;
+const commit = (process.env.COMMIT_REF || process.env.GITHUB_SHA || '').slice(0, 7);
+const appRelease = `chessmate@${pkgVersion}${commit ? `+${commit}` : ''}`;
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    // Exposed as import.meta.env.VITE_APP_RELEASE for Sentry release tagging.
+    'import.meta.env.VITE_APP_RELEASE': JSON.stringify(appRelease),
+  },
   plugins: [
     // Copy stockfish.js from node_modules to public/ at build time — eliminates CDN dependency
     {

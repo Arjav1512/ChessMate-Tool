@@ -12,6 +12,9 @@ export function initSentry() {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: ENVIRONMENT,
+    // Release tag (chessmate@<version>+<commit>) injected at build time so every
+    // captured event maps to an exact build. See vite.config.ts.
+    release: import.meta.env.VITE_APP_RELEASE,
     integrations: [
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration({

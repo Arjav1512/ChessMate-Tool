@@ -1,0 +1,42 @@
+name: Deploy Verify
+
+# Deployment verification + uptime canary. Runs the post-deploy smoke test
+# (scripts/smoke-test.mjs) against the live site: status 200, app shell, and the
+# production security headers. Turns red if a deploy ships broken or a config
+# change drops the headers.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL to smoke test (defaults to PROD_URL repo variable / production)'
+        required: false
+  schedule:
+    - cron: '0 * * * *' # hourly uptime canary
+  push:
+    branches: [main] # post-deploy verification
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+
+      # Netlify deploys on push to main; give it time to finish before verifying.
+      - name: Wait for deploy to publish
+        if: github.event_name == 'push'
+        run: sleep 120
+
+      - name: Smoke test the live site
+        env:
+          SMOKE_URL: ${{ github.event.inputs.url || vars.PROD_URL || 'https://chess-mateapp.netlify.app' }}
+        run: node scripts/smoke-test.mjs "$SMOKE_URL"
