@@ -7,8 +7,8 @@ _Last updated: 2026-06-20 · Auditor: Autonomous Engineering System (QA + Tech L
 _Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality) → 81 (Observability)._
 Target for Production Ready is **≥85** (`PRODUCT_ACCEPTANCE_CRITERIA.md`). **Acceptance sections now
 passing:** Security (≥85), Testing (≥85), Accessibility, Performance, PR Quality, Chess Analysis, AI
-Coach. Remaining gaps to ≥85: design-system consolidation (UI 62), Monitoring alerting (needs Sentry
-DSN), AI-coach depth, Product-Quality audit. No P0 data-loss or auth-bypass.
+Coach, Product Quality. Remaining gaps to ≥85: UI consolidation (66, biggest lever), Monitoring
+activation (owner-set DSN/pg_cron), AI-coach depth. No P0 data-loss or auth-bypass.
 
 ### Lighthouse (production build, 2026-06-20)
 Performance **83** (≥80 ✅) · Accessibility **100** (≥80 ✅) · Best-Practices **100** (≥90 ✅) ·
@@ -43,11 +43,12 @@ shared runner — not representative of production._
 - **<40** Alpha / prototype.
 
 ## Remaining path to 85 (Production Ready)
-Done since audit: Security ✅, Testing ✅, Accessibility ✅, Performance ✅, Product Quality ✅.
-- **UI 62→80** (wt 8, biggest remaining lever): consolidate inline-style surfaces onto `ui/` primitives.
-  _Autonomous but low visual-verifiability — needs design direction/QA._
-- **Monitoring 55→78** (wt 7): Sentry is wired in code; needs `VITE_SENTRY_DSN` in Netlify (**user**) + alerting.
-- **AI Coach 66→78** (wt 6): env-driven model + persist Q&A history.
-- **Mobile 76→85** (wt 6), **Deploy 70→82** (wt 6): responsive polish; staging/rollback automation.
-- **MERGE_READY:** human merge of PRs #10 → #11 → #12 → #13 (all CI-green).
+Done since audit: Security ✅, Testing ✅, Accessibility ✅, Performance ✅, Product Quality ✅,
+Observability scaffolding ✅.
+- **UI 66→80** (wt 8, biggest remaining lever): DS P1–P5 — autonomous for low-traffic; **P4 high-traffic
+  surfaces need visual QA** (`DESIGN_SYSTEM_AUDIT.md`).
+- **Monitoring 72→80** (wt 7): **owner** sets `VITE_SENTRY_DSN` + Sentry alerts + pg_cron (`MONITORING.md`).
+- **AI Coach 66→78** (wt 6): env-driven model + persist Q&A history (autonomous).
+- **Mobile 76→85** (wt 6), **Deploy 76→82** (wt 6): responsive polish; staging + tag-on-merge.
+- **MERGE_READY:** human merge of PRs #10 → #11 → #12 → #13 → #14 → #15 (all CI-green).
 
