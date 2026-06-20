@@ -107,3 +107,16 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
   Score ~80 (UI nudge). CI green, 0 CodeRabbit findings.
 - **Next loop:** DS P1 (Input adoption) / P2 (modal buttons) — autonomous; **P4 high-traffic visual
   surfaces require human/visual QA** (escalation). Also pending: PR merges (#10–#14), Sentry DSN.
+
+---
+
+## 2026-06-20 · Product-to-Production · Loop E — Monitoring & Observability (autonomous)
+- **Objective:** make production failures visible (highest production risk from the gap analysis)
+  without requiring external credentials.
+- **Change:** Sentry release/env tagging (vite-injected `chessmate@<ver>+<commit>`); global
+  error/rejection handlers (`src/lib/monitoring.ts`, 5 tests); durable edge-`api_logs` capture on all
+  failure paths (3 assertions); `scripts/smoke-test.mjs` + `deploy-verify.yml` (canary); `MONITORING.md`.
+- **Verify:** typecheck ✅ · lint ✅ · unit 91 ✅ · build ✅ · e2e 29/0/13 ✅ · smoke green vs prod+preview.
+- **Result:** Monitoring 55→72, Deploy 70→76; score ~81. Credential-bound items (DSN/alerts/pg_cron)
+  documented with setup guides in MONITORING.md — owner action, not blocking.
+- **Next:** owner sets DSN/pg_cron to reach Monitoring ~80; remaining autonomous levers smaller.

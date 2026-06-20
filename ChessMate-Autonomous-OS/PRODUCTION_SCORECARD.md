@@ -2,9 +2,9 @@
 
 _Last updated: 2026-06-20 · Auditor: Autonomous Engineering System (QA + Tech Lead hats)_
 
-## Headline Score: **~80 / 100 — "Release Candidate"**
+## Headline Score: **~81 / 100 — "Release Candidate"**
 
-_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality)._
+_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality) → 81 (Observability)._
 Target for Production Ready is **≥85** (`PRODUCT_ACCEPTANCE_CRITERIA.md`). **Acceptance sections now
 passing:** Security (≥85), Testing (≥85), Accessibility, Performance, PR Quality, Chess Analysis, AI
 Coach. Remaining gaps to ≥85: design-system consolidation (UI 62), Monitoring alerting (needs Sentry
@@ -27,13 +27,13 @@ shared runner — not representative of production._
 | 6 | Accessibility | 8 | 87 | **AA contrast passes** (axe 0 on landing + auth-with-error), Lighthouse a11y 100, focus traps, landmarks, alt, **accessible form errors** (`aria-invalid`/`describedby`/`role=alert`) |
 | 7 | Mobile / Responsive | 6 | 76 | `useResponsive`, mobile bottom-sheet nav, 320px overflow fixed |
 | 8 | UI Consistency & Design System | 8 | 66 | **`Button` primitive completed** (hover/interaction states for all variants) + adoption started (WelcomeScreen, ErrorBoundary); tokens systematized. Audit + P1–P5 plan in `DESIGN_SYSTEM_AUDIT.md`; ~636 inline-style literals remain (P4 high-traffic surfaces need visual QA) |
-| 9 | Monitoring & Observability | 7 | 55 | Sentry optional/likely off, `api_logs` table; **no error tracking enabled** (acceptance criterion), no alerting/SLO |
-| 10 | Deployment & Release | 6 | 70 | CI lint/build/unit/e2e, headers live, release runbook drafted; no staging/rollback automation |
+| 9 | Monitoring & Observability | 7 | 72 | **Release/env-tagged Sentry + global error/rejection handlers**, **durable edge-error capture** (api_logs all paths), **smoke-test + hourly canary** (`deploy-verify.yml`), `MONITORING.md` runbook. _Credential-bound left:_ `VITE_SENTRY_DSN`, Sentry alerts, pg_cron |
+| 10 | Deployment & Release | 6 | 76 | CI + **post-deploy smoke test + uptime canary** verifying live status/shell/headers; headers live; runbook. _Left:_ staging, tag-on-merge automation |
 | 11 | AI Coach | 6 | 66 | Context-aware, rate-limited, structured output; model hardcoded, no streaming/caching |
 | 12 | Analysis Engine | 4 | 78 | Stockfish multi-PV, eval gauge, move classifier, insight cards — strong core |
 | 13 | Learning & Progress System | 4 | 58 | Stats + snapshots + color split honest; thin as a "learning" loop (no drills/plan) |
 
-**Weighted total ≈ 80 / 100.**
+**Weighted total ≈ 81 / 100.**
 
 ## Scoring Rubric
 - **90–100** Production-ready: ship with monitoring.
