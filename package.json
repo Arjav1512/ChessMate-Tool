@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.8.5",
+    "@electric-sql/pglite": "^0.5.3",
     "@eslint/js": "^9.9.1",
     "@playwright/test": "^1.42.1",
     "@types/react": "^18.3.5",

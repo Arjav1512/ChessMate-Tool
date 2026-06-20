@@ -65,3 +65,17 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
   incremental re-review (rate-limited ~50 min) and human approval/merge.
 - **Next loop:** re-check CodeRabbit after rate-limit clears; on human approval → merge → Sprint 2
   (which absorbs AUD-21/22/23 to restore the e2e gate).
+
+---
+
+## 2026-06-20 · Product-to-Production · Loop B — RLS/auth integration tests
+- **Objective:** highest-weighted acceptance blockers — Security (wt 15, "RLS verified") + Testing
+  (wt 10, "Integration tests pass"), both gated on the same DB-level test (AUD-27).
+- **Hypothesis:** can verify RLS against the real migrations with no infra/cost via PGlite (WASM PG).
+- **Change:** `src/lib/rls.integration.test.ts` — PGlite + Supabase-auth shim + all 7 migrations;
+  asserts cross-user isolation (games/moves/api_logs), WITH CHECK spoof-prevention, zero-row
+  UPDATE/DELETE across users, and the W/L/D stats trigger. Runs under node env (docblock).
+- **Verify:** `npm test` 83 passed (7 new) · typecheck ✅ · lint ✅ · build ✅.
+- **Result:** Security 84→87, Testing 80→87, DB 78→82; both acceptance sections now pass. Score 78→~79.
+- **Next loop:** next highest lever toward ≥85 — UI/design-system consolidation (wt 8, score 62) or
+  Monitoring (alerting/cleanup); Product-Quality audit.

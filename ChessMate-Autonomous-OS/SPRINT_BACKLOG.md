@@ -68,7 +68,7 @@ gates green (typecheck/lint/unit+coverage/build); in PR pending CodeRabbit + mer
 |----|:--:|------|------|-------|
 | AUD-25 | 🟠 | Monitoring | Enable Sentry/error tracking in prod + deployment monitoring | Monitoring section requires "Error tracking configured" — **next loop** |
 | AUD-26 | 🟢 DONE | Performance | Lighthouse (prod build): Perf 83 / BP 100 / SEO 100 / A11y 100 | **Done:** added SEO meta; all four categories clear thresholds |
-| AUD-27 | 🟠 | Testing/Security | RLS/auth integration tests | Testing "Integration tests pass" + Security "RLS policies verified" |
+| AUD-27 | 🟢 DONE | Testing/Security | RLS/auth integration tests (PGlite, no infra) | **Done (PR #12):** cross-user isolation + WITH CHECK + stats trigger; Security/Testing sections now pass |
 
 ## Sprint 2 — Verify & Observe
 **Goal:** prove the security boundary in CI and gain production visibility + repeatable releases.

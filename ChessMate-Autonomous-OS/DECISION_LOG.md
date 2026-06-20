@@ -55,6 +55,12 @@ STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) 
   `prod/accessibility-aa-and-test-gate`; chromium e2e is green (28/0/13). AUD-23 (the e2e gate had
   been red on `main`) is thereby addressed — e2e can become a trustworthy required check.
 
+- **[2026-06-20] D-012 DECIDED** — AUD-27 RLS/auth integration tests use **PGlite** (in-process
+  Postgres WASM) rather than a live Supabase test project. _Rationale:_ runs the real migrations in
+  the existing CI unit job with no Docker, no external service, no secrets, and **no cost** — so it
+  needs no escalation (earlier flagged as possibly cost/secret-gated; PGlite removes that). A minimal
+  `auth.uid()`/roles shim lets the unmodified migrations apply.
+
 ## Resolved Escalations
 
 - **[2026-06-20] E-1 DECIDED — Priority direction: PARALLEL.**
