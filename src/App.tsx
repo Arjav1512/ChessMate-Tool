@@ -16,6 +16,7 @@ import { CompatibilityWarning } from './components/layout/CompatibilityWarning';
 import { ProfileModal } from './components/layout/ProfileModal';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { Modal } from './components/ui/Modal';
+import { Button } from './components/ui/Button';
 import { useResponsive } from './hooks/useResponsive';
 import { LogOut, TrendingUp, Upload, Brain, BarChart3, User, Menu, X as XIcon } from 'lucide-react';
 // Note: i18n infrastructure removed — no components use useTranslation
@@ -498,43 +499,12 @@ function WelcomeScreen({ onImport, onOpenAnalyze }: { onImport: () => void; onOp
       </div>
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <button
-          onClick={onImport}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 18px',
-            background: 'var(--cm-accent-strong)',
-            border: '1px solid transparent',
-            borderRadius: '8px',
-            color: 'var(--cm-text-inverse)',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'background 0.15s',
-          }}
-        >
-          <Upload size={14} /> Import games
-        </button>
-        <button
-          onClick={onOpenAnalyze}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 18px',
-            background: 'var(--cm-bg-elevated)',
-            border: '1px solid var(--cm-border-default)',
-            borderRadius: '8px',
-            color: 'var(--cm-text-primary)',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
-        >
-          <Brain size={14} /> Open analysis hub
-        </button>
+        <Button variant="primary" size="lg" leftIcon={<Upload size={14} />} onClick={onImport} style={{ fontWeight: 600 }}>
+          Import games
+        </Button>
+        <Button variant="secondary" size="lg" leftIcon={<Brain size={14} />} onClick={onOpenAnalyze}>
+          Open analysis hub
+        </Button>
       </div>
 
       <div
