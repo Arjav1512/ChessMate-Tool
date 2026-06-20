@@ -24,7 +24,7 @@ shared runner — not representative of production._
 | 3 | Database & Supabase | 8 | 82 | RLS on every user table, indexed; **migrations + RLS + stats trigger now executed in tests** (PGlite); `cleanup_old_logs` unscheduled |
 | 4 | Testing & QA | 10 | 87 | **e2e gate green & deterministic** (28/0/13), **RLS/auth integration tests** (PGlite), coverage + lint in CI; _left:_ coverage threshold |
 | 5 | Performance | 8 | 88 | **Lighthouse (prod build) all pass: Perf 83 / BP 100 / SEO 100 / A11y 100.** 89 KB gzip main, code-split, worker offload; SEO meta added |
-| 6 | Accessibility | 8 | 85 | **AA contrast passes** (axe 0 on landing, default+dark), focus-visible, focus traps, landmarks, alt; _left:_ authed-surface audit, more `aria-live` |
+| 6 | Accessibility | 8 | 87 | **AA contrast passes** (axe 0 on landing + auth-with-error), Lighthouse a11y 100, focus traps, landmarks, alt, **accessible form errors** (`aria-invalid`/`describedby`/`role=alert`) |
 | 7 | Mobile / Responsive | 6 | 76 | `useResponsive`, mobile bottom-sheet nav, 320px overflow fixed |
 | 8 | UI Consistency & Design System | 8 | 62 | `--cm-accent-strong`/`-bright`/`-error-bright` tokens systematized; primitives still underused vs inline styles |
 | 9 | Monitoring & Observability | 7 | 55 | Sentry optional/likely off, `api_logs` table; **no error tracking enabled** (acceptance criterion), no alerting/SLO |
@@ -33,7 +33,7 @@ shared runner — not representative of production._
 | 12 | Analysis Engine | 4 | 78 | Stockfish multi-PV, eval gauge, move classifier, insight cards — strong core |
 | 13 | Learning & Progress System | 4 | 58 | Stats + snapshots + color split honest; thin as a "learning" loop (no drills/plan) |
 
-**Weighted total ≈ 75 / 100.**
+**Weighted total ≈ 80 / 100.**
 
 ## Scoring Rubric
 - **90–100** Production-ready: ship with monitoring.
@@ -43,16 +43,11 @@ shared runner — not representative of production._
 - **<40** Alpha / prototype.
 
 ## Remaining path to 85 (Production Ready)
-- **Monitoring 55→78:** enable Sentry/error tracking in prod + deployment monitoring (acceptance req). _next_
-- **Performance:** run Lighthouse; confirm Perf≥80 / BestPractices≥90 / SEO≥90 / A11y≥80 or fix.
-- **Testing 80→85:** RLS/auth integration tests (also validates Security "RLS verified").
-- **UI 62→80:** consolidate surfaces onto `ui/` primitives.
+Done since audit: Security ✅, Testing ✅, Accessibility ✅, Performance ✅, Product Quality ✅.
+- **UI 62→80** (wt 8, biggest remaining lever): consolidate inline-style surfaces onto `ui/` primitives.
+  _Autonomous but low visual-verifiability — needs design direction/QA._
+- **Monitoring 55→78** (wt 7): Sentry is wired in code; needs `VITE_SENTRY_DSN` in Netlify (**user**) + alerting.
+- **AI Coach 66→78** (wt 6): env-driven model + persist Q&A history.
+- **Mobile 76→85** (wt 6), **Deploy 70→82** (wt 6): responsive polish; staging/rollback automation.
+- **MERGE_READY:** human merge of PRs #10 → #11 → #12 → #13 (all CI-green).
 
-## Path to 85+ (Release Candidate)
-1. Close Security gaps 1–4 (Sprint 1): verify JWT, add CSP/HSTS, fail-closed CORS, real security contact → Security 65→85.
-2. Lint + RLS/auth integration in CI, seed e2e user (Sprint 1–2) → Testing 70→85.
-3. Sentry on + alerting + scheduled log cleanup + strip console noise (Sprint 2) → Monitoring 55→78.
-4. Release runbook + staging + tagging (Sprint 2) → Deployment 66→82.
-5. Design-system consolidation / finish v2 (Sprint 3) → UI 58→80.
-
-Projected post-Sprint-3 score: **~85 / 100.**
