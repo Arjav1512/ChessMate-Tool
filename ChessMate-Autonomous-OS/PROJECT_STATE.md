@@ -9,14 +9,18 @@ VALID review comments. Do not stop at sprint boundaries.
 
 ## Production Score: **~75 / 100** (audit 70 → Sprint 1 73 → a11y/test-gate loop 75)
 
-## Active loop — Accessibility & Test-Gate (branch `prod/accessibility-aa-and-test-gate`, stacked on PR #10)
-**Closes AUD-21/22/23.**
-- WCAG **AA contrast** passes on the landing page — axe **0 violations** in both default (`:root`)
-  and explicit-dark states. Brand-preserving: `--cm-accent-strong` (button fill), `--cm-error-bright`
-  (error chips), accent-text → `--cm-accent-bright`, `:root` inverse fix; **disabled the dead
-  "coming soon" pricing CTAs** (also a Product-Quality fix).
-- **e2e gate restored:** chromium **28 passed / 0 failed / 13 skipped** (was 26/2/13).
-- Gates: typecheck ✅ · lint ✅ 0 err · unit ✅ 76/76 · build ✅ · e2e ✅.
+## Completed loop — Accessibility & Test-Gate (PR #11, **all CI green incl. e2e**)
+**Closes AUD-21/22/23.** Verified green in CI on commit `4ef2468`.
+- WCAG **AA contrast** passes — axe **0 violations** in both default (`:root`) and explicit-dark.
+  Brand-preserving tokens: `--cm-accent-strong` (button fill), `--cm-error-bright` (error chips),
+  accent-text → `--cm-accent-bright`, `:root` inverse fix; **disabled dead "coming soon" pricing CTAs**.
+- **e2e gate restored AND made trustworthy** by fixing two real root causes (not just the symptoms):
+  1. The job started `npm run dev` manually **and** Playwright's `webServer` did too →
+     port-5173 conflict erroring the job before any test ran (the true reason `main` was red 5+ merges).
+  2. The a11y specs `goto('/')` then `.count()` immediately, racing React's mount → flaky zero-button
+     failures. Added a `beforeEach` render-gate.
+- **CI: Lint ✅ · Type-check & Build ✅ · Unit ✅ · E2E ✅ (1m44s) · CodeRabbit ✅** (11 doc findings
+  triaged; 8 VALID fixed).
 
 ## Phase 2 — Sprint 1 (Production Safety & Trust): in PR #10, review fixes applied.
 All 8 items + CodeRabbit fixes landed on `sprint-1/production-safety-and-trust` (rebased onto
