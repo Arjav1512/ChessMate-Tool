@@ -7,7 +7,15 @@ _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
 VALID review comments. Do not stop at sprint boundaries.
 
-## Production Score: **~79 / 100** (70 → 73 Sprint 1 → 75 a11y → 78 Lighthouse/SEO → 79 RLS integration)
+## Production Score: **~80 / 100** (70 → 73 → 75 → 78 → 79 RLS → 80 Product Quality)
+
+## Latest loop — Product Quality audit (PR #13, stacked on #12)
+**Acceptance "Product Quality" section addressed.** Audit found the app mature (toggles consumed,
+empty/loading states present, no dead buttons beyond the already-fixed pricing CTAs). Fixed the one
+systemic gap — **error & validation UX**: `noValidate` on all 3 auth forms (consistent styled custom
+validation), `Input` primitive now `aria-invalid`/`aria-describedby`/`role="alert"`, error messages →
+`--cm-error-bright` (AA) + announced, auth accent links → `--cm-accent-bright`. Auth error state
+axe-clean; e2e 29/0/13 (new validation regression test).
 
 ## Latest loop — RLS/auth integration tests (PR #12, stacked on #11)
 **Closes AUD-27; satisfies Security "RLS verified" + Testing "Integration tests pass."**

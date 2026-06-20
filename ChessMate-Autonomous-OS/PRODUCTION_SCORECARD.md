@@ -2,9 +2,9 @@
 
 _Last updated: 2026-06-20 · Auditor: Autonomous Engineering System (QA + Tech Lead hats)_
 
-## Headline Score: **~79 / 100 — "Release Candidate"**
+## Headline Score: **~80 / 100 — "Release Candidate"**
 
-_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS integration)._
+_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality)._
 Target for Production Ready is **≥85** (`PRODUCT_ACCEPTANCE_CRITERIA.md`). **Acceptance sections now
 passing:** Security (≥85), Testing (≥85), Accessibility, Performance, PR Quality, Chess Analysis, AI
 Coach. Remaining gaps to ≥85: design-system consolidation (UI 62), Monitoring alerting (needs Sentry
