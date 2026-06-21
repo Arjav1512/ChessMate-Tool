@@ -70,6 +70,13 @@ describe('buildMoveAnalysisRows', () => {
     expect(rows[0].ply).toBe(2);
   });
 
+  it('tags rows with motifs (a material-losing blunder → hung_piece)', () => {
+    const [r] = buildMoveAnalysisRows(G, U, [ply({ ply: 0, evalCpBefore: 50, evalCpAfter: -260 })]);
+    expect(r.classification).toBe('blunder');
+    expect(r.motif_tags).toContain('hung_piece');
+    expect(r.motif_tags).toContain('major_tactical_blunder');
+  });
+
   it('tags each row with the derived phase', () => {
     const [opening] = buildMoveAnalysisRows(G, U, [ply({ ply: 0, evalCpBefore: 0, evalCpAfter: 5, fenBefore: START_FEN })]);
     expect(opening.phase).toBe('opening');

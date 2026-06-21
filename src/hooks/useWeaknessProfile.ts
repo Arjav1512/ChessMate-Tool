@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { buildWeaknessProfile, type WeaknessGame, type WeaknessProfile, type PhaseMove } from '../lib/weaknessProfile';
+import { buildWeaknessProfile, type WeaknessGame, type WeaknessProfile, type UserMove } from '../lib/weaknessProfile';
 import type { Phase } from '../lib/moveAnalysis';
+import type { Motif } from '../lib/motifs';
 import type { MoveClassification } from '../utils/moveClassifier';
 
 // Session cache: the profile is derived from all of a user's games, which the
@@ -53,10 +54,10 @@ export function useWeaknessProfile(enabled = true): State {
           .from('game_analysis_results')
           .select('game_id, accuracy, mistakes, inaccuracies, blunders, total_moves')
           .eq('user_id', user.id),
-        // Per-ply phase data (B-1/B-2). Sparse until games are (re-)analyzed.
+        // Per-ply phase + motif data (B-1/B-2/B-3). Sparse until (re-)analyzed.
         supabase
           .from('move_analysis')
-          .select('game_id, color, phase, classification')
+          .select('game_id, color, phase, classification, motif_tags')
           .eq('user_id', user.id),
       ]);
 
@@ -92,11 +93,16 @@ export function useWeaknessProfile(enabled = true): State {
       // matches the game's user_color (and that carry phase + classification).
       const userColorByGame = new Map(games.map((g) => [g.id, g.user_color]));
       const moveRows = movesRes.status === 'fulfilled' ? movesRes.value.data ?? [] : [];
-      const moves: PhaseMove[] = [];
+      const moves: UserMove[] = [];
       for (const m of moveRows) {
         if (!m.phase || !m.classification) continue;
         if (m.color !== userColorByGame.get(m.game_id)) continue;
-        moves.push({ phase: m.phase as Phase, classification: m.classification as MoveClassification });
+        moves.push({
+          gameId: m.game_id,
+          phase: m.phase as Phase,
+          classification: m.classification as MoveClassification,
+          motifs: (m.motif_tags ?? []) as Motif[],
+        });
       }
 
       const profile = buildWeaknessProfile(games, moves);

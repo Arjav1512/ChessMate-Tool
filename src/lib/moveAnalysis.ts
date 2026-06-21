@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { classifyMove, type MoveClassification } from '../utils/moveClassifier';
+import { detectMotifs, type Motif } from './motifs';
 
 export type Phase = 'opening' | 'middlegame' | 'endgame';
 
@@ -50,6 +51,7 @@ export interface MoveAnalysisRow {
   classification: MoveClassification;
   best_move: string | null;
   phase: Phase;
+  motif_tags: Motif[];
 }
 
 /** One half-move of already-computed analysis, in source-of-truth units. */
@@ -86,6 +88,7 @@ export function buildMoveAnalysisRows(
     const cpLoss = isWhiteMove
       ? Math.max(0, p.evalCpBefore - p.evalCpAfter)
       : Math.max(0, p.evalCpAfter - p.evalCpBefore);
+    const classification = classifyMove(p.evalCpBefore, p.evalCpAfter, isWhiteMove);
     rows.push({
       game_id: gameId,
       user_id: userId,
@@ -96,9 +99,18 @@ export function buildMoveAnalysisRows(
       san: p.san,
       eval_cp: Math.round(p.evalCpAfter),
       cp_loss: Math.round(cpLoss),
-      classification: classifyMove(p.evalCpBefore, p.evalCpAfter, isWhiteMove),
+      classification,
       best_move: p.bestMove,
       phase: derivePhase(p.fenBefore, moveNumber),
+      motif_tags: detectMotifs({
+        fenBefore: p.fenBefore,
+        san: p.san,
+        bestMove: p.bestMove,
+        isWhiteMove,
+        evalCpBefore: p.evalCpBefore,
+        evalCpAfter: p.evalCpAfter,
+        classification,
+      }),
     });
   }
   return rows;

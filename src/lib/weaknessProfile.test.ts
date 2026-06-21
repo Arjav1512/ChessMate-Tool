@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildWeaknessProfile, extractOpeningMoves, type WeaknessGame } from './weaknessProfile';
+import { buildWeaknessProfile, extractOpeningMoves, type WeaknessGame, type UserMove } from './weaknessProfile';
 import type { Phase } from './moveAnalysis';
 import type { MoveClassification } from '../utils/moveClassifier';
 
@@ -153,6 +153,40 @@ describe('buildWeaknessProfile — true phase strength (B-2, from move data)', (
     expect(p.phaseStrengths).toEqual({});
     expect(p.phaseMoveCount).toBe(0);
     expect(p.weaknesses.find((w) => w.category === 'phase')).toBeUndefined();
+  });
+});
+
+describe('buildWeaknessProfile — recurring tactical motifs (B-3)', () => {
+  const mv = (gameId: string, motifs: ('hung_piece' | 'allowed_mate')[] = []) =>
+    ({ gameId, phase: 'middlegame', classification: 'blunder', motifs } as const);
+
+  it('flags a motif recurring across enough games', () => {
+    const moves = [
+      mv('g1', ['hung_piece']),
+      mv('g2', ['hung_piece']),
+      mv('g3', ['hung_piece']),
+      mv('g4', ['hung_piece']),
+      mv('g5'), // clean game keeps the denominator honest
+    ];
+    const p = buildWeaknessProfile([], moves);
+    const motif = p.weaknesses.find((w) => w.category === 'motif');
+    expect(motif).toBeTruthy();
+    expect(motif!.title).toMatch(/hangs pieces/i);
+    expect(motif!.sampleSize).toBe(4); // 4 of 5 games
+    expect(motif!.evidence[0]).toMatch(/across 4 games/);
+  });
+
+  it('does not flag a motif seen in too few games', () => {
+    const moves = [mv('g1', ['allowed_mate']), mv('g2', ['allowed_mate']), mv('g3'), mv('g4'), mv('g5')];
+    const p = buildWeaknessProfile([], moves);
+    expect(p.weaknesses.find((w) => w.id === 'motif:allowed_mate')).toBeUndefined();
+  });
+
+  it('does not flag major_tactical_blunder as a motif (covered by recurring blunders)', () => {
+    const moves: UserMove[] = Array.from({ length: 6 }, (_, i) =>
+      ({ gameId: `g${i}`, phase: 'middlegame', classification: 'blunder', motifs: ['major_tactical_blunder'] }));
+    const p = buildWeaknessProfile([], moves);
+    expect(p.weaknesses.find((w) => w.id === 'motif:major_tactical_blunder')).toBeUndefined();
   });
 });
 

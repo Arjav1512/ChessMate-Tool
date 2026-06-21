@@ -1,4 +1,4 @@
-import { Target, BookOpen, AlertTriangle, Clock, Repeat, TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { Target, BookOpen, AlertTriangle, Clock, Repeat, Crosshair, TrendingDown, TrendingUp, Minus } from 'lucide-react';
 import type { Weakness, WeaknessProfile as Profile, WeaknessCategory, Confidence, Trend, PhaseStrength } from '../../lib/weaknessProfile';
 import type { Phase } from '../../lib/moveAnalysis';
 
@@ -56,6 +56,7 @@ const CATEGORY_ICON: Record<WeaknessCategory, React.ReactNode> = {
   recurring: <Repeat size={15} />,
   phase: <Clock size={15} />,
   color: <Target size={15} />,
+  motif: <Crosshair size={15} />,
 };
 
 const CONFIDENCE_LABEL: Record<Confidence, string> = { low: 'Low confidence', medium: 'Medium confidence', high: 'High confidence' };
