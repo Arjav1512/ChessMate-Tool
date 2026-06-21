@@ -7,7 +7,14 @@ _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
 VALID review comments. Do not stop at sprint boundaries.
 
-## Production Score: **~84 / 100** (… → 83 true phase → 84 tactical motifs)
+## Production Score: **~84 / 100** (… → 84 tactical motifs → 84 train-on-mistakes)
+
+## Latest loop — Phase 2 / B-4: Train-On-Your-Mistakes (PR #20)
+Read-only review feed (`lib/mistakeReview.ts` + `useMistakeReview` + `MistakeReview` UI) over stored
+mistake/blunder rows: prioritized board cards (FEN · played · best · classification · cp-loss · phase ·
+motifs), filterable by phase/motif, with Weakness-Profile cards deep-linking to their related mistakes.
+No new analysis/engine/AI; no schema change. **Completes the read-only Personal Chess Improvement
+System (B-1→B-4).** Learning 85→88.
 
 ## Latest loop — Phase 2 / B-3: tactical-motif detection (PR #19)
 Deterministic motif tagger (`lib/motifs.ts`, no extra engine pass) populates `move_analysis.motif_tags`

@@ -4,7 +4,7 @@ _Last updated: 2026-06-20 · Auditor: Autonomous Engineering System (QA + Tech L
 
 ## Headline Score: **~84 / 100 — "Release Candidate"**
 
-_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality) → 81 (Observability) → 82 (Weakness Profile) → 82 (B-1) → 83 (true phase) → 84 (motifs)._
+_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality) → 81 (Observability) → 82 (Weakness Profile) → 82 (B-1) → 83 (true phase) → 84 (motifs) → 84 (train-on-mistakes)._
 Target for Production Ready is **≥85** (`PRODUCT_ACCEPTANCE_CRITERIA.md`). **Acceptance sections now
 passing:** Security (≥85), Testing (≥85), Accessibility, Performance, PR Quality, Chess Analysis, AI
 Coach, Product Quality. Remaining gaps to ≥85: UI consolidation (66, biggest lever), Monitoring
@@ -31,7 +31,7 @@ shared runner — not representative of production._
 | 10 | Deployment & Release | 6 | 76 | CI + **post-deploy smoke test + uptime canary** verifying live status/shell/headers; headers live; runbook. _Left:_ staging, tag-on-merge automation |
 | 11 | AI Coach | 6 | 72 | Context-aware, rate-limited, structured output; **now personalized with the player's weakness profile**; model hardcoded, no streaming/caching |
 | 12 | Analysis Engine | 4 | 82 | Stockfish multi-PV, eval gauge, move classifier; **per-move phase + deterministic tactical-motif tagging persisted** |
-| 13 | Learning & Progress System | 4 | 85 | Weakness Engine: opening/color/recurring + **true phase strength** + **recurring tactical-motif patterns** (hangs pieces / misses wins / drops material / mate motifs) with frequency+confidence — a real improvement system. _Left:_ train-on-mistakes, drills (B-4+) |
+| 13 | Learning & Progress System | 4 | 88 | **Complete read-only improvement system**: weakness profile (opening/color/phase/motif) **+ Train-On-Your-Mistakes review feed** (prioritized board cards, filter by phase/motif, click a weakness → its mistakes). _Left:_ drills/SRS (separately scoped, later) |
 
 **Weighted total ≈ 84 / 100.**
 

@@ -106,6 +106,13 @@ STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) 
   recur across ≥3 games and ≥25% of games, with frequency + sample-size confidence;
   `major_tactical_blunder` excluded (covered by recurring-blunders).
 
+- **[2026-06-21] D-020 DECIDED** — B-4 ships **Train-On-Your-Mistakes (read-only v1)**: a prioritized,
+  filterable review feed over the user's stored mistake/blunder rows. No new analysis/engine/AI, no
+  schema change, and **none** of the excluded mechanics (SRS/drills/puzzles/plans/notifications/streaks).
+  Priority blends severity (cp_loss) + motif importance + recurrence; weakness cards (phase/motif)
+  deep-link to their related mistakes. Completes the **read-only** Personal Chess Improvement System
+  (B-1→B-4); drills/training are a deliberate later, separately-scoped decision.
+
 ## Resolved Escalations
 
 - **[2026-06-20] E-1 DECIDED — Priority direction: PARALLEL.**

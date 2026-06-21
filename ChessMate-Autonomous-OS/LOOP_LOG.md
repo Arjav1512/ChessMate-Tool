@@ -167,3 +167,15 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
 - **Verify:** typecheck ✅ · lint ✅ · unit 127 ✅ · build ✅ · e2e 29/0/13 ✅.
 - **Result:** Learning 80→85, Analysis 80→82; score ~84. Learning layer = opening + phase + motif.
 - **Next:** B-4 train-on-your-mistakes (surface stored blunder positions: fen-before + best alternative).
+
+---
+
+## 2026-06-21 · Product-to-Production · Loop J — Phase 2 / B-4: Train-On-Your-Mistakes
+- **Objective:** turn stored move_analysis into a read-only mistake-review workflow (no drills/SRS).
+- **Change:** pure `buildMistakeReview` (rank by severity + motif importance + recurrence; filter by
+  phase/motif; UCI→SAN); `useMistakeReview` (user's own mistakes, cached); `MistakeReview` feed of
+  board cards; Weakness-Profile cards deep-link (phase/motif) → filtered feed + scroll.
+- **Verify:** typecheck ✅ · lint ✅ · unit 134 ✅ · build ✅ · e2e 29/0/13 ✅.
+- **Result:** Learning 85→88; read-only improvement system complete (B-1→B-4). Score ~84.
+- **Next:** drills/training (SRS) would be a NEW product-direction decision; otherwise owner-gated
+  items (merges, Sentry DSN) and remaining levers (UI P4, AI-coach depth) remain.

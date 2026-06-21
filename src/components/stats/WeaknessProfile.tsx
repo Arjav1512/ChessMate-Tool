@@ -82,17 +82,27 @@ function TrendTag({ trend }: { trend: Trend }) {
   );
 }
 
-function WeaknessCard({ w }: { w: Weakness }) {
+function WeaknessCard({ w, onSelect }: { w: Weakness; onSelect?: (w: Weakness) => void }) {
+  // Phase + motif weaknesses map cleanly to a mistake-review filter.
+  const clickable = !!onSelect && (w.category === 'phase' || w.category === 'motif');
   return (
-    <div style={{
-      background: 'var(--cm-bg-elevated)',
-      border: '1px solid var(--cm-border-subtle)',
-      borderRadius: '10px',
-      padding: '14px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-    }}>
+    <div
+      onClick={clickable ? () => onSelect!(w) : undefined}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect!(w); } } : undefined}
+      title={clickable ? 'Show the related mistakes' : undefined}
+      style={{
+        background: 'var(--cm-bg-elevated)',
+        border: '1px solid var(--cm-border-subtle)',
+        borderRadius: '10px',
+        padding: '14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        cursor: clickable ? 'pointer' : undefined,
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span style={{ color: severityColor(w.severity), display: 'flex' }}>{CATEGORY_ICON[w.category]}</span>
         <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--cm-text-primary)', flex: 1 }}>{w.title}</span>
@@ -134,10 +144,12 @@ function WeaknessCard({ w }: { w: Weakness }) {
   );
 }
 
-export function WeaknessProfile({ profile, loading, error }: {
+export function WeaknessProfile({ profile, loading, error, onSelect }: {
   profile: Profile | null;
   loading: boolean;
   error: string | null;
+  /** Click a phase/motif weakness to filter the mistake-review feed. */
+  onSelect?: (w: Weakness) => void;
 }) {
   return (
     <section aria-labelledby="weakness-heading" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -173,7 +185,7 @@ export function WeaknessProfile({ profile, loading, error }: {
 
       {!loading && !error && profile && profile.weaknesses.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {profile.weaknesses.map((w) => <WeaknessCard key={w.id} w={w} />)}
+          {profile.weaknesses.map((w) => <WeaknessCard key={w.id} w={w} onSelect={onSelect} />)}
         </div>
       )}
     </section>
