@@ -7,7 +7,13 @@ _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
 VALID review comments. Do not stop at sprint boundaries.
 
-## Production Score: **~82 / 100** (… → 82 Weakness Profile → 82 B-1 data layer)
+## Production Score: **~83 / 100** (… → 82 B-1 data layer → 83 true phase weakness)
+
+## Latest loop — Phase 2 / B-2: true phase weakness (PR #18)
+Removed the game-length phase proxy. `derivePhase` tags every persisted move (opening/middle/endgame);
+the Weakness Engine now computes real per-phase **strength** (good-or-better share) + flags the weakest
+phase with confidence by sample size; the Profile shows Opening/Middlegame/Endgame strength meters. The
+hook filters `move_analysis` to the user's own moves. Learning 75→80, Analysis 78→80.
 
 ## Latest loop — Phase 2 / B-1: move_analysis data layer (PR #17)
 Additive `move_analysis` per-ply table (RLS via denormalized `user_id`, indexed) + pure, tested

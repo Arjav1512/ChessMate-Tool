@@ -2,9 +2,9 @@
 
 _Last updated: 2026-06-20 · Auditor: Autonomous Engineering System (QA + Tech Lead hats)_
 
-## Headline Score: **~82 / 100 — "Release Candidate"**
+## Headline Score: **~83 / 100 — "Release Candidate"**
 
-_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality) → 81 (Observability) → 82 (Weakness Profile) → 82 (B-1 data layer)._
+_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality) → 81 (Observability) → 82 (Weakness Profile) → 82 (B-1) → 83 (true phase weakness)._
 Target for Production Ready is **≥85** (`PRODUCT_ACCEPTANCE_CRITERIA.md`). **Acceptance sections now
 passing:** Security (≥85), Testing (≥85), Accessibility, Performance, PR Quality, Chess Analysis, AI
 Coach, Product Quality. Remaining gaps to ≥85: UI consolidation (66, biggest lever), Monitoring
@@ -30,10 +30,10 @@ shared runner — not representative of production._
 | 9 | Monitoring & Observability | 7 | 72 | **Release/env-tagged Sentry + global error/rejection handlers**, **durable edge-error capture** (api_logs all paths), **smoke-test + hourly canary** (`deploy-verify.yml`), `MONITORING.md` runbook. _Credential-bound left:_ `VITE_SENTRY_DSN`, Sentry alerts, pg_cron |
 | 10 | Deployment & Release | 6 | 76 | CI + **post-deploy smoke test + uptime canary** verifying live status/shell/headers; headers live; runbook. _Left:_ staging, tag-on-merge automation |
 | 11 | AI Coach | 6 | 72 | Context-aware, rate-limited, structured output; **now personalized with the player's weakness profile**; model hardcoded, no streaming/caching |
-| 12 | Analysis Engine | 4 | 78 | Stockfish multi-PV, eval gauge, move classifier, insight cards — strong core |
-| 13 | Learning & Progress System | 4 | 75 | **Weakness Detection Engine** (opening/color/recurring + low-conf phase proxy) in the Improve workflow with confidence + evidence + trend — the Personal-Improvement-System foundation. _Left:_ per-move phase, drills (later phases) |
+| 12 | Analysis Engine | 4 | 80 | Stockfish multi-PV, eval gauge, move classifier, insight cards; **per-move phase classification persisted** |
+| 13 | Learning & Progress System | 4 | 80 | Weakness Engine: opening/color/recurring + **true opening/middlegame/endgame strength** (real per-move phase, confidence by sample) — proxy removed. _Left:_ motifs, train-on-mistakes, drills (B-3/B-4) |
 
-**Weighted total ≈ 82 / 100.**
+**Weighted total ≈ 83 / 100.**
 
 ## Scoring Rubric
 - **90–100** Production-ready: ship with monitoring.
