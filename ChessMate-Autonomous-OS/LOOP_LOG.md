@@ -156,3 +156,14 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
 - **Verify:** typecheck ✅ · lint ✅ · unit 115 ✅ · build ✅ · e2e 29/0/13 ✅.
 - **Result:** Learning 75→80, Analysis 78→80; score ~83. Phase data persist-forward (sparse until re-analysis).
 - **Next:** B-3 lightweight motif tagging; B-4 train-on-your-mistakes.
+
+---
+
+## 2026-06-21 · Product-to-Production · Loop I — Phase 2 / B-3: tactical motifs
+- **Objective:** lightweight, deterministic tactical-motif detection → recurring mistake patterns.
+- **Change:** `lib/motifs.ts` (deterministic, eval-magnitude mate + single chess.js capture check, no
+  engine pass) tagging persisted rows; engine adds recurring-motif weaknesses (freq + confidence);
+  Profile shows motif cards; hook passes user moves + motifs. Phase-1 taxonomy only; no schema change.
+- **Verify:** typecheck ✅ · lint ✅ · unit 127 ✅ · build ✅ · e2e 29/0/13 ✅.
+- **Result:** Learning 80→85, Analysis 80→82; score ~84. Learning layer = opening + phase + motif.
+- **Next:** B-4 train-on-your-mistakes (surface stored blunder positions: fen-before + best alternative).

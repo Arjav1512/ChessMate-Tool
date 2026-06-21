@@ -99,6 +99,13 @@ STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) 
   means phase data is sparse until games are (re)analyzed — surfaced honestly in the UI. No motifs/
   drills/coach changes; no schema change (uses B-1's `phase` column).
 
+- **[2026-06-21] D-019 DECIDED** — B-3 adds **deterministic** tactical-motif detection (Phase-1
+  taxonomy only) over already-produced analysis — no extra engine pass, no AI classification, no
+  schema change (uses B-1's `motif_tags`). Mate motifs from eval magnitude; material motifs gated to
+  errors with a single chess.js capture check (no SEE). Recurring-motif weaknesses flag motifs that
+  recur across ≥3 games and ≥25% of games, with frequency + sample-size confidence;
+  `major_tactical_blunder` excluded (covered by recurring-blunders).
+
 ## Resolved Escalations
 
 - **[2026-06-20] E-1 DECIDED — Priority direction: PARALLEL.**

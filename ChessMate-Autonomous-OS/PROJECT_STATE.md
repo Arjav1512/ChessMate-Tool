@@ -7,7 +7,14 @@ _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
 VALID review comments. Do not stop at sprint boundaries.
 
-## Production Score: **~83 / 100** (… → 82 B-1 data layer → 83 true phase weakness)
+## Production Score: **~84 / 100** (… → 83 true phase → 84 tactical motifs)
+
+## Latest loop — Phase 2 / B-3: tactical-motif detection (PR #19)
+Deterministic motif tagger (`lib/motifs.ts`, no extra engine pass) populates `move_analysis.motif_tags`
+during analysis; the Weakness Engine surfaces **recurring tactical-motif patterns** (frequently hangs
+pieces / misses wins / drops material / mate motifs) with frequency + confidence; the Profile shows
+them as cards. The learning layer now spans opening + phase + motif weaknesses — a real improvement
+system. Learning 80→85, Analysis 80→82.
 
 ## Latest loop — Phase 2 / B-2: true phase weakness (PR #18)
 Removed the game-length phase proxy. `derivePhase` tags every persisted move (opening/middle/endgame);
