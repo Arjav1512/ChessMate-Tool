@@ -93,6 +93,12 @@ STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) 
   + tests + docs) — no UI/engine/drills. Additive-only, RLS preserved, client-side Stockfish
   preserved, analysis performance preserved (persist is post-analysis, non-fatal). Confidence ≥80%.
 
+- **[2026-06-21] D-018 DECIDED** — B-2 replaces the game-length phase **proxy** with **true
+  per-move phase** weakness from `move_analysis`. Phase is a documented heuristic (non-pawn material +
+  move number); strength = good-or-better share per phase; confidence by phase move-count. Persist-forward
+  means phase data is sparse until games are (re)analyzed — surfaced honestly in the UI. No motifs/
+  drills/coach changes; no schema change (uses B-1's `phase` column).
+
 ## Resolved Escalations
 
 - **[2026-06-20] E-1 DECIDED — Priority direction: PARALLEL.**

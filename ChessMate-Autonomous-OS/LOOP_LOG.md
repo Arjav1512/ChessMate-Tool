@@ -145,3 +145,14 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
 - **Result:** DB/Architecture +1 each; score ~82 (foundational). Unlocks B-2 (true phase), B-3 (motifs),
   B-4 (train-on-mistakes).
 - **Next:** B-2 — derive phase + upgrade the Weakness Engine to true phase weakness (replaces the proxy).
+
+---
+
+## 2026-06-21 · Product-to-Production · Loop H — Phase 2 / B-2: true phase weakness
+- **Objective:** replace the proxy phase signal with true opening/middle/endgame weakness from move_analysis.
+- **Change:** `derivePhase` (per-move, material+move-number heuristic) tagging persisted rows; engine
+  computes per-phase strength + weakest-phase weakness with sample-size confidence; hook filters to the
+  user's own moves; Profile shows phase-strength meters. Proxy removed.
+- **Verify:** typecheck ✅ · lint ✅ · unit 115 ✅ · build ✅ · e2e 29/0/13 ✅.
+- **Result:** Learning 75→80, Analysis 78→80; score ~83. Phase data persist-forward (sparse until re-analysis).
+- **Next:** B-3 lightweight motif tagging; B-4 train-on-your-mistakes.
