@@ -1,6 +1,30 @@
 import { supabase } from './supabase';
 import { classifyMove, type MoveClassification } from '../utils/moveClassifier';
 
+export type Phase = 'opening' | 'middlegame' | 'endgame';
+
+/**
+ * Derive the game phase of a position from its FEN + full-move number. Unlike the
+ * old whole-game length proxy, this classifies each move by its *own* position.
+ *
+ * Heuristic (all phase definitions are heuristic): count non-pawn, non-king pieces
+ * on the board (start = 14). Endgame once the heavy material is largely gone;
+ * opening while it is early and material is essentially intact; middlegame between.
+ */
+export function derivePhase(fen: string, moveNumber: number): Phase {
+  const placement = (fen.split(' ')[0] ?? '');
+  let nonPawnPieces = 0;
+  let queens = 0;
+  for (const ch of placement) {
+    const u = ch.toLowerCase();
+    if (u === 'q') { queens++; nonPawnPieces++; }
+    else if (u === 'r' || u === 'b' || u === 'n') nonPawnPieces++;
+  }
+  if (nonPawnPieces <= 4 || (queens === 0 && nonPawnPieces <= 6)) return 'endgame';
+  if (moveNumber <= 10 && nonPawnPieces >= 12) return 'opening';
+  return 'middlegame';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Per-ply analysis persistence (Phase 2 / PR B-1).
 //
@@ -25,6 +49,7 @@ export interface MoveAnalysisRow {
   cp_loss: number;
   classification: MoveClassification;
   best_move: string | null;
+  phase: Phase;
 }
 
 /** One half-move of already-computed analysis, in source-of-truth units. */
@@ -57,6 +82,7 @@ export function buildMoveAnalysisRows(
   for (const p of plies) {
     if (!Number.isFinite(p.evalCpBefore) || !Number.isFinite(p.evalCpAfter)) continue;
     const isWhiteMove = p.ply % 2 === 0;
+    const moveNumber = Math.floor(p.ply / 2) + 1;
     const cpLoss = isWhiteMove
       ? Math.max(0, p.evalCpBefore - p.evalCpAfter)
       : Math.max(0, p.evalCpAfter - p.evalCpBefore);
@@ -64,7 +90,7 @@ export function buildMoveAnalysisRows(
       game_id: gameId,
       user_id: userId,
       ply: p.ply,
-      move_number: Math.floor(p.ply / 2) + 1,
+      move_number: moveNumber,
       color: isWhiteMove ? 'white' : 'black',
       fen: p.fenBefore,
       san: p.san,
@@ -72,6 +98,7 @@ export function buildMoveAnalysisRows(
       cp_loss: Math.round(cpLoss),
       classification: classifyMove(p.evalCpBefore, p.evalCpAfter, isWhiteMove),
       best_move: p.bestMove,
+      phase: derivePhase(p.fenBefore, moveNumber),
     });
   }
   return rows;
