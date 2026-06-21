@@ -1,10 +1,16 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { parsePGN } from '../../lib/pgn';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { WeaknessProfile } from './WeaknessProfile';
 import { useWeaknessProfile } from '../../hooks/useWeaknessProfile';
+import { MistakeReview } from './MistakeReview';
+import { useMistakeReview } from '../../hooks/useMistakeReview';
+import type { MistakeFilter } from '../../lib/mistakeReview';
+import type { Weakness } from '../../lib/weaknessProfile';
+import type { Phase } from '../../lib/moveAnalysis';
+import type { Motif } from '../../lib/motifs';
 
 interface AnalysisResult {
   game_id: string;
@@ -42,6 +48,19 @@ interface GameStats {
 export function ProgressBar() {
   const { user } = useAuth();
   const weakness = useWeaknessProfile();
+  const mistakeReview = useMistakeReview();
+  const [mistakeFilter, setMistakeFilter] = useState<MistakeFilter>({});
+  const mistakeSectionRef = useRef<HTMLDivElement>(null);
+
+  // A phase/motif weakness maps directly to a mistake-review filter.
+  const handleWeaknessSelect = useCallback((w: Weakness) => {
+    const [cat, val] = w.id.split(':');
+    if (cat === 'phase') setMistakeFilter({ phase: val as Phase });
+    else if (cat === 'motif') setMistakeFilter({ motif: val as Motif });
+    else return;
+    mistakeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<GameStats>({
     totalGames: 0,
@@ -301,7 +320,23 @@ export function ProgressBar() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Weakness Profile — what to work on first (read-only, from your games) */}
       <div style={sectionStyle}>
-        <WeaknessProfile profile={weakness.profile} loading={weakness.loading} error={weakness.error} />
+        <WeaknessProfile
+          profile={weakness.profile}
+          loading={weakness.loading}
+          error={weakness.error}
+          onSelect={handleWeaknessSelect}
+        />
+      </div>
+
+      {/* Train on your mistakes (read-only review feed) */}
+      <div ref={mistakeSectionRef} style={sectionStyle}>
+        <MistakeReview
+          mistakes={mistakeReview.mistakes}
+          loading={mistakeReview.loading}
+          error={mistakeReview.error}
+          filter={mistakeFilter}
+          onFilterChange={setMistakeFilter}
+        />
       </div>
 
       {/* Score Trend */}
