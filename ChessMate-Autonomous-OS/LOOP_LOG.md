@@ -132,3 +132,16 @@ Objective -> Hypothesis -> Change -> Verify -> Result -> Next Loop
 - **Verify:** typecheck ✅ · lint ✅ · unit 102 ✅ · build ✅ · e2e 29/0/13 ✅. No schema/per-move/jobs.
 - **Result:** Learning 58→75, AI Coach 66→72; score ~82. Phase-2 (per-move phase, drills) honestly deferred.
 - **Next:** CodeRabbit triage on PR #16 → MERGE_READY. Owner-gated items (merges, Sentry DSN) still pending.
+
+---
+
+## 2026-06-21 · Product-to-Production · Loop G — Phase 2 / B-1: move_analysis data layer
+- **Objective:** ship the foundational per-ply data layer (Option B) cleanly + safely. No UI/engine/drills.
+- **Change:** additive `move_analysis` migration (RLS, indexes, reserved phase/motif columns); pure
+  `buildMoveAnalysisRows` + non-fatal `persistMoveAnalysis` (`lib/moveAnalysis.ts`); BulkAnalysis write
+  path from already-computed data (best-alternative = prior ply's engine best move); RLS isolation test
+  in PGlite (executes the migration); CONTEXT.md updated.
+- **Verify:** typecheck ✅ · lint ✅ · unit 108 ✅ (incl. migration execution + RLS) · build ✅ · e2e 29/0/13 ✅.
+- **Result:** DB/Architecture +1 each; score ~82 (foundational). Unlocks B-2 (true phase), B-3 (motifs),
+  B-4 (train-on-mistakes).
+- **Next:** B-2 — derive phase + upgrade the Weakness Engine to true phase weakness (replaces the proxy).

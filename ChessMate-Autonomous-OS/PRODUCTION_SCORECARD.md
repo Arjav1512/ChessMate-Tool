@@ -4,7 +4,7 @@ _Last updated: 2026-06-20 · Auditor: Autonomous Engineering System (QA + Tech L
 
 ## Headline Score: **~82 / 100 — "Release Candidate"**
 
-_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality) → 81 (Observability) → 82 (Weakness Profile)._
+_Trajectory: 70 (audit) → 73 (Sprint 1) → 75 (a11y) → 78 (Lighthouse/SEO) → 79 (RLS) → 80 (Product Quality) → 81 (Observability) → 82 (Weakness Profile) → 82 (B-1 data layer)._
 Target for Production Ready is **≥85** (`PRODUCT_ACCEPTANCE_CRITERIA.md`). **Acceptance sections now
 passing:** Security (≥85), Testing (≥85), Accessibility, Performance, PR Quality, Chess Analysis, AI
 Coach, Product Quality. Remaining gaps to ≥85: UI consolidation (66, biggest lever), Monitoring
@@ -20,8 +20,8 @@ shared runner — not representative of production._
 | # | Category | Weight | Score /100 | Notes |
 |---|---|:--:|:--:|---|
 | 1 | Security & Privacy | 15 | 87 | JWT verified (`getUser` + `verify_jwt`), CSP/HSTS live on Netlify, CORS fail-closed, disclosure channel, no client secrets, XSS-safe; **RLS now verified by real integration tests** (PGlite) |
-| 2 | Architecture & Code Quality | 10 | 82 | Strict TS, clean hooks/workers, passing gates; some 1000+ line components & inline-style sprawl |
-| 3 | Database & Supabase | 8 | 82 | RLS on every user table, indexed; **migrations + RLS + stats trigger now executed in tests** (PGlite); `cleanup_old_logs` unscheduled |
+| 2 | Architecture & Code Quality | 10 | 83 | Strict TS, clean hooks/workers; **per-ply analysis data layer added cleanly** (additive, pure+tested persistence); some 1000+ line components & inline-style sprawl |
+| 3 | Database & Supabase | 8 | 83 | RLS on every user table, indexed; **`move_analysis` added (additive, RLS-tested in PGlite)**; migrations + stats trigger executed in tests; `cleanup_old_logs` unscheduled |
 | 4 | Testing & QA | 10 | 87 | **e2e gate green & deterministic** (28/0/13), **RLS/auth integration tests** (PGlite), coverage + lint in CI; _left:_ coverage threshold |
 | 5 | Performance | 8 | 88 | **Lighthouse (prod build) all pass: Perf 83 / BP 100 / SEO 100 / A11y 100.** 89 KB gzip main, code-split, worker offload; SEO meta added |
 | 6 | Accessibility | 8 | 87 | **AA contrast passes** (axe 0 on landing + auth-with-error), Lighthouse a11y 100, focus traps, landmarks, alt, **accessible form errors** (`aria-invalid`/`describedby`/`role=alert`) |

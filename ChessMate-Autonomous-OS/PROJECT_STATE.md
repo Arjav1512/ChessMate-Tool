@@ -7,7 +7,13 @@ _Last updated: 2026-06-20 · Snapshot by Autonomous Engineering System_
 every required section complete, all CI green, AA contrast, no Critical/High bugs, no unresolved
 VALID review comments. Do not stop at sprint boundaries.
 
-## Production Score: **~82 / 100** (… → 81 → 82 Weakness Profile)
+## Production Score: **~82 / 100** (… → 82 Weakness Profile → 82 B-1 data layer)
+
+## Latest loop — Phase 2 / B-1: move_analysis data layer (PR #17)
+Additive `move_analysis` per-ply table (RLS via denormalized `user_id`, indexed) + pure, tested
+persistence layer + BulkAnalysis write path (persist-forward, from already-computed data — no extra
+engine calls). RLS isolation proven in the PGlite suite (executes the real migration). Foundational
+only — phase/motif/drills are later PRs. DB 82→83, Architecture 82→83 (score ~flat; value realized in B-2/B-3).
 
 ## Latest loop — Weakness Profile (PR #16): Analyzer → Personal Chess Improvement System
 Phase-1 **Weakness Detection Engine** (read-only, existing data): opening / color / recurring-blunder
