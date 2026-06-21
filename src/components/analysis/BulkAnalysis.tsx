@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { StockfishEngine } from '../../lib/stockfish';
 import { parsePGN } from '../../lib/pgn';
 import { classifyMove, MoveClassification } from '../../utils/moveClassifier';
+import { buildMoveAnalysisRows, persistMoveAnalysis, type PlyAnalysis } from '../../lib/moveAnalysis';
 import { Chess } from 'chess.js';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
@@ -100,7 +101,14 @@ export function BulkAnalysis() {
       let totalCpLoss = 0;
       let classifiedMoves = 0;
 
+      // Per-ply rows for move_analysis (Phase 2 / PR B-1). Built from data this
+      // loop already computes — no extra engine calls. `prevBest` is the engine's
+      // best move in the position *before* the next move (the better alternative).
+      const plies: PlyAnalysis[] = [];
+      let prevBest: string | null = null;
+
       for (let i = 0; i < pgnData.moves.length; i++) {
+        const fenBefore = chess.fen();
         chess.move(pgnData.moves[i]);
 
         try {
@@ -130,7 +138,17 @@ export function BulkAnalysis() {
             totalCpLoss += cpLoss;
             classCounts[classifyMove(evalBeforeCp, evalAfterCp, isWhiteMove)]++;
             classifiedMoves++;
+
+            plies.push({
+              ply: i,
+              fenBefore,
+              san: pgnData.moves[i],
+              evalCpBefore: evalBeforeCp,
+              evalCpAfter: evalAfterCp,
+              bestMove: prevBest,
+            });
           }
+          prevBest = result.bestMove ?? null;
 
           setAnalyses(prev => {
             const updated = new Map(prev);
@@ -176,6 +194,10 @@ export function BulkAnalysis() {
         best_moves: bestMoves,
         average_centipawn_loss: Math.round(avgCentipawnLoss * 100) / 100,
       }, { onConflict: 'game_id' });
+
+      // Persist per-ply analysis (Phase 2 / B-1). Non-fatal and persist-forward:
+      // it never blocks the aggregate result above.
+      await persistMoveAnalysis(buildMoveAnalysisRows(gameId, user!.id, plies));
 
       setAnalyses(prev => {
         const updated = new Map(prev);

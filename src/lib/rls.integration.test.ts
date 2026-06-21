@@ -166,6 +166,28 @@ describe('RLS / auth integration (real migrations on PGlite)', () => {
     expect((await db.query(`SELECT * FROM api_logs`)).rows).toHaveLength(1);
   });
 
+  it('move_analysis is isolated per user and blocks spoofed user_id (B-1)', async () => {
+    // A owns a game; attach a per-move row.
+    await asUser(db, USER_A);
+    const gid = (await db.query<{ id: string }>(`SELECT id FROM games WHERE user_id='${USER_A}' LIMIT 1`)).rows[0].id;
+    await db.exec(`INSERT INTO move_analysis (game_id, user_id, ply, move_number, color, fen, classification)
+      VALUES ('${gid}', '${USER_A}', 7, 4, 'white', 'fen-before', 'blunder')`);
+
+    // B cannot see A's per-move analysis.
+    await asUser(db, USER_B);
+    expect((await db.query(`SELECT * FROM move_analysis`)).rows).toHaveLength(0);
+
+    // B cannot insert a row spoofed as A.
+    await expect(
+      db.exec(`INSERT INTO move_analysis (game_id, user_id, ply, move_number, color, fen)
+        VALUES ('${gid}', '${USER_A}', 9, 5, 'black', 'x')`),
+    ).rejects.toThrow(/row-level security/i);
+
+    // A sees their own.
+    await asUser(db, USER_A);
+    expect((await db.query(`SELECT * FROM move_analysis`)).rows).toHaveLength(1);
+  });
+
   it('the statistics trigger derives W/L/D from games.user_color', async () => {
     // Fresh user to keep counts deterministic.
     const u = '33333333-3333-3333-3333-333333333333';
