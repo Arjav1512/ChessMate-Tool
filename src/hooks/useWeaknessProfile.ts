@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { buildWeaknessProfile, type WeaknessGame, type WeaknessProfile } from '../lib/weaknessProfile';
+import { buildWeaknessProfile, type WeaknessGame, type WeaknessProfile, type PhaseMove } from '../lib/weaknessProfile';
+import type { Phase } from '../lib/moveAnalysis';
+import type { MoveClassification } from '../utils/moveClassifier';
 
 // Session cache: the profile is derived from all of a user's games, which the
 // Progress view and the coach both want. Computing it once per session keeps the
@@ -41,7 +43,7 @@ export function useWeaknessProfile(enabled = true): State {
     setState((s) => ({ ...s, loading: true, error: null }));
 
     (async () => {
-      const [gamesRes, analysisRes] = await Promise.allSettled([
+      const [gamesRes, analysisRes, movesRes] = await Promise.allSettled([
         supabase
           .from('games')
           .select('id, result, user_color, pgn, uploaded_at')
@@ -50,6 +52,11 @@ export function useWeaknessProfile(enabled = true): State {
         supabase
           .from('game_analysis_results')
           .select('game_id, accuracy, mistakes, inaccuracies, blunders, total_moves')
+          .eq('user_id', user.id),
+        // Per-ply phase data (B-1/B-2). Sparse until games are (re-)analyzed.
+        supabase
+          .from('move_analysis')
+          .select('game_id, color, phase, classification')
           .eq('user_id', user.id),
       ]);
 
@@ -81,7 +88,18 @@ export function useWeaknessProfile(enabled = true): State {
         analysis: byGame.get(g.id) ?? null,
       }));
 
-      const profile = buildWeaknessProfile(games);
+      // Phase strength is about the USER's own moves: keep only plies whose color
+      // matches the game's user_color (and that carry phase + classification).
+      const userColorByGame = new Map(games.map((g) => [g.id, g.user_color]));
+      const moveRows = movesRes.status === 'fulfilled' ? movesRes.value.data ?? [] : [];
+      const moves: PhaseMove[] = [];
+      for (const m of moveRows) {
+        if (!m.phase || !m.classification) continue;
+        if (m.color !== userColorByGame.get(m.game_id)) continue;
+        moves.push({ phase: m.phase as Phase, classification: m.classification as MoveClassification });
+      }
+
+      const profile = buildWeaknessProfile(games, moves);
       cache.set(user.id, profile);
       setState({ profile, loading: false, error: null });
     })();

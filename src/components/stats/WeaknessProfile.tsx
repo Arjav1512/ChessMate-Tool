@@ -1,5 +1,55 @@
 import { Target, BookOpen, AlertTriangle, Clock, Repeat, TrendingDown, TrendingUp, Minus } from 'lucide-react';
-import type { Weakness, WeaknessProfile as Profile, WeaknessCategory, Confidence, Trend } from '../../lib/weaknessProfile';
+import type { Weakness, WeaknessProfile as Profile, WeaknessCategory, Confidence, Trend, PhaseStrength } from '../../lib/weaknessProfile';
+import type { Phase } from '../../lib/moveAnalysis';
+
+const PHASE_ORDER: Phase[] = ['opening', 'middlegame', 'endgame'];
+const PHASE_TITLE: Record<Phase, string> = { opening: 'Opening', middlegame: 'Middlegame', endgame: 'Endgame' };
+
+// Strength: higher = stronger, so colour inverts the weakness scale.
+function strengthColor(s: number): string {
+  if (s >= 70) return 'var(--cm-success)';
+  if (s >= 55) return 'var(--cm-warning)';
+  return 'var(--cm-error-bright)';
+}
+
+function PhaseStrengths({ strengths, moveCount }: { strengths: Partial<Record<Phase, PhaseStrength>>; moveCount: number }) {
+  if (moveCount === 0) return null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <h4 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--cm-text-secondary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+        Phase strength
+      </h4>
+      {PHASE_ORDER.map((phase) => {
+        const ps = strengths[phase];
+        return (
+          <div key={phase} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '12px', color: 'var(--cm-text-primary)', width: '88px', flexShrink: 0 }}>{PHASE_TITLE[phase]}</span>
+            {ps ? (
+              <>
+                <div
+                  role="meter"
+                  aria-valuenow={ps.strength}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${PHASE_TITLE[phase]} strength ${ps.strength} of 100`}
+                  style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--cm-bg-active)', overflow: 'hidden' }}
+                >
+                  <div style={{ width: `${ps.strength}%`, height: '100%', background: strengthColor(ps.strength) }} />
+                </div>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: strengthColor(ps.strength), width: '34px', textAlign: 'right' }}>{ps.strength}%</span>
+                <span style={{ fontSize: '10.5px', color: 'var(--cm-text-muted)', width: '92px', textAlign: 'right' }}>
+                  {ps.moves} moves · {ps.confidence}
+                </span>
+              </>
+            ) : (
+              <span style={{ flex: 1, fontSize: '11.5px', color: 'var(--cm-text-muted)' }}>Not enough analyzed moves yet</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 const CATEGORY_ICON: Record<WeaknessCategory, React.ReactNode> = {
   opening: <BookOpen size={15} />,
@@ -100,6 +150,10 @@ export function WeaknessProfile({ profile, loading, error }: {
           Patterns found across your imported games — the things to work on first.
         </p>
       </div>
+
+      {!loading && !error && profile && (
+        <PhaseStrengths strengths={profile.phaseStrengths} moveCount={profile.phaseMoveCount} />
+      )}
 
       {loading && <p style={{ fontSize: '13px', color: 'var(--cm-text-secondary)' }}>Analyzing your games…</p>}
 
