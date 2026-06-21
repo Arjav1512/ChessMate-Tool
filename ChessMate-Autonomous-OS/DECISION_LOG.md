@@ -86,6 +86,13 @@ STATUS ∈ DECIDED · OPEN · SUPERSEDED · NOTED (observation, not a decision) 
   attribution is honestly deferred to a Phase-2 per-move-persistence item; the phase signal ships as a
   labeled low-confidence game-length proxy. Confidence ≥80% — no schema/architecture change required.
 
+- **[2026-06-21] D-017 DECIDED (architecture)** — Phase 2 adopts **Option B**: an additive
+  `move_analysis` per-ply table (not jsonb-in-`moves`, not the full Option-C pipeline). Backfill is
+  **persist-forward + lazy** (no mandatory library re-analysis). Motifs start with a **lightweight
+  taxonomy** (B-3). PR **B-1** ships the data layer only (migration + RLS + persistence + write path
+  + tests + docs) — no UI/engine/drills. Additive-only, RLS preserved, client-side Stockfish
+  preserved, analysis performance preserved (persist is post-analysis, non-fatal). Confidence ≥80%.
+
 ## Resolved Escalations
 
 - **[2026-06-20] E-1 DECIDED — Priority direction: PARALLEL.**

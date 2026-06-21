@@ -83,6 +83,11 @@ User-owned tables, all with RLS (`auth.uid() = user_id`, or via a `games` join):
 - `moves(id, game_id→games, move_number, white_move, black_move, position_fen, stockfish_evaluation jsonb, …)`
 - `questions(id, user_id, game_id?, move_id?, question, answer, context jsonb, …)`
 - `game_analysis_results(...)` and `user_statistics(...)` and `user_progress_snapshots(...)` — analysis aggregates
+- `move_analysis(game_id→games, user_id, ply, move_number, color, fen, san, eval_cp, cp_loss, classification, best_move, phase?, motif_tags[])`
+  — **per-ply** analysis (Phase 2 / B-1). Foundation for true phase weakness, tactical-motif tagging,
+  and train-on-your-mistakes. Written **persist-forward** during analysis (`lib/moveAnalysis.ts`), from
+  data the analysis loop already computes — no extra engine calls. `phase`/`motif_tags` are reserved
+  for later PRs. RLS via denormalized `user_id`. (The older `moves` table remains unused.)
 - `api_logs(id, user_id?, endpoint, question, success, error_message, created_at)` — Edge Function audit + rate-limit source
 
 **Stats are trigger-maintained.** `update_user_statistics()` (SECURITY DEFINER) recomputes
