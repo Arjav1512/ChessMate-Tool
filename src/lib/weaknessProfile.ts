@@ -1,6 +1,7 @@
 import { detectOpening } from './openings';
 import type { Phase } from './moveAnalysis';
 import type { MoveClassification } from '../utils/moveClassifier';
+import { MOTIF_INFO, type Motif } from './motifs';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Weakness Detection Engine — Phase 1 (read-only, from existing stored data).
@@ -17,7 +18,7 @@ import type { MoveClassification } from '../utils/moveClassifier';
 // marked low confidence (see DESIGN note) rather than a fabricated attribution.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type WeaknessCategory = 'opening' | 'recurring' | 'phase' | 'color';
+export type WeaknessCategory = 'opening' | 'recurring' | 'phase' | 'color' | 'motif';
 export type Confidence = 'low' | 'medium' | 'high';
 export type Trend = 'improving' | 'worsening' | 'stable' | 'unknown';
 
@@ -49,11 +50,16 @@ export interface Weakness {
   sampleSize: number;
 }
 
-/** One of the user's own moves with its derived phase, from move_analysis. */
-export interface PhaseMove {
+/** One of the user's own moves (from move_analysis): phase, classification, motifs. */
+export interface UserMove {
+  gameId?: string;
   phase: Phase;
   classification: MoveClassification;
+  motifs?: Motif[];
 }
+
+/** @deprecated use UserMove. */
+export type PhaseMove = UserMove;
 
 export interface PhaseStrength {
   phase: Phase;
@@ -86,6 +92,10 @@ const MIN_GROUP = 3; // minimum games to make any claim
 const WINRATE_MARGIN = 0.1; // how far below baseline counts as a weakness
 const MIN_PHASE_MOVES = 20; // minimum of the user's own moves in a phase to score it
 const PHASE_GAP_MARGIN = 8; // accuracy-point gap (best vs worst phase) to flag a weakness
+const MIN_MOTIF_GAMES = 3; // a motif must recur across ≥ this many games to be "recurring"
+const MOTIF_FREQ_MARGIN = 0.25; // ...and appear in ≥ this share of analyzed games
+// major_tactical_blunder is excluded — it overlaps the game-level "recurring blunders".
+const MOTIF_ORDER: readonly Motif[] = ['hung_piece', 'allowed_material_loss', 'missed_material_gain', 'allowed_mate', 'missed_mate'];
 
 function outcome(g: WeaknessGame): Outcome | null {
   if (!g.user_color || g.result === '*' || !g.result) return null;
@@ -160,7 +170,7 @@ function trendOf(sortedOldToNew: WeaknessGame[], metricHigherIsBetter: (g: Weakn
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
-export function buildWeaknessProfile(games: WeaknessGame[], moves: PhaseMove[] = []): WeaknessProfile {
+export function buildWeaknessProfile(games: WeaknessGame[], moves: UserMove[] = []): WeaknessProfile {
   const byTime = [...games].sort((a, b) => a.uploaded_at.localeCompare(b.uploaded_at));
   const decided = byTime.filter((g) => outcome(g) !== null);
   const analyzed = byTime.filter((g) => g.analysis);
@@ -293,6 +303,36 @@ export function buildWeaknessProfile(games: WeaknessGame[], moves: PhaseMove[] =
         ],
         trend: 'unknown',
         sampleSize: worst.moves,
+      });
+    }
+  }
+
+  // ── 5. Recurring tactical motifs (B-3) ───────────────────────────────────
+  if (moves.length > 0) {
+    const totalGames = new Set(moves.map((m) => m.gameId ?? '')).size || 1;
+    for (const motif of MOTIF_ORDER) {
+      let occurrences = 0;
+      const gamesWith = new Set<string>();
+      for (const m of moves) {
+        if (m.motifs?.includes(motif)) {
+          occurrences++;
+          gamesWith.add(m.gameId ?? '');
+        }
+      }
+      if (gamesWith.size < MIN_MOTIF_GAMES) continue;
+      const frequency = gamesWith.size / totalGames;
+      if (frequency < MOTIF_FREQ_MARGIN) continue;
+      const info = MOTIF_INFO[motif];
+      weaknesses.push({
+        id: `motif:${motif}`,
+        category: 'motif',
+        title: info.weaknessTitle,
+        detail: `${info.definition} Seen in ${pct(frequency)} of your analyzed games.`,
+        severity: Math.min(100, Math.round(frequency * 120)),
+        confidence: confidenceFor(totalGames),
+        evidence: [`${occurrences} time${occurrences === 1 ? '' : 's'} across ${gamesWith.size} games · ${pct(frequency)} of analyzed`],
+        trend: 'unknown',
+        sampleSize: gamesWith.size,
       });
     }
   }
