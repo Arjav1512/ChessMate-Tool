@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildWeaknessProfile, extractOpeningMoves, type WeaknessGame } from './weaknessProfile';
+import type { Phase } from './moveAnalysis';
+import type { MoveClassification } from '../utils/moveClassifier';
 
 let seq = 0;
 function mk(opts: Partial<WeaknessGame> & {
@@ -115,17 +117,42 @@ describe('buildWeaknessProfile — recurring blunders', () => {
   });
 });
 
-describe('buildWeaknessProfile — phase proxy (low confidence)', () => {
-  it('flags long-game underperformance as a low-confidence proxy', () => {
-    const games = [
-      ...Array.from({ length: 6 }, () => mk({ opening: 'g4', result: '1-0', color: 'white', moves: 22 })),
-      ...Array.from({ length: 4 }, () => mk({ opening: 'g4', result: '0-1', color: 'white', moves: 55 })),
+describe('buildWeaknessProfile — true phase strength (B-2, from move data)', () => {
+  const rep = (phase: Phase, classification: MoveClassification, n: number) =>
+    Array.from({ length: n }, () => ({ phase, classification }));
+
+  it('computes per-phase strength and flags the weakest phase', () => {
+    const moves = [
+      ...rep('opening', 'good', 60),     // strength 100
+      ...rep('middlegame', 'good', 60),  // strength 100
+      ...rep('endgame', 'blunder', 30),  // strength 50
+      ...rep('endgame', 'good', 30),
     ];
-    const p = buildWeaknessProfile(games);
+    const p = buildWeaknessProfile([], moves);
+    expect(p.phaseStrengths.opening?.strength).toBe(100);
+    expect(p.phaseStrengths.endgame?.strength).toBe(50);
+    expect(p.phaseStrengths.endgame?.confidence).toBe('medium'); // 60 endgame moves (50–99)
     const phase = p.weaknesses.find((w) => w.category === 'phase');
     expect(phase).toBeTruthy();
-    expect(phase!.confidence).toBe('low');
-    expect(phase!.evidence.join(' ')).toMatch(/proxy/i);
+    expect(phase!.title).toMatch(/endgame/i);
+    expect(phase!.evidence.join(' ')).not.toMatch(/proxy/i); // real data, not a proxy
+  });
+
+  it('ignores a phase below the minimum move sample', () => {
+    const moves = [
+      ...rep('opening', 'good', 60),
+      ...rep('endgame', 'blunder', 5), // < MIN_PHASE_MOVES
+    ];
+    const p = buildWeaknessProfile([], moves);
+    expect(p.phaseStrengths.endgame).toBeUndefined();
+    expect(p.weaknesses.find((w) => w.category === 'phase')).toBeUndefined();
+  });
+
+  it('emits no phase data when no moves are provided', () => {
+    const p = buildWeaknessProfile([mk({ opening: 'g4', result: '1-0', color: 'white' })]);
+    expect(p.phaseStrengths).toEqual({});
+    expect(p.phaseMoveCount).toBe(0);
+    expect(p.weaknesses.find((w) => w.category === 'phase')).toBeUndefined();
   });
 });
 
