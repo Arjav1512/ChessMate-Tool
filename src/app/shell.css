@@ -1,0 +1,149 @@
+/* =============================================================================
+   Ivory app shell (Phase 3) — layout, sidebar, bottom tab bar, command menu.
+   Token-bound (System Design §5/§6 Navigation). Scoped to .ivs-* so it cannot
+   affect the legacy Obsidian app (strangler).
+   ========================================================================== */
+
+.ivs-shell { min-height: 100vh; background: var(--bg-grad), var(--bg); color: var(--text-body); font-family: var(--font-sans); }
+.ivs-shell__body { display: flex; min-height: 100vh; }
+.ivs-shell__content { flex: 1; min-width: 0; overflow-x: hidden; }
+
+/* ----- Sidebar (desktop, §6 Navigation Components) ----- */
+.ivs-sidebar {
+  width: 232px; flex-shrink: 0; position: sticky; top: 0; height: 100vh;
+  display: flex; flex-direction: column;
+  background: var(--surface-1); border-right: 1px solid var(--hairline);
+  padding: var(--space-4) var(--space-3);
+}
+.ivs-sidebar--collapsed { width: 72px; }
+.ivs-brand { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-2) var(--space-4); }
+.ivs-brand__mark { font-size: 20px; line-height: 1; color: var(--accent); }
+.ivs-brand__name { font-weight: 700; font-size: 16px; color: var(--text-hi); letter-spacing: -0.01em; }
+.ivs-sidebar--collapsed .ivs-brand__name { display: none; }
+
+.ivs-nav { display: flex; flex-direction: column; gap: 2px; margin-top: var(--space-2); }
+.ivs-nav__group-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-low); padding: var(--space-4) var(--space-2) var(--space-2); }
+.ivs-navitem {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%;
+  padding: 9px 10px; border-radius: var(--r-md); border: 1px solid transparent;
+  color: var(--text-mid); font-size: 14px; font-weight: 500; text-decoration: none;
+  cursor: pointer; background: none; text-align: left;
+  transition: background var(--dur-instant) var(--ease-standard), color var(--dur-instant) var(--ease-standard);
+}
+.ivs-navitem:hover { background: var(--hover-tint); color: var(--text-hi); }
+.ivs-navitem:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.ivs-navitem[aria-current="page"] {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 24%, transparent);
+  color: var(--text-hi);
+}
+.ivs-navitem__glyph { width: 20px; text-align: center; font-size: 15px; flex-shrink: 0; }
+.ivs-navitem__badge { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--on-accent); background: var(--accent); border-radius: var(--r-pill); padding: 0 6px; }
+.ivs-sidebar--collapsed .ivs-navitem__label,
+.ivs-sidebar--collapsed .ivs-navitem__badge,
+.ivs-sidebar--collapsed .ivs-nav__group-label { display: none; }
+.ivs-sidebar--collapsed .ivs-navitem { justify-content: center; }
+
+.ivs-sidebar__search { margin: var(--space-2) 0; }
+.ivs-sidebar__spacer { flex: 1; }
+
+/* ----- User/profile menu (pinned bottom of sidebar, §3) ----- */
+.ivs-usermenu { position: relative; }
+.ivs-usermenu--block { width: 100%; }
+.ivs-userblock {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%;
+  padding: var(--space-2); border-radius: var(--r-md); border: 1px solid var(--border);
+  background: var(--surface-2); cursor: pointer; text-align: left; font: inherit; color: inherit;
+}
+.ivs-userblock:hover { background: var(--surface-3); }
+.ivs-userblock:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.ivs-userblock__meta { min-width: 0; }
+.ivs-userblock__name { font-size: 13px; font-weight: 600; color: var(--text-hi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ivs-userblock__sub { font-size: 11px; color: var(--text-low); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ivs-sidebar--collapsed .ivs-userblock__meta { display: none; }
+
+.ivs-usermenu__pop {
+  position: absolute; bottom: calc(100% + 6px); left: 0; right: 0; z-index: 70;
+  display: flex; flex-direction: column; gap: 2px; padding: 6px;
+  background: var(--surface-3); border: 1px solid var(--border);
+  border-radius: var(--r-md); box-shadow: var(--shadow-pop);
+}
+.ivs-usermenu--icon .ivs-usermenu__pop { left: auto; right: 0; min-width: 180px; top: calc(100% + 6px); bottom: auto; }
+.ivs-usermenu__item {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%;
+  padding: 9px 10px; border: none; background: none; border-radius: var(--r-xs);
+  color: var(--text-body); font-family: var(--font-sans); font-size: 13px; cursor: pointer; text-align: left; text-decoration: none;
+}
+.ivs-usermenu__item:hover { background: var(--hover-tint); color: var(--text-hi); }
+.ivs-usermenu__item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.ivs-sidebar__collapse { width: 100%; margin-bottom: var(--space-2); }
+
+/* ----- Skip link (WCAG 2.4.1) ----- */
+.ivs-skiplink {
+  position: absolute; left: 8px; top: -48px; z-index: 300;
+  background: var(--accent); color: var(--on-accent); font-family: var(--font-sans);
+  font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: var(--r-md);
+  text-decoration: none; transition: top var(--dur-standard) var(--ease-standard);
+}
+.ivs-skiplink:focus { top: 8px; outline: none; box-shadow: var(--focus-ring); }
+
+/* ----- Top bar (shown when sidebar is hidden — tablet/mobile) ----- */
+.ivs-topbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: var(--space-3);
+  height: 56px; padding: 0 var(--space-4);
+  background: var(--surface-1); border-bottom: 1px solid var(--hairline);
+}
+.ivs-topbar__brand { display: flex; align-items: center; gap: var(--space-2); margin-right: auto; }
+.ivs-iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 40px; min-height: 40px; border-radius: var(--r-md);
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--text-mid); cursor: pointer;
+}
+.ivs-iconbtn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+/* 44px touch target on coarse pointers (§6/§10). */
+@media (pointer: coarse) { .ivs-iconbtn { min-width: 44px; min-height: 44px; } }
+
+/* ----- Bottom tab bar (mobile, §6) ----- */
+.ivs-bottombar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+  display: flex; height: 64px;
+  background: var(--surface-1); border-top: 1px solid var(--hairline);
+}
+.ivs-bottombar__item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  color: var(--text-low); text-decoration: none; font-size: 11px; font-weight: 600;
+  background: none; border: none; cursor: pointer;
+}
+.ivs-bottombar__item[aria-current="page"] { color: var(--text-hi); }
+.ivs-bottombar__item[aria-current="page"] .ivs-bottombar__glyph { color: var(--accent); }
+.ivs-bottombar__glyph { font-size: 18px; line-height: 1; }
+.ivs-shell__content--mobile { padding-bottom: 80px; }
+
+/* ----- Command menu (⌘K, §6) ----- */
+.ivs-cmdk-scrim {
+  position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.6);
+  display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh;
+}
+.ivs-cmdk {
+  width: 100%; max-width: 560px; background: var(--surface-card-grad);
+  border: 1px solid var(--border); border-radius: var(--r-xl); box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+.ivs-cmdk__input {
+  width: 100%; border: none; background: transparent; color: var(--text-hi);
+  font-family: var(--font-sans); font-size: 16px; padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--hairline);
+}
+.ivs-cmdk__input:focus { outline: none; }
+.ivs-cmdk__list { max-height: 50vh; overflow: auto; padding: var(--space-2); }
+.ivs-cmdk__group { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-low); padding: var(--space-3) var(--space-3) var(--space-2); }
+.ivs-cmdk__item {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%;
+  padding: 10px 12px; border-radius: var(--r-md); border: none; background: none;
+  color: var(--text-body); font-size: 14px; cursor: pointer; text-align: left;
+}
+.ivs-cmdk__item[aria-selected="true"], .ivs-cmdk__item:hover { background: var(--hover-tint); color: var(--text-hi); }
+.ivs-cmdk__glyph { width: 20px; text-align: center; color: var(--text-low); }
+.ivs-cmdk__empty { padding: var(--space-6); text-align: center; color: var(--text-low); font-size: 13px; }

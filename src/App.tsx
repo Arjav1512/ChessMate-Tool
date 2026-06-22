@@ -18,11 +18,19 @@ import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
 import { useResponsive } from './hooks/useResponsive';
+import { Styleguide } from './styles/Styleguide';
+import { Gallery } from './components/ui/iv/Gallery';
+import { useFlag } from './lib/flags';
+import { AppRouter } from './app/AppRouter';
 import { LogOut, TrendingUp, Upload, Brain, BarChart3, User, Menu, X as XIcon } from 'lucide-react';
 // Note: i18n infrastructure removed — no components use useTranslation
 import type { Game } from './lib/supabase';
 
 type ModalType = 'import' | 'progress' | 'analyze' | 'stats' | null;
+
+// Dev-only latch for the `?shell` preview (Phase 3). Module-scoped so it
+// survives re-renders/redirects within a page session and resets on reload.
+let previewShellLatch = false;
 
 function NavButton({ onClick, icon, label }: { onClick: () => void; icon: React.ReactNode; label: string }) {
   return (
@@ -61,6 +69,10 @@ function NavButton({ onClick, icon, label }: { onClick: () => void; icon: React.
 
 function MainApp() {
   const { user, loading, signOut, passwordRecovery } = useAuth();
+  // Strangler migration (Architecture §22): when ui.newShell is on, an
+  // authenticated user gets the new Ivory shell instead of the legacy modal app.
+  // Default OFF → production is unchanged. Toggle via ?ff=ui.newShell.
+  const newShell = useFlag('ui.newShell');
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [openModal, setOpenModal] = useState<ModalType>(null);
   const [showCompatibilityWarning, setShowCompatibilityWarning] = useState(true);
@@ -99,6 +111,17 @@ function MainApp() {
     );
   }
 
+  // Dev-only preview of the new Ivory shell without auth (Phase 3 visual
+  // checkpoint). Lives inside AuthProvider so useAuth() resolves. The latch
+  // survives the in-app redirect that strips the ?shell query; a full reload
+  // clears it. Removed at cutover; the real entry is the ui.newShell flag below.
+  if (typeof window !== 'undefined' && window.location.search.includes('shell')) {
+    previewShellLatch = true;
+  }
+  if (previewShellLatch) {
+    return <AppRouter />;
+  }
+
   // Password recovery takes precedence over the rest of the app: even though
   // Supabase has signed the user in (so `user` is non-null), we should not
   // let them touch the main UI until they've set a new password.
@@ -110,6 +133,13 @@ function MainApp() {
     return preAuthView === 'landing'
       ? <LandingPage onGetStarted={goToAuth} onSignIn={goToAuth} />
       : <AuthForm onBackToLanding={goToLanding} />;
+  }
+
+  // New Ivory shell (flagged). Legacy auth flow above is preserved; only the
+  // post-auth experience swaps. Existing functionality is NOT migrated yet —
+  // every route renders a placeholder (Phase 3).
+  if (newShell) {
+    return <AppRouter />;
   }
 
   return (
@@ -622,6 +652,16 @@ function MissingConfigScreen() {
 }
 
 function App() {
+  // Phase 1 verification surface (Ivory tokens). `?styleguide` renders the
+  // token styleguide without touching the live app flow. Removed at cutover.
+  if (typeof window !== 'undefined' && window.location.search.includes('styleguide')) {
+    return <Styleguide />;
+  }
+  // Phase 2 verification surface — Ivory component gallery.
+  if (typeof window !== 'undefined' && window.location.search.includes('components')) {
+    return <Gallery />;
+  }
+
   if (!supabaseConfigured) {
     return <MissingConfigScreen />;
   }
