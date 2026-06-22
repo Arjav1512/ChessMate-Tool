@@ -38,14 +38,19 @@ export function ImprovementScoreCard() {
       </div>
       <CardState isLoading={q.isLoading} isError={q.isError} refetch={q.refetch}
         skeleton={<div className="dash-score"><div className="dash-score__top"><Skeleton width={108} height={108} radius="50%" /><Skeleton width={150} height={64} /></div><Skeleton height={56} /><Skeleton height={44} /></div>}>
-        {q.data && (
+        {q.data && (() => {
+          const scoreUp = q.data.deltaPts >= 0;
+          const dir = scoreUp ? 'up' : 'down';
+          return (
           <div className="dash-score">
             <div className="dash-score__top">
-              <ScoreRing value={q.data.score} ariaLabel={`Improvement score ${q.data.score} of 100, up ${q.data.deltaPts} points in 30 days`} />
+              <ScoreRing value={q.data.score} ariaLabel={`Improvement score ${q.data.score} of 100, ${dir} ${Math.abs(q.data.deltaPts)} points in 30 days`} />
               <div>
                 <h3 className="dash-score__verdict iv-h3">
                   {q.data.verdict}{' '}
-                  <span style={{ color: 'var(--success)', fontFamily: 'var(--font-mono)', fontSize: 15 }}>▲ {q.data.deltaPts}</span>
+                  <span style={{ color: scoreUp ? 'var(--success)' : 'var(--error)', fontFamily: 'var(--font-mono)', fontSize: 15 }}>
+                    <span aria-hidden>{scoreUp ? '▲' : '▼'}</span> {Math.abs(q.data.deltaPts)}
+                  </span>
                 </h3>
                 <div className="dash-score__drivers">
                   <span className="dash-score__driver dash-score__driver--up"><span aria-hidden>▲</span><span>{q.data.drivers.up}</span></span>
@@ -62,7 +67,8 @@ export function ImprovementScoreCard() {
               <span>Fastest way to raise it: <strong>{q.data.nextStep}</strong></span>
             </button>
           </div>
-        )}
+          );
+        })()}
       </CardState>
     </Card>
   );
@@ -90,7 +96,7 @@ export function RatingTrendCard() {
               <SegmentedControl ariaLabel="Rating range" value={range} onChange={setRange}
                 options={[{ value: '30d', label: '30d' }, { value: '90d', label: '90d' }, { value: '1y', label: '1y' }]} />
             </div>
-            <LineChart data={q.data.series} subtle height={120} ariaLabel={`Rating over ${range}: ${q.data.series[0].value} to ${q.data.current}, ${up ? 'up' : 'down'} ${Math.abs(q.data.deltaForRange)}`} />
+            <LineChart data={q.data.series} subtle height={120} ariaLabel={`Rating over ${range}: ${q.data.series[0]?.value ?? q.data.current} to ${q.data.current}, ${up ? 'up' : 'down'} ${Math.abs(q.data.deltaForRange)}`} />
           </>
         )}
       </CardState>
