@@ -28,12 +28,16 @@ export function useSendToImprove(gameId: string) {
     if (!move) return;
     const motif = move.motifs[0] ?? (move.quality ?? 'review');
     const item: ImproveQueueItem = { gameId, ply: move.ply, motif, san: move.san, addedAt: new Date().toISOString() };
+    const label = motif.replace(/-/g, ' ');
     try {
       const q = readQueue();
       q.push(item);
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(q));
-    } catch { /* ignore */ }
-    const label = motif.replace(/-/g, ' ');
+    } catch {
+      // Don't claim success when the write failed.
+      toast('Couldn’t save to your improvement plan — try again', 'error');
+      return;
+    }
     toast(`Added “${label}” to your improvement plan`, 'success');
   };
 }

@@ -56,7 +56,9 @@ export function AnalysisPage() {
   const reset = useAnalysisStepper((s) => s.reset);
 
   const h1Ref = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { reset(game.userColor); h1Ref.current?.focus(); }, [game.id, game.userColor, reset]);
+  // Reset on the ROUTE id so navigating between games resets even if the
+  // (sample) game object is stable.
+  useEffect(() => { reset(game.userColor); h1Ref.current?.focus(); }, [id, game.userColor, reset]);
 
   const currentMove = currentPly > 0 ? moves[currentPly - 1] : null;
   const currentFen = currentMove?.fenAfter ?? moves[0]?.fenBefore ?? START_FEN;
@@ -77,8 +79,12 @@ export function AnalysisPage() {
   // Keyboard nav (§8): ←/→ step · ↑/↓ start/end · f flip (ignored while typing).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const t = (e.target as HTMLElement)?.tagName;
-      if (t === 'INPUT' || t === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
+      const el = e.target as HTMLElement | null;
+      const t = el?.tagName;
+      if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || el?.isContentEditable) return;
+      // Don't hijack arrow keys from widgets that consume them (tabs, segmented
+      // radios) — they'd otherwise also jump the board.
+      if (el?.closest('[role="tablist"],[role="radiogroup"]')) return;
       switch (e.key) {
         case 'ArrowLeft': e.preventDefault(); setPly(Math.max(0, currentPly - 1)); break;
         case 'ArrowRight': e.preventDefault(); setPly(Math.min(total, currentPly + 1)); break;

@@ -21,9 +21,11 @@ export function EvalTimeline({ moves, currentPly, turningPoints, onSeek }: EvalT
   const x = (ply: number) => (n <= 1 ? 0 : (ply / n) * W);
   const y = (cp: number) => mid - (clamp(cp) / 600) * (mid - 4);
 
+  // Plot each move's eval at x(ply) so the position-after-move aligns with the
+  // playhead (which is at x(currentPly)).
   const pts = moves
     .filter((m) => m.evalCp != null)
-    .map((m) => `${x(m.ply - 1).toFixed(1)},${y(m.evalCp as number).toFixed(1)}`);
+    .map((m) => `${x(m.ply).toFixed(1)},${y(m.evalCp as number).toFixed(1)}`);
   const line = pts.length ? `M${pts.join(' L')}` : '';
   const curX = x(currentPly);
   const curMove = currentPly > 0 ? moves[currentPly - 1] : null;
@@ -57,7 +59,7 @@ export function EvalTimeline({ moves, currentPly, turningPoints, onSeek }: EvalT
         {line && <path d={line} fill="none" stroke="var(--accent)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />}
         {/* turning-point markers */}
         {sortedTP.map((p) => (
-          <circle key={p} cx={x(p - 1)} cy={y(moves[p - 1]?.evalCp ?? 0)} r={3} fill="var(--mq-blunder)" />
+          <circle key={p} cx={x(p)} cy={y(moves[p - 1]?.evalCp ?? 0)} r={3} fill="var(--mq-blunder)" />
         ))}
         {/* dashed playhead + current dot */}
         <line x1={curX} y1={0} x2={curX} y2={H} stroke="var(--accent)" strokeWidth={1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" opacity={0.7} />

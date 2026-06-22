@@ -107,9 +107,11 @@ export function getSampleMoves(): AnalysisMoveVM[] {
   return out;
 }
 
-/** Plies of the biggest eval swings (turning points), worst-first. */
+/** Plies of the biggest eval swings (turning points), worst-first. Clamped to
+ *  the available move range so a changed sample PGN can't yield out-of-range jumps. */
 export function getSampleTurningPoints(): number[] {
-  return [33, 31, 27];
+  const total = getSampleMoves().length;
+  return [33, 31, 27].filter((p) => p >= 1 && p <= total);
 }
 
 /**

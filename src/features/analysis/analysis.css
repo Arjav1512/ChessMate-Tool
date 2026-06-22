@@ -81,7 +81,7 @@
 /* Move-quality counts */
 .iv-aw__counts { display: flex; flex-wrap: wrap; gap: 6px; }
 .iv-aw__count { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: var(--r-xs); border: 1px solid color-mix(in srgb, var(--mq-color) 30%, transparent); background: color-mix(in srgb, var(--mq-color) 11%, transparent); color: var(--mq-color); font-family: var(--font-mono); font-size: 12px; font-weight: 600; cursor: default; }
-.iv-aw__count-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.iv-aw__count-dot { width: 7px; height: 7px; border-radius: 50%; background: currentcolor; }
 .iv-aw__count-sym { opacity: 0.85; }
 
 /* Insight card */

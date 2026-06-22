@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Input, Spinner, useIvToast } from '../../components/ui/iv';
+import { Button, Input, useIvToast } from '../../components/ui/iv';
 import { BoardContainer } from './BoardContainer';
 import { askChessMentor } from '../../lib/gemini';
 import { COACH_STARTER_PROMPTS } from '../../lib/sampleData';
@@ -85,8 +85,8 @@ export function CoachTab({ game, move, currentFen }: CoachTabProps) {
           onKeyDown={(e) => { if (e.key === 'Enter') ask(question); }}
           disabled={loading}
         />
-        <Button onClick={() => ask(question)} disabled={loading || !question.trim()}>
-          {loading ? <Spinner size={14} /> : 'Ask'}
+        <Button onClick={() => ask(question)} loading={loading} disabled={!question.trim()}>
+          Ask
         </Button>
       </div>
     </div>

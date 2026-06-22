@@ -21,7 +21,7 @@ export function AccuracySummary({ user, opponent }: AccuracySummaryProps) {
         <MetricCard
           label="Your accuracy"
           value={`${user}%`}
-          delta={{ value: `${Math.abs(delta)}`, direction: delta >= 0 ? 'up' : 'down' }}
+          delta={{ value: `${Math.abs(delta)}%`, direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat' }}
           sublabel="vs opponent"
         />
       </div>
