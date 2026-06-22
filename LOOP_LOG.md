@@ -39,4 +39,10 @@
 - Docs: updated audit (Phase 3.5 report + scorecard) + roadmap; created `PROJECT_STATE.md`, `DECISION_LOG.md`, this log.
 - Gates (local): typecheck ✅ · lint ✅ (0 err) · unit/component 177 ✅ · a11y e2e 4/4 ✅ · build ✅.
 - Strangler intact: legacy app untouched, `ui.newShell` OFF by default.
-- Outcome: PR opened (base `prod/mistake-review-b4`); awaiting CI + CodeRabbit + approval. **Not merged.**
+- Outcome: PR #21 opened (base `prod/mistake-review-b4`); CI all green (incl. Accessibility (axe)). **Not merged.**
+
+## 2026-06-22 · Phase 3.5 — CodeRabbit review round
+- Triggered CodeRabbit manually (auto-review disabled on non-default base). 15 inline findings.
+- Resolved 14 (commit `bfaae8e`): DEV-gated preview surfaces; AppRouter explicit throw; Button `type="button"` + loading sr-only name; Card native-click keyboard activation; Dialog `useId` title + guaranteed name; tokenized `--progress-track`; MetricCard SR delta direction; ProgressBar required name + numeric guards; flags/themeStore localStorage sanitization; Styleguide/Gallery `<html>` restore on unmount; 44px coarse targets on all nav rows.
+- Skipped 1 with reason: Import stays a ⌘K Action (avoid duplicate "Go to" entry).
+- Re-ran gates locally: typecheck ✅ · lint ✅ · unit 177 ✅ · a11y e2e 4/4 ✅ · build ✅. Pushed; CI re-running.
