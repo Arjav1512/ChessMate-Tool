@@ -4,7 +4,9 @@ on:
   push:
     branches: [main, dev]
   pull_request:
-    branches: [main]
+    # Run CI for PRs into main and for stacked PRs into the prod/* and feature/*
+    # integration branches (the strangler migration lands on prod/* before main).
+    branches: [main, 'prod/**', 'feature/**']
 
 jobs:
   # ─── Lint ──────────────────────────────────────────────────────────────────
@@ -139,5 +141,47 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ─── Accessibility (axe) ───────────────────────────────────────────────────
+  # Explicit a11y gate (Phase 3.5): real-browser axe over the app shell —
+  # structural ARIA/roles/labels, color-contrast, keyboard focus trap, skip
+  # link. Component-level axe smoke tests run inside the unit-tests job (jsdom).
+  # This job fails the build on any accessibility regression.
+  accessibility:
+    name: Accessibility (axe)
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run accessibility e2e (axe + contrast + keyboard)
+        env:
+          CI: true
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'placeholder_anon_key' }}
+        run: npx playwright test e2e/shell-a11y.spec.ts e2e/accessibility.spec.ts --project=chromium
+
+      - name: Upload a11y report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: a11y-report
           path: playwright-report/
           retention-days: 7
