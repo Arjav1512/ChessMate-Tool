@@ -102,8 +102,15 @@
   background: var(--surface-2); border: 1px solid var(--border); color: var(--text-mid); cursor: pointer;
 }
 .ivs-iconbtn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
-/* 44px touch target on coarse pointers (§6/§10). */
-@media (pointer: coarse) { .ivs-iconbtn { min-width: 44px; min-height: 44px; } }
+/* 44px touch targets on coarse pointers (§6/§10) — icon buttons + every
+   tappable nav/menu row (sidebar items, user menu, command-menu rows). */
+@media (pointer: coarse) {
+  .ivs-iconbtn { min-width: 44px; min-height: 44px; }
+  .ivs-navitem,
+  .ivs-userblock,
+  .ivs-usermenu__item,
+  .ivs-cmdk__item { min-height: 44px; }
+}
 
 /* ----- Bottom tab bar (mobile, §6) ----- */
 .ivs-bottombar {

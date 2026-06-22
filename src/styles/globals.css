@@ -21,6 +21,17 @@
 .iv-caption { font-family: var(--font-sans); font-size: var(--fs-caption); font-weight: var(--fw-caption); line-height: var(--lh-caption); }
 .iv-data    { font-family: var(--font-mono); font-size: var(--fs-data); font-weight: var(--fw-data); line-height: var(--lh-data); letter-spacing: var(--tr-data); }
 
+/* Visually-hidden, screen-reader-only content (preserves accessible names). */
+.iv-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ----- §12 Motion: ambient brand halo pulse (decorative, pointer-events:none) */
 @keyframes cmGlow {
   0%, 100% { opacity: 0.5; }

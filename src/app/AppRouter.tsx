@@ -12,7 +12,11 @@ import './shell.css';
 /** Placeholder element for a destination defined in navigation config. */
 function placeholderFor(key: string) {
   const all = [...ALL_DESTINATIONS, ...PARAM_ROUTES.map((p) => ({ ...p, glyph: '' }))];
-  const d = all.find((x) => x.key === key)!;
+  const d = all.find((x) => x.key === key);
+  if (!d) {
+    // Fail fast + diagnosable if a route key drifts from navigation config.
+    throw new Error(`placeholderFor: unknown route key "${key}"`);
+  }
   return <PlaceholderPage title={d.label} purpose={d.purpose} phase={d.phase} path={d.path} />;
 }
 

@@ -118,6 +118,9 @@
   /* Cool ambient blobs (§5.6) */
   --halo-cool-1: rgba(74, 150, 200, 0.11);
   --halo-cool-2: rgba(79, 182, 168, 0.08);
+
+  /* Progress bar track (§6) — dark default value from spec. */
+  --progress-track: #211d18;
 }
 
 /* ===========================================================================
@@ -151,6 +154,9 @@
 
   --piece-white: #FAF6EE;
   --piece-black: #2A251E;
+
+  /* Progress track on warm paper. */
+  --progress-track: #E4DCCB;
 }
 
 /* ===========================================================================

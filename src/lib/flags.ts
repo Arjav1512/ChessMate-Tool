@@ -39,11 +39,23 @@ function emptyFlags(): FlagMap {
   return FLAG_KEYS.reduce((acc, k) => { acc[k] = false; return acc; }, {} as FlagMap);
 }
 
+const FLAG_KEY_SET = new Set<string>(FLAG_KEYS);
+
+/** Keep only known keys with strict boolean values; drop anything tampered/unknown. */
+function sanitize(raw: unknown): Partial<FlagMap> {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: Partial<FlagMap> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (FLAG_KEY_SET.has(k) && typeof v === 'boolean') out[k as FlagKey] = v;
+  }
+  return out;
+}
+
 function readStorage(): Partial<FlagMap> {
   if (typeof window === 'undefined') return {};
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Partial<FlagMap>) : {};
+    return raw ? sanitize(JSON.parse(raw)) : {};
   } catch {
     return {};
   }

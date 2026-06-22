@@ -4,7 +4,7 @@
  * states across theme/accent so reviewers can verify before screen work begins.
  * QA/dev artifact only; not a product screen.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Button, Input, Textarea, SearchInput, Card, MetricCard, Badge, Chip,
   MoveQualityChip, SegmentedControl, Tabs, TabPanel, Dropdown, Toggle, Dialog,
@@ -129,12 +129,23 @@ export function Gallery() {
   const [theme, setTheme] = useState<Theme>('dark');
   const [accent, setAccent] = useState<Accent>('ivory');
 
+  // Mirror onto <html>, restoring prior attributes on unmount (no leakage).
+  useEffect(() => {
+    const el = document.documentElement;
+    const prev = { theme: el.getAttribute('data-theme'), accent: el.getAttribute('data-accent') };
+    el.setAttribute('data-theme', theme);
+    el.setAttribute('data-accent', accent);
+    return () => {
+      if (prev.theme === null) el.removeAttribute('data-theme'); else el.setAttribute('data-theme', prev.theme);
+      if (prev.accent === null) el.removeAttribute('data-accent'); else el.setAttribute('data-accent', prev.accent);
+    };
+  }, [theme, accent]);
+
   return (
     <IvToastProvider>
       <div
         data-theme={theme}
         data-accent={accent}
-        ref={(el) => { if (el) { document.documentElement.setAttribute('data-theme', theme); document.documentElement.setAttribute('data-accent', accent); } }}
         style={{ minHeight: '100vh', background: 'var(--bg-grad), var(--bg)', color: 'var(--text-body)', fontFamily: 'var(--font-sans)', padding: 'var(--space-8)' }}
       >
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto' }}>

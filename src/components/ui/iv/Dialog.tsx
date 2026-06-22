@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { useModalA11y } from '../../../hooks/useModalA11y';
 
 export interface DialogProps {
@@ -20,9 +20,11 @@ export interface DialogProps {
  */
 export function Dialog({ open, onClose, title, ariaLabel, children, sheet = false, className = '' }: DialogProps) {
   const { containerRef, dialogProps } = useModalA11y(onClose);
+  const uid = useId();
   if (!open) return null;
 
-  const labelId = title ? 'iv-dialog-title' : undefined;
+  // Unique per instance so multiple dialogs never collide on the title id.
+  const labelId = title ? `iv-dialog-title-${uid}` : undefined;
 
   return (
     <div
@@ -33,7 +35,7 @@ export function Dialog({ open, onClose, title, ariaLabel, children, sheet = fals
         ref={containerRef}
         {...dialogProps}
         aria-labelledby={labelId}
-        aria-label={labelId ? undefined : ariaLabel}
+        aria-label={labelId ? undefined : (ariaLabel ?? 'Dialog')}
         className={`${sheet ? 'iv-sheet' : 'iv-dialog'} ${className}`}
       >
         {sheet && <span className="iv-sheet__handle" aria-hidden />}

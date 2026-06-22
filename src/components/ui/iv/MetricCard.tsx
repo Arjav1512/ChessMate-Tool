@@ -21,6 +21,8 @@ export function MetricCard({ label, value, delta, sublabel, className = '' }: Me
         {delta && (
           <span className={`iv-metric__delta iv-metric__delta--${delta.direction}`}>
             <span aria-hidden>{arrow}</span>
+            {/* Direction is announced for screen readers, not just shown as an arrow. */}
+            <span className="iv-sr-only">{delta.direction === 'up' ? 'up ' : delta.direction === 'down' ? 'down ' : 'no change '}</span>
             {delta.value}
           </span>
         )}

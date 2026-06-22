@@ -38,8 +38,10 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(function Card(
         onClick,
         onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
           if (e.key === 'Enter' || e.key === ' ') {
+            // Synthesize a real click so onClick fires with a proper mouse
+            // event (no cross-event-type casting).
             e.preventDefault();
-            (onClick as ((e: unknown) => void) | undefined)?.(e);
+            e.currentTarget.click();
           }
         },
       }

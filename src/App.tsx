@@ -32,6 +32,11 @@ type ModalType = 'import' | 'progress' | 'analyze' | 'stats' | null;
 // survives re-renders/redirects within a page session and resets on reload.
 let previewShellLatch = false;
 
+/** Presence check for a dev-preview query flag (e.g. ?shell, ?styleguide). */
+function hasQueryFlag(key: string): boolean {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).has(key);
+}
+
 function NavButton({ onClick, icon, label }: { onClick: () => void; icon: React.ReactNode; label: string }) {
   return (
     <button
@@ -112,13 +117,14 @@ function MainApp() {
   }
 
   // Dev-only preview of the new Ivory shell without auth (Phase 3 visual
-  // checkpoint). Lives inside AuthProvider so useAuth() resolves. The latch
+  // checkpoint). Gated to `import.meta.env.DEV` so it is never reachable in a
+  // production build. Lives inside AuthProvider so useAuth() resolves. The latch
   // survives the in-app redirect that strips the ?shell query; a full reload
   // clears it. Removed at cutover; the real entry is the ui.newShell flag below.
-  if (typeof window !== 'undefined' && window.location.search.includes('shell')) {
+  if (import.meta.env.DEV && hasQueryFlag('shell')) {
     previewShellLatch = true;
   }
-  if (previewShellLatch) {
+  if (import.meta.env.DEV && previewShellLatch) {
     return <AppRouter />;
   }
 
@@ -654,11 +660,11 @@ function MissingConfigScreen() {
 function App() {
   // Phase 1 verification surface (Ivory tokens). `?styleguide` renders the
   // token styleguide without touching the live app flow. Removed at cutover.
-  if (typeof window !== 'undefined' && window.location.search.includes('styleguide')) {
+  if (import.meta.env.DEV && hasQueryFlag('styleguide')) {
     return <Styleguide />;
   }
   // Phase 2 verification surface — Ivory component gallery.
-  if (typeof window !== 'undefined' && window.location.search.includes('components')) {
+  if (import.meta.env.DEV && hasQueryFlag('components')) {
     return <Gallery />;
   }
 

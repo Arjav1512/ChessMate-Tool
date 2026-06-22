@@ -6,7 +6,7 @@
  * to confirm everything recolors live with no reload. This is a QA/dev artifact,
  * not a product screen; it consumes only Ivory tokens from tokens.css.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type Theme = 'dark' | 'light';
 type Accent = 'ivory' | 'periwinkle' | 'sage' | 'clay';
@@ -130,7 +130,28 @@ export function Styleguide() {
   const [board, setBoard] = useState<Board>('wood');
   const [density, setDensity] = useState<Density>('comfortable');
 
-  const apply = (attr: string, value: string) => document.documentElement.setAttribute(attr, value);
+  // Mirror onto <html> so token consumers outside this subtree also flip, and
+  // restore the prior attributes on unmount so leaving the styleguide doesn't
+  // leave the document in a toggled theme state.
+  useEffect(() => {
+    const el = document.documentElement;
+    const prev = {
+      theme: el.getAttribute('data-theme'),
+      accent: el.getAttribute('data-accent'),
+      board: el.getAttribute('data-board'),
+      density: el.getAttribute('data-density'),
+    };
+    el.setAttribute('data-theme', theme);
+    el.setAttribute('data-accent', accent);
+    el.setAttribute('data-board', board);
+    el.setAttribute('data-density', density);
+    return () => {
+      for (const [k, v] of Object.entries(prev)) {
+        if (v === null) el.removeAttribute(`data-${k}`);
+        else el.setAttribute(`data-${k}`, v);
+      }
+    };
+  }, [theme, accent, board, density]);
 
   return (
     <div
@@ -144,15 +165,6 @@ export function Styleguide() {
         color: 'var(--text-body)',
         fontFamily: 'var(--font-sans)',
         padding: 'var(--space-8)',
-      }}
-      ref={(el) => {
-        // Mirror onto <html> so any token consumers outside this subtree also flip.
-        if (el) {
-          apply('data-theme', theme);
-          apply('data-accent', accent);
-          apply('data-board', board);
-          apply('data-density', density);
-        }
       }}
     >
       <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto' }}>
