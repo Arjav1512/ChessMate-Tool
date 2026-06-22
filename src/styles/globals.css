@@ -1,0 +1,82 @@
+/* =============================================================================
+   ChessMate — Ivory global helpers & motion.
+   Opt-in only: every selector is class-scoped (iv-*) or a uniquely-named
+   keyframe, so importing this file does NOT alter the legacy Obsidian app.
+   Source: System Design §5.3 (gradient headline), §5.6 (halos), §12 (motion).
+   ========================================================================== */
+
+/* =============================================================================
+   Type primitives (System Design §5.3 scale). Single source for typographic
+   roles — components apply these classes instead of inline `font:` shorthands,
+   so all typography derives from the scale tokens with no duplication.
+   ========================================================================== */
+.iv-display { font-family: var(--font-sans); font-size: var(--fs-display); font-weight: var(--fw-display); line-height: var(--lh-display); letter-spacing: var(--tr-display); }
+.iv-h1      { font-family: var(--font-sans); font-size: var(--fs-h1); font-weight: var(--fw-h1); line-height: var(--lh-h1); letter-spacing: var(--tr-h1); }
+.iv-h2      { font-family: var(--font-sans); font-size: var(--fs-h2); font-weight: var(--fw-h2); line-height: var(--lh-h2); letter-spacing: var(--tr-h2); }
+.iv-h3      { font-family: var(--font-sans); font-size: var(--fs-h3); font-weight: var(--fw-h3); line-height: var(--lh-h3); letter-spacing: var(--tr-h3); }
+.iv-title   { font-family: var(--font-sans); font-size: var(--fs-title); font-weight: var(--fw-title); line-height: var(--lh-title); letter-spacing: var(--tr-title); }
+.iv-body    { font-family: var(--font-sans); font-size: var(--fs-body); font-weight: var(--fw-body); line-height: var(--lh-body); }
+.iv-body-sm { font-family: var(--font-sans); font-size: var(--fs-body-sm); font-weight: var(--fw-body); line-height: var(--lh-body-sm); }
+.iv-label   { font-family: var(--font-sans); font-size: var(--fs-label); font-weight: var(--fw-label); line-height: var(--lh-label); letter-spacing: var(--tr-label); text-transform: uppercase; }
+.iv-caption { font-family: var(--font-sans); font-size: var(--fs-caption); font-weight: var(--fw-caption); line-height: var(--lh-caption); }
+.iv-data    { font-family: var(--font-mono); font-size: var(--fs-data); font-weight: var(--fw-data); line-height: var(--lh-data); letter-spacing: var(--tr-data); }
+
+/* ----- §12 Motion: ambient brand halo pulse (decorative, pointer-events:none) */
+@keyframes cmGlow {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 0.85; }
+}
+
+/* ----- §6 Skeleton shimmer sweep (~1.2s loop) ----- */
+@keyframes ivShimmer {
+  0%   { background-position: -150% 0; }
+  100% { background-position: 250% 0; }
+}
+
+/* ----- §12 Page transition: content fade/slide-up on route change ----- */
+@keyframes ivPageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Ambient warm halo blob (place behind content, decorative) */
+.iv-halo {
+  position: absolute;
+  pointer-events: none;
+  background: radial-gradient(ellipse, var(--accent-glow), transparent 68%);
+  animation: cmGlow 9s var(--ease-standard) infinite;
+}
+
+/* §5.3 Display headline gradient-clip treatment — hero headlines only */
+.iv-headline-grad {
+  background: linear-gradient(118deg, #FFFFFF 18%, #F4E7CF 52%, var(--accent) 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Skeleton block (matches final layout boxes) */
+.iv-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    var(--surface-3) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: ivShimmer 1.2s linear infinite;
+  border-radius: var(--r-md);
+}
+
+.iv-page-enter {
+  animation: ivPageIn var(--dur-emphasis) var(--ease-out);
+}
+
+/* §11 / §12 reduced-motion: kill ambient + shimmer + page motion */
+@media (prefers-reduced-motion: reduce) {
+  .iv-halo,
+  .iv-skeleton,
+  .iv-page-enter {
+    animation: none;
+  }
+}
