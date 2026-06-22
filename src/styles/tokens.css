@@ -1,0 +1,240 @@
+/* =============================================================================
+   ChessMate — IVORY DESIGN TOKENS
+   Source of truth: CHESSMATE_SYSTEM_DESIGN.md §5. Values are used verbatim.
+
+   STRANGLER NOTE: this file is ADDITIVE. It introduces the approved Ivory token
+   set under the *spec's own names* (--bg, --accent, --mq-*, …). It deliberately
+   does NOT touch the legacy `--cm-*` Obsidian tokens in `style.css`, so the
+   currently-shipping app is byte-for-byte unchanged. New (flagged) screens
+   consume these tokens; at cutover (Phase 11) the legacy tokens are removed.
+
+   Theming model (§5.1, §5.2, §5.10):
+     - Dark is the default (:root).
+     - Light theme overrides under [data-theme="light"].
+     - Theme tweaks are independent attributes that reshape feel:
+         [data-accent="ivory|periwinkle|sage|clay"]  (default ivory)
+         [data-board="wood|slate|tournament"]        (default wood)
+         [data-density="cozy|comfortable|spacious"]   (default comfortable)
+   ========================================================================== */
+
+/* ----- Type families (Onest loaded in index.html with font-display:swap) ---- */
+
+:root {
+  /* ===== §5.3 Typography ===== */
+  --font-sans: 'Onest', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Type scale (size / weight / line-height / tracking) — §5.3 */
+  --fs-display: 44px;  --fw-display: 700; --lh-display: 1.08; --tr-display: -0.03em;
+  --fs-h1: 34px;       --fw-h1: 700;     --lh-h1: 1.0;       --tr-h1: -0.02em;
+  --fs-h2: 24px;       --fw-h2: 700;     --lh-h2: 1.0;       --tr-h2: -0.02em;
+  --fs-h3: 18px;       --fw-h3: 600;     --lh-h3: 1.25;      --tr-h3: -0.01em;
+  --fs-title: 16px;    --fw-title: 600;  --lh-title: 1.2;    --tr-title: -0.01em;
+  --fs-body: 14px;     --fw-body: 400;   --lh-body: 1.55;    --tr-body: 0;
+  --fs-body-sm: 13px;  --lh-body-sm: 1.5;
+  --fs-label: 11px;    --fw-label: 600;  --lh-label: 1;      --tr-label: 0.12em;
+  --fs-caption: 12px;  --fw-caption: 500;--lh-caption: 1.4;
+  --fs-data: 13px;     --fw-data: 600;   --lh-data: 1;       --tr-data: -0.02em;
+
+  /* ===== §5.4 Spacing — 4px base ===== */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-5: 20px;  --space-6: 24px;  --space-7: 28px;  --space-8: 32px;
+  --space-10: 40px; --space-12: 48px; --space-14: 56px;
+
+  /* ===== §5.5 Border radius ===== */
+  --r-xs: 6px;
+  --r-sm: 7px;
+  --r-md: 10px;
+  --r-lg: 13px;
+  --r-xl: 17px;
+  --r-pill: 999px;
+
+  /* ===== §5.7 Motion ===== */
+  --dur-instant: 120ms;
+  --dur-standard: 200ms;
+  --dur-emphasis: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ===== §5.8 Opacity ===== */
+  --op-disabled: 0.45;
+  --op-hairline-fill: 0.018;
+  --hover-tint: rgba(255, 255, 255, 0.04);
+
+  /* ===== §5.10 Density — content max width (default Comfortable) ===== */
+  --content-max: 1120px;
+}
+
+/* ===========================================================================
+   §5.1 COLOR — DARK (primary). :root is the dark default.
+   =========================================================================== */
+:root,
+[data-theme="dark"] {
+  /* Surfaces / background */
+  --bg:            #0C0B0A;
+  --bg-grad:       radial-gradient(1100px 620px at 50% -8%, #16110c, #0C0B0A 58%);
+  --surface-1:     #131110;
+  --surface-2:     #161412;
+  --surface-3:     #1D1A17;
+  --surface-elev:  #242019;
+  --surface-card-grad: linear-gradient(180deg, #1d1714, #131110);
+  --hairline:      rgba(255, 255, 255, 0.06);
+  --border:        rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.12);
+
+  /* Text */
+  --text-hi:    #F6F3EE;
+  --text-body:  #E9E3D9;
+  --text-mid:   #B0A89D;
+  --text-low:   #8F877B;
+  --text-faint: #726B61;
+
+  /* Move quality — fixed, never re-themed (§5.1) */
+  --mq-brilliant: #6FBE85;
+  --mq-best:      #4FB6A8;
+  --mq-good:      #B4AB9C;
+  --mq-inaccuracy:#E0AE45;
+  --mq-mistake:   #DD8442;
+  --mq-blunder:   #D85B4A;
+
+  /* Semantic */
+  --success: #6FBE85;
+  --warning: #E0AE45;
+  --error:   #D85B4A;
+  --info:    #7BA6C4;
+
+  /* Piece tones (board light/dark come from [data-board]) */
+  --piece-white: #FAF6EE;
+  --piece-black: #2A251E;
+  --board-lastmove: rgba(224, 178, 90, 0.30);
+
+  /* ===== §5.6 Elevation & shadows (warm-black, soft) ===== */
+  --shadow-card:   inset 0 1px 0 rgba(255,255,255,0.05), 0 12px 32px -18px rgba(0,0,0,0.75);
+  --shadow-hero:   inset 0 1px 0 rgba(255,255,255,0.06), 0 18px 40px -22px rgba(0,0,0,0.80);
+  --shadow-pop:    0 20px 50px -12px rgba(0,0,0,0.75);
+  --shadow-accent: 0 6px 18px -8px var(--accent-glow);
+  --board-shadow:  0 12px 40px -14px rgba(0,0,0,0.60);
+
+  /* Cool ambient blobs (§5.6) */
+  --halo-cool-1: rgba(74, 150, 200, 0.11);
+  --halo-cool-2: rgba(79, 182, 168, 0.08);
+
+  /* Progress bar track (§6) — dark default value from spec. */
+  --progress-track: #211d18;
+}
+
+/* ===========================================================================
+   §5.2 COLOR — LIGHT theme (defined, not primary). Accent/move-quality/
+   semantic are unchanged from dark; shadows soften (lower alpha).
+   =========================================================================== */
+[data-theme="light"] {
+  --bg:            #F4F1EA;
+  --bg-grad:       radial-gradient(1100px 620px at 50% -8%, #FBF9F4, #F4F1EA 58%);
+  --surface-1:     #FBF9F4;
+  --surface-2:     #EDE8DD;
+  --surface-3:     #E4DCCB;
+  --surface-elev:  #EDE8DD;
+  --surface-card-grad: linear-gradient(180deg, #FBF9F4, #F4F1EA);
+  --hairline:      rgba(28, 24, 18, 0.07);
+  --border:        rgba(28, 24, 18, 0.10);
+  --border-strong: rgba(28, 24, 18, 0.16);
+
+  --text-hi:    #211D17;
+  --text-body:  #2E2920;
+  --text-mid:   #5A5347;
+  --text-low:   #6E665A;
+  --text-faint: #8A8275;
+  --primary-deep: #3A332A;
+
+  /* Softer shadows on paper */
+  --shadow-card:   inset 0 1px 0 rgba(255,255,255,0.50), 0 10px 28px -18px rgba(28,24,18,0.30);
+  --shadow-hero:   inset 0 1px 0 rgba(255,255,255,0.60), 0 16px 36px -22px rgba(28,24,18,0.34);
+  --shadow-pop:    0 18px 44px -14px rgba(28,24,18,0.28);
+  --board-shadow:  0 10px 34px -16px rgba(28,24,18,0.28);
+
+  --piece-white: #FAF6EE;
+  --piece-black: #2A251E;
+
+  /* Progress track on warm paper. */
+  --progress-track: #E4DCCB;
+}
+
+/* ===========================================================================
+   §5.10 THEME TWEAK — ACCENT (default Ivory).
+   Drives --accent, --accent-bright, --accent-glow, --accent-grad, --on-accent.
+   on-accent stays dark for all (every accent is a light pastel).
+   =========================================================================== */
+:root,
+[data-accent="ivory"] {
+  --accent:        #EBD9B8;
+  --accent-bright: #F6F3EE;
+  --on-accent:     #1A1814;
+  --accent-grad:   linear-gradient(135deg, #F6F3EE, #EBD9B8);
+  --accent-glow:   rgba(224, 178, 110, 0.12);
+}
+[data-accent="periwinkle"] {
+  --accent:        #C7CCFF;
+  --accent-bright: #F2F3FF;
+  --on-accent:     #16161E;
+  --accent-grad:   linear-gradient(135deg, #F2F3FF, #C7CCFF);
+  --accent-glow:   rgba(150, 158, 255, 0.12);
+}
+[data-accent="sage"] {
+  --accent:        #BBD0B0;
+  --accent-bright: #EEF4EA;
+  --on-accent:     #161A14;
+  --accent-grad:   linear-gradient(135deg, #EEF4EA, #BBD0B0);
+  --accent-glow:   rgba(140, 184, 124, 0.12);
+}
+[data-accent="clay"] {
+  --accent:        #E3B79A;
+  --accent-bright: #F7E9DF;
+  --on-accent:     #1C1611;
+  --accent-grad:   linear-gradient(135deg, #F7E9DF, #E3B79A);
+  --accent-glow:   rgba(214, 142, 102, 0.12);
+}
+
+/* ===========================================================================
+   §5.1 / §5.10 THEME TWEAK — BOARD (default Wood).
+   =========================================================================== */
+:root,
+[data-board="wood"] {
+  --board-light: #E7DDC8;
+  --board-dark:  #8A7C66;
+}
+[data-board="slate"] {
+  --board-light: #D5D9DF;
+  --board-dark:  #6E7682;
+}
+[data-board="tournament"] {
+  --board-light: #ECECD2;
+  --board-dark:  #6E8A5A;
+}
+
+/* ===========================================================================
+   §5.10 THEME TWEAK — DENSITY (default Comfortable).
+   =========================================================================== */
+[data-density="cozy"]        { --content-max: 960px; }
+:root,
+[data-density="comfortable"] { --content-max: 1120px; }
+[data-density="spacious"]    { --content-max: 1280px; }
+
+/* ===========================================================================
+   §5.9 Focus & interaction states
+   =========================================================================== */
+:root {
+  /* + 1px solid var(--accent) border on inputs, applied per-component */
+  --focus-ring: 0 0 0 3px rgba(235, 217, 184, 0.12);
+}
+
+/* ===========================================================================
+   §11 / §12 Motion reduction — disable ambient pulse & non-essential motion.
+   (Component-level transitions also honor this via their own media queries.)
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0ms;
+    --dur-standard: 0ms;
+    --dur-emphasis: 0ms;
+  }
+}

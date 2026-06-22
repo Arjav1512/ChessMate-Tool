@@ -1,0 +1,350 @@
+/* =============================================================================
+   ChessMate — Ivory UI primitives stylesheet (Phase 2).
+   Every value resolves to a token from tokens.css (System Design §5/§6). No
+   off-system colors/spacing/radii/shadows. Real pseudo-class states give proper
+   :hover / :focus-visible / :active / :disabled without JS.
+
+   STRANGLER: class names are `iv-*`-scoped; this file does not affect the legacy
+   Obsidian components in src/components/ui/*.
+   ========================================================================== */
+
+/* ===== Buttons (§6 Buttons) ===== */
+.iv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: filter var(--dur-instant) var(--ease-standard),
+    background var(--dur-instant) var(--ease-standard),
+    border-color var(--dur-instant) var(--ease-standard),
+    box-shadow var(--dur-instant) var(--ease-standard),
+    transform var(--dur-instant) var(--ease-standard);
+  user-select: none;
+}
+.iv-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.iv-btn:disabled,
+.iv-btn[aria-disabled='true'] {
+  opacity: var(--op-disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+  pointer-events: none;
+}
+.iv-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* sizes (§6: md 11×18 / r-md, sm 8×13 / r-sm) */
+.iv-btn--md { padding: 11px 18px; font-size: 14px; border-radius: var(--r-md); }
+.iv-btn--sm { padding: 8px 13px; font-size: 13px; border-radius: var(--r-sm); }
+
+/* variants */
+.iv-btn--primary {
+  background: var(--accent-grad);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-accent);
+}
+.iv-btn--primary:hover:not(:disabled) { filter: brightness(1.04); }
+
+.iv-btn--secondary {
+  background: var(--surface-3);
+  color: var(--text-body);
+  border-color: var(--border-strong);
+}
+.iv-btn--secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--surface-3) 100%, white 4%); }
+
+.iv-btn--ghost {
+  background: transparent;
+  color: var(--text-mid);
+}
+.iv-btn--ghost:hover:not(:disabled) { background: var(--hover-tint); color: var(--text-hi); }
+
+.iv-btn--accent-bright {
+  background: var(--accent-bright);
+  color: var(--on-accent);
+}
+.iv-btn--accent-bright:hover:not(:disabled) { filter: brightness(1.04); }
+
+.iv-btn--full { width: 100%; }
+
+/* ===== Inputs (§6 Inputs) ===== */
+.iv-field { display: flex; flex-direction: column; gap: var(--space-2); }
+.iv-field__label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-low);
+}
+.iv-input,
+.iv-textarea {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text-hi);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  transition: border-color var(--dur-instant) var(--ease-standard),
+    box-shadow var(--dur-instant) var(--ease-standard);
+}
+.iv-textarea { resize: vertical; min-height: 96px; line-height: 1.55; }
+.iv-input::placeholder,
+.iv-textarea::placeholder { color: var(--text-faint); }
+.iv-input:hover:not(:disabled),
+.iv-textarea:hover:not(:disabled) { border-color: var(--border-strong); }
+.iv-input:focus-visible,
+.iv-textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+.iv-input:disabled,
+.iv-textarea:disabled { opacity: var(--op-disabled); cursor: not-allowed; }
+.iv-input--error,
+.iv-textarea--error { border-color: var(--error); }
+.iv-field__help { font-size: 12px; color: var(--text-low); }
+.iv-field__help--error { color: var(--error); }
+
+/* search variant */
+.iv-search { position: relative; display: flex; align-items: center; }
+.iv-search__glyph {
+  position: absolute; left: 12px; display: flex; pointer-events: none;
+  color: var(--text-faint);
+}
+.iv-search .iv-input { padding-left: 34px; }
+.iv-search__kbd {
+  position: absolute; right: 10px;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-faint);
+  border: 1px solid var(--border); border-radius: var(--r-xs);
+  padding: 2px 6px; pointer-events: none;
+}
+
+/* ===== Cards (§6 Cards) ===== */
+.iv-card {
+  background: var(--surface-card-grad);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+.iv-card--pad { padding: 20px; }
+.iv-card--clickable { cursor: pointer; transition: background var(--dur-instant) var(--ease-standard), transform var(--dur-instant) var(--ease-standard); }
+.iv-card--clickable:hover { background-color: var(--hover-tint); transform: translateY(-1px); }
+.iv-card--clickable:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-card--hero {
+  position: relative;
+  border-radius: var(--r-xl);
+  border-color: rgba(235, 217, 184, 0.21);
+  box-shadow: var(--shadow-hero);
+  overflow: hidden;
+}
+.iv-card--category { border-left-width: 3px; }
+.iv-card--selected { border-color: var(--accent); }
+
+/* ===== MetricCard (§6 Metric Cards) ===== */
+.iv-metric { display: flex; flex-direction: column; gap: var(--space-1); }
+.iv-metric__label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-low);
+}
+.iv-metric__value {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 26px; line-height: 1; color: var(--text-hi);
+  letter-spacing: -0.02em;
+}
+.iv-metric__row { display: flex; align-items: baseline; gap: var(--space-2); }
+.iv-metric__delta { font-family: var(--font-mono); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
+.iv-metric__delta--up { color: var(--success); }
+.iv-metric__delta--down { color: var(--error); }
+.iv-metric__delta--flat { color: var(--text-low); }
+.iv-metric__sub { font-size: 12px; color: var(--text-mid); }
+
+/* ===== Badge (§6) ===== */
+.iv-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--font-sans); font-size: 11px; font-weight: 600;
+  padding: 3px 8px; border-radius: var(--r-xs);
+  border: 1px solid var(--border);
+  color: var(--text-mid); background: var(--surface-2);
+}
+.iv-badge--high { color: var(--error); background: color-mix(in srgb, var(--error) 11%, transparent); border-color: color-mix(in srgb, var(--error) 30%, transparent); }
+.iv-badge--medium { color: var(--warning); background: color-mix(in srgb, var(--warning) 11%, transparent); border-color: color-mix(in srgb, var(--warning) 30%, transparent); }
+.iv-badge--low { color: var(--text-mid); }
+
+/* ===== Chip + move-quality (§5.1 chip pattern) ===== */
+.iv-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-sans); font-size: 12px; font-weight: 600;
+  padding: 5px 10px; border-radius: var(--r-xs);
+  border: 1px solid var(--border); color: var(--text-mid);
+  background: var(--surface-2);
+}
+.iv-chip__dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.iv-chip__san { font-family: var(--font-mono); }
+/* Move-quality colored chips: text=color, bg=color@11%, border=color@30% */
+.iv-chip--mq { color: var(--mq-color); background: color-mix(in srgb, var(--mq-color) 11%, transparent); border-color: color-mix(in srgb, var(--mq-color) 30%, transparent); }
+.iv-chip--mq.iv-chip--emph .iv-chip__dot { box-shadow: 0 0 12px color-mix(in srgb, var(--mq-color) 55%, transparent); }
+
+/* ===== SegmentedControl (§6) ===== */
+.iv-seg {
+  display: inline-flex; gap: 2px; padding: 2px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+.iv-seg__item {
+  font-family: var(--font-sans); font-size: 12px; font-weight: 600;
+  padding: 5px 12px; border: none; border-radius: var(--r-xs);
+  background: transparent; color: var(--text-mid); cursor: pointer;
+  transition: background var(--dur-standard) var(--ease-standard), color var(--dur-standard) var(--ease-standard);
+}
+.iv-seg__item:hover:not([aria-checked='true']) { color: var(--text-hi); }
+.iv-seg__item[aria-checked='true'] { background: var(--accent); color: var(--on-accent); }
+.iv-seg__item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ===== Tabs (§6 — underline; Analysis default semantics enforced in TS) ===== */
+.iv-tabs { display: flex; gap: var(--space-5); border-bottom: 1px solid var(--hairline); }
+.iv-tab {
+  font-family: var(--font-sans); font-size: 14px; font-weight: 600;
+  padding: 10px 2px; background: none; border: none; cursor: pointer;
+  color: var(--text-low); border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--dur-standard) var(--ease-standard), border-color var(--dur-standard) var(--ease-standard);
+}
+.iv-tab:hover { color: var(--text-mid); }
+.iv-tab[aria-selected='true'] { color: var(--text-hi); border-bottom-color: var(--accent); }
+.iv-tab:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r-xs); }
+
+/* ===== Dropdown (§6) ===== */
+.iv-dropdown { position: relative; display: inline-block; }
+.iv-dropdown__menu {
+  position: absolute; z-index: 60; min-width: 180px; margin-top: 6px;
+  background: var(--surface-3); border: 1px solid var(--border);
+  border-radius: var(--r-md); box-shadow: var(--shadow-pop);
+  padding: 6px; display: flex; flex-direction: column; gap: 2px;
+}
+.iv-dropdown__item {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-family: var(--font-sans); font-size: 13px; color: var(--text-body);
+  padding: 8px 10px; border: none; background: transparent; border-radius: var(--r-xs);
+  cursor: pointer; text-align: left; width: 100%;
+}
+.iv-dropdown__item:hover { background: var(--hover-tint); }
+.iv-dropdown__item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-dropdown__item--selected { color: var(--accent); }
+
+/* ===== Toggle / switch (§6) ===== */
+.iv-toggle {
+  position: relative; width: 40px; height: 24px; border-radius: var(--r-pill);
+  background: var(--surface-3); border: 1px solid var(--border);
+  cursor: pointer; padding: 0; transition: background var(--dur-standard) var(--ease-standard);
+  flex-shrink: 0;
+}
+.iv-toggle[aria-checked='true'] { background: var(--accent); }
+.iv-toggle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-toggle__knob {
+  position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--text-hi);
+  transition: transform var(--dur-standard) var(--ease-standard);
+}
+.iv-toggle[aria-checked='true'] .iv-toggle__knob { transform: translateX(16px); background: var(--on-accent); }
+.iv-toggle:disabled { opacity: var(--op-disabled); cursor: not-allowed; }
+
+/* ===== Dialog + Sheet (§6 Dialogs / Sheets) ===== */
+.iv-scrim {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-5);
+}
+.iv-dialog {
+  width: 100%; max-width: 520px; max-height: 90vh; overflow: auto;
+  background: var(--surface-card-grad); border: 1px solid var(--border);
+  border-radius: var(--r-xl); box-shadow: var(--shadow-pop);
+  padding: var(--space-6);
+}
+.iv-scrim--sheet { align-items: flex-end; padding: 0; }
+.iv-sheet {
+  width: 100%; max-height: 88vh; overflow: auto;
+  background: var(--surface-card-grad); border-top: 1px solid var(--border);
+  border-radius: var(--r-xl) var(--r-xl) 0 0; box-shadow: var(--shadow-pop);
+  padding: var(--space-5) var(--space-5) var(--space-6);
+}
+.iv-sheet__handle {
+  width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong);
+  margin: 0 auto var(--space-4);
+}
+
+/* ===== Toast (§6) ===== */
+.iv-toast-region {
+  position: fixed; z-index: 200; bottom: 20px; right: 20px;
+  display: flex; flex-direction: column; gap: 10px; max-width: 380px;
+}
+.iv-toast {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--surface-3); border: 1px solid var(--border);
+  border-radius: var(--r-md); box-shadow: var(--shadow-pop);
+  padding: 12px 14px; color: var(--text-body); font-size: 13px;
+  animation: ivPageIn var(--dur-standard) var(--ease-out);
+}
+.iv-toast__dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.iv-toast--success .iv-toast__dot { background: var(--success); }
+.iv-toast--error .iv-toast__dot { background: var(--error); }
+.iv-toast--info .iv-toast__dot { background: var(--info); }
+
+/* ===== ProgressBar (§6 Charts: progress bar) ===== */
+.iv-progress { width: 100%; height: 6px; background: var(--progress-track); border-radius: var(--r-pill); overflow: hidden; }
+.iv-progress__fill { height: 100%; border-radius: var(--r-pill); background: var(--accent); transition: width var(--dur-emphasis) var(--ease-out); }
+.iv-progress--success .iv-progress__fill { background: var(--success); }
+.iv-progress--glow .iv-progress__fill { box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent); }
+
+/* ===== Avatar (§6 Profile) ===== */
+.iv-avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: var(--surface-elev); color: var(--text-mid);
+  font-family: var(--font-sans); font-weight: 600; overflow: hidden;
+  border: 1px solid var(--border);
+}
+.iv-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ===== Spinner (§12 loading) ===== */
+.iv-spinner {
+  display: inline-block; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-top-color: var(--accent);
+  animation: ivSpin 800ms linear infinite;
+}
+@keyframes ivSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .iv-spinner { animation-duration: 2s; } }
+
+/* ===== Empty / Error states (§6) ===== */
+.iv-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: var(--space-3); padding: var(--space-10) var(--space-5);
+}
+.iv-state__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 56px; height: 56px; border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.iv-state--error .iv-state__icon {
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--error); border-color: color-mix(in srgb, var(--error) 28%, transparent);
+}
+.iv-state__title { font-size: 16px; font-weight: 600; color: var(--text-hi); }
+.iv-state__body { font-size: 13px; color: var(--text-mid); max-width: 380px; line-height: 1.55; }
+
+/* ===== Touch targets (§6/§10): 44px min on coarse pointers ===== */
+@media (pointer: coarse) {
+  .iv-btn,
+  .iv-seg__item,
+  .iv-tab,
+  .iv-dropdown__item { min-height: 44px; }
+}
