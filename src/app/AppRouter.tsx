@@ -7,7 +7,14 @@ import { AppShell } from './AppShell';
 import { PlaceholderPage } from './PlaceholderPage';
 import { ALL_DESTINATIONS, PARAM_ROUTES } from './navigation';
 import { applyThemeAttributes, useThemeStore } from '../stores/themeStore';
+import { useFlag } from '../lib/flags';
+import { DashboardPage } from '../features/dashboard/DashboardPage';
 import './shell.css';
+
+/** Show the real screen when its per-screen flag is on; placeholder otherwise. */
+function DashboardRoute() {
+  return useFlag('ui.screen.dashboard') ? <DashboardPage /> : placeholderFor('dashboard');
+}
 
 /** Placeholder element for a destination defined in navigation config. */
 function placeholderFor(key: string) {
@@ -46,7 +53,7 @@ export function AppRouter() {
           <Routes>
             <Route element={<AppShell />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={placeholderFor('dashboard')} />
+              <Route path="/dashboard" element={<DashboardRoute />} />
               <Route path="/games" element={placeholderFor('games')} />
               <Route path="/games/import" element={placeholderFor('import')} />
               <Route path="/games/:id" element={placeholderFor('game-detail')} />

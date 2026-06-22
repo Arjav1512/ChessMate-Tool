@@ -39,3 +39,13 @@
 
 ## D-001 · Approved Phase-0 decisions (carried from roadmap "Locked decisions")
 - Strangler migration behind flags; analysis stays **client-side** for v1 (server pipeline deferred); differentiator screens build on **typed sample/derived data**; hosting stays **Vercel** (documented deviation from Architecture §21 Netlify).
+
+## D-010 · Dashboard reads as an improvement system, not analytics (Phase 4)
+- **Decision (post visual-review refinement):** Improvement Score leads with a verdict + drivers + actionable next-step; Rating trend de-emphasized (smaller value, `subtle` chart) as an outcome companion; weakness cards add *why it matters* + *recommended action*; Improvement Roadmap elevated to hero treatment above Coach; subtle question captions map cards to the improvement narrative (how improving / what's holding me back / what next / what outcome).
+- **Why:** §2 "improvement over analysis / insight over raw data"; reviewer flagged the first cut felt like a premium analytics dashboard. Refinement only — no redesign, no visual-language change, no new features.
+- **Trade-off:** two hero cards now in view (Focus + Roadmap); accepted as action-anchor + outcome-anchor. Reversible.
+
+## D-011 · Dashboard ships on typed sample/derived data (Phase 4)
+- **Decision:** dashboard hooks resolve from `features/dashboard/sampleDashboard.ts`, shaped to the future API; Improvement Score is a real pure fn (Arch §13) fed sample inputs.
+- **Why:** locked decision #3 — `rating_history`/plan/milestone tables don't exist yet. Swap to live reads is one adapter file (Phase 11).
+- **Trade-off:** dashboard numbers are illustrative until the data layer lands; clearly labelled.

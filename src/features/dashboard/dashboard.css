@@ -1,0 +1,165 @@
+/* =============================================================================
+   Dashboard layout (System Design §7). Token-bound; scoped to .dash-*.
+   Desktop flex ratios per §7; collapses to single column (priority order) on
+   smaller widths, with the score-first reorder on mobile (§4.11).
+   ========================================================================== */
+
+.dash {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-7) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+/* ----- Greeting ----- */
+.dash-greeting { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.dash-greeting__text { min-width: 0; }
+.dash-greeting__sub { color: var(--text-mid); margin-top: 4px; }
+.dash-greeting__actions { display: flex; gap: var(--space-3); flex-shrink: 0; }
+
+/* ----- Rows ----- */
+.dash-row { display: grid; gap: var(--space-4); }
+.dash-row--score { grid-template-columns: 320px 1fr; }
+.dash-row--mid { grid-template-columns: 1fr 360px; }
+.dash-row--bottom { grid-template-columns: 1.4fr 1fr; }
+.dash-rightstack { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.dash-card__head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: var(--space-4); gap: var(--space-3); }
+.dash-card__titles { display: flex; flex-direction: column; gap: 2px; }
+.dash-card__title { color: var(--text-hi); }
+/* Narrative caption — frames each spine card as an improvement question (§2). */
+.dash-card__q { font-size: 11px; color: var(--text-low); font-style: italic; }
+.dash-link { color: var(--text-mid); font-size: 13px; text-decoration: none; background: none; border: none; cursor: pointer; }
+.dash-link:hover { color: var(--accent); }
+.dash-link:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r-xs); }
+
+/* ----- Improvement Score card (the hero — explanatory + actionable) ----- */
+.dash-score { display: flex; flex-direction: column; gap: var(--space-4); height: 100%; }
+.dash-score__top { display: flex; gap: var(--space-4); align-items: center; }
+.dash-score__verdict { color: var(--text-hi); margin-bottom: var(--space-2); }
+.dash-score__drivers { display: flex; flex-direction: column; gap: 4px; }
+.dash-score__driver { font-size: 12px; display: flex; align-items: baseline; gap: 6px; }
+.dash-score__driver--up { color: var(--success); }
+.dash-score__driver--down { color: var(--warning); }
+.dash-score__driver span { color: var(--text-mid); }
+.dash-score__metrics { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.dash-score__next {
+  display: flex; align-items: center; gap: var(--space-2); margin-top: auto;
+  padding: 10px 12px; border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--text-body); font-size: 13px; width: 100%; cursor: pointer; text-align: left;
+}
+.dash-score__next:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.dash-score__next:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dash-score__next strong { color: var(--accent); font-weight: 600; }
+
+/* ----- Rating trend ----- */
+.dash-rating__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4); }
+.dash-rating__nums { display: flex; align-items: baseline; gap: var(--space-3); }
+/* Quieter than the score hero — rating is an outcome, not the goal (§2). */
+.dash-rating__value { font-family: var(--font-mono); font-size: 22px; font-weight: 600; color: var(--text-body); letter-spacing: -0.02em; }
+.dash-rating__delta { font-family: var(--font-mono); font-size: 14px; font-weight: 600; }
+.dash-rating__delta--up { color: var(--success); }
+.dash-rating__delta--down { color: var(--error); }
+.dash-rating__peak { font-family: var(--font-mono); font-size: 12px; color: var(--text-low); }
+
+/* ----- Weakness rows (explain why it matters + recommended action) ----- */
+.dash-weakness { display: flex; flex-direction: column; gap: 8px; padding: var(--space-4) 0; width: 100%; background: none; border: none; text-align: left; cursor: pointer; }
+.dash-weakness + .dash-weakness { border-top: 1px solid var(--hairline); }
+.dash-weakness:hover .dash-weakness__name { color: var(--accent); }
+.dash-weakness:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r-sm); }
+.dash-weakness__top { display: flex; align-items: center; gap: var(--space-3); }
+.dash-weakness__icon {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 34px; height: 34px; border-radius: var(--r-md); font-size: 17px;
+  background: color-mix(in srgb, var(--mq-color, var(--accent)) 12%, transparent);
+  color: var(--mq-color, var(--accent));
+  border: 1px solid color-mix(in srgb, var(--mq-color, var(--accent)) 26%, transparent);
+}
+.dash-weakness__name { color: var(--text-hi); font-size: 14px; font-weight: 600; flex: 1; min-width: 0; }
+.dash-weakness__pct { font-family: var(--font-mono); font-size: 13px; color: var(--text-body); font-weight: 600; }
+.dash-weakness__trend { font-size: 11px; display: inline-flex; align-items: center; gap: 3px; }
+.dash-weakness__trend--improving { color: var(--success); }
+.dash-weakness__trend--worsening { color: var(--error); }
+.dash-weakness__trend--steady { color: var(--text-low); }
+.dash-weakness__why { color: var(--text-mid); font-size: 12px; line-height: 1.5; padding-left: 46px; }
+.dash-weakness__foot { display: flex; align-items: center; gap: var(--space-3); padding-left: 46px; }
+.dash-weakness__foot .iv-progress { flex: 1; }
+.dash-weakness__action { color: var(--accent); font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+/* ----- Focus (hero) ----- */
+.dash-focus__label { color: var(--accent); display: inline-flex; align-items: center; gap: 6px; margin-bottom: var(--space-2); }
+.dash-focus__title { color: var(--text-hi); margin-bottom: var(--space-2); }
+.dash-focus__rationale { color: var(--text-mid); font-size: 13px; line-height: 1.55; margin-bottom: var(--space-4); }
+.dash-focus__metrics { display: flex; gap: var(--space-5); margin-bottom: var(--space-4); }
+.dash-focus__cta { display: flex; align-items: center; gap: var(--space-3); }
+.dash-focus__time { color: var(--text-low); font-size: 12px; font-family: var(--font-mono); }
+
+/* ----- Game rows (compact) ----- */
+.dash-game { display: flex; align-items: center; gap: var(--space-3); padding: 10px 0; text-decoration: none; }
+.dash-game + .dash-game { border-top: 1px solid var(--hairline); }
+.dash-game:hover { background: var(--hover-tint); }
+.dash-game:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r-sm); }
+.dash-game__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dash-game__dot--win { background: var(--success); box-shadow: 0 0 8px color-mix(in srgb, var(--success) 55%, transparent); }
+.dash-game__dot--loss { background: var(--error); box-shadow: 0 0 8px color-mix(in srgb, var(--error) 55%, transparent); }
+.dash-game__dot--draw { background: var(--text-low); }
+.dash-game__main { flex: 1; min-width: 0; }
+.dash-game__vs { color: var(--text-body); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-game__opening { color: var(--text-low); font-size: 12px; }
+.dash-game__eco { font-family: var(--font-mono); color: var(--text-faint); }
+.dash-game__acc { font-family: var(--font-mono); font-size: 13px; color: var(--text-body); font-weight: 600; }
+.dash-game__time { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); white-space: nowrap; }
+.dash-game__tag { font-size: 11px; color: var(--text-mid); }
+
+/* ----- Coach summary (subordinate, §14.7) ----- */
+.dash-coach__head { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+.dash-coach__mark {
+  width: 28px; height: 28px; border-radius: var(--r-md); flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(150deg, #2e2920, #161310); color: var(--accent); font-size: 14px;
+}
+.dash-coach__label { color: var(--accent); }
+.dash-coach__text { color: var(--text-body); font-size: 13px; line-height: 1.55; }
+.dash-coach__ctx { color: var(--text-low); font-size: 11px; margin-top: var(--space-2); }
+
+/* ----- Roadmap timeline (elevated — the "what outcome to expect" anchor) ----- */
+.dash-roadmap { display: flex; flex-direction: column; }
+.dash-roadmap__node { display: flex; gap: var(--space-3); padding-bottom: var(--space-5); position: relative; }
+.dash-roadmap__node:last-child { padding-bottom: 0; }
+.dash-roadmap__node:not(:last-child)::before {
+  content: ''; position: absolute; left: 10px; top: 24px; bottom: 0; width: 2px; background: var(--hairline);
+}
+.dash-roadmap__dot { width: 21px; height: 21px; border-radius: 50%; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; z-index: 1; margin-top: 1px; }
+.dash-roadmap__dot--achieved { background: var(--success); color: var(--on-accent); }
+.dash-roadmap__dot--in_progress { background: color-mix(in srgb, var(--accent) 22%, transparent); border: 2px solid var(--accent); box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent); }
+.dash-roadmap__dot--future { background: transparent; border: 1px solid var(--border-strong); }
+.dash-roadmap__label { color: var(--text-body); font-size: 14px; font-weight: 500; }
+.dash-roadmap__node--in_progress .dash-roadmap__label { color: var(--text-hi); font-weight: 600; }
+.dash-roadmap__detail { color: var(--text-low); font-size: 12px; font-family: var(--font-mono); margin-top: 2px; }
+.dash-roadmap__node--future .dash-roadmap__label { color: var(--text-mid); }
+
+/* =============================================================================
+   Responsive — collapse in priority order; mobile score-first (§7, §4.11)
+   ========================================================================== */
+@media (max-width: 1023px) {
+  .dash-row--score, .dash-row--mid, .dash-row--bottom { grid-template-columns: 1fr; }
+}
+@media (max-width: 767px) {
+  .dash { padding: var(--space-5) var(--space-4) var(--space-12); gap: var(--space-5); }
+  .dash-greeting__actions { width: 100%; }
+  .dash-greeting__actions > * { flex: 1; }
+  /* Flatten every row so cards become direct flex items of .dash and can be
+     reordered into the score-first hierarchy (§4.11):
+     score → focus → rating → weaknesses → recent → coach/roadmap. */
+  .dash-row--score, .dash-row--mid, .dash-row--bottom { display: contents; }
+  .dash-order-score  { order: 1; }
+  .dash-order-focus  { order: 2; }
+  .dash-order-rating { order: 3; }
+  .dash-order-weak   { order: 4; }
+  .dash-order-recent { order: 5; }
+  .dash-order-stack  { order: 6; }
+}

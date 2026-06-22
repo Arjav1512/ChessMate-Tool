@@ -142,6 +142,8 @@
 
 ## Phase 4 — Dashboard
 
+**Status:** ✅ Built + UX-refined (PR open on `feature/phase-4-dashboard`, awaiting review). Behind `ui.screen.dashboard`; typed sample/derived data (locked decision #3). See `DASHBOARD_IMPLEMENTATION_PLAN.md`.
+
 **Objectives**
 - Build `/dashboard` per System Design §7: Greeting + primary CTA; Row1 Improvement Score (ScoreRing + 2 MetricCards) + Rating trend (SegmentedControl + LineChart); Row2 Biggest weaknesses (3 compact WeaknessCards) + Recommended-this-week FocusCard (hero); Row3 Recently analyzed (5 compact GameRows) + Coach summary + Roadmap timeline.
 - Build supporting charts: **ScoreRing**, **LineChart (RatingChart)**, compact **WeaknessCard**, compact **GameRow**, **FocusCard**, **CoachCard**, **RoadmapTimeline**.

@@ -46,3 +46,12 @@
 - Resolved 14 (commit `bfaae8e`): DEV-gated preview surfaces; AppRouter explicit throw; Button `type="button"` + loading sr-only name; Card native-click keyboard activation; Dialog `useId` title + guaranteed name; tokenized `--progress-track`; MetricCard SR delta direction; ProgressBar required name + numeric guards; flags/themeStore localStorage sanitization; Styleguide/Gallery `<html>` restore on unmount; 44px coarse targets on all nav rows.
 - Skipped 1 with reason: Import stays a ⌘K Action (avoid duplicate "Go to" entry).
 - Re-ran gates locally: typecheck ✅ · lint ✅ · unit 177 ✅ · a11y e2e 4/4 ✅ · build ✅. Pushed; CI re-running.
+
+## 2026-06-23 · Phase 4 — Dashboard
+- Branch `feature/phase-4-dashboard` off the merged shell (`prod/mistake-review-b4`).
+- Discovery + `DASHBOARD_IMPLEMENTATION_PLAN.md` (gap analysis, layout, component mapping, data reqs).
+- Built `/dashboard` (§7) behind `ui.screen.dashboard`: ScoreRing + LineChart charts; ImprovementScore/Rating/Weaknesses/Focus/Recent/Coach/Roadmap cards; typed sample/derived data hooks; all four states; mobile score-first reorder.
+- Visual review gate → reviewer approved direction after a **UX refinement pass** (no redesign): explanatory+actionable score, de-emphasized rating, why+action on weaknesses, elevated roadmap, narrative question captions.
+- Tests: component/integration (`dashboard.test.tsx` 12 + `dashboard.empty.test.tsx` 1); e2e a11y (`dashboard-a11y.spec.ts` 3) wired into CI accessibility job.
+- Gates (local): typecheck ✅ · lint ✅ (0 err) · unit 190 ✅ · e2e 36 passed ✅ · build ✅ · dashboard axe (jsdom + real-browser contrast) ✅.
+- Behind flag; legacy app untouched. PR to be opened (base `prod/mistake-review-b4`); not merged.

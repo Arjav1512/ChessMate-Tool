@@ -2,7 +2,7 @@
 
 > Living snapshot of the ChessMate redesign (Ivory direction). Source of truth for "where are we?" Updated at each phase boundary. Pairs with `IMPLEMENTATION_ROADMAP.md` (plan), `DESIGN_COMPLIANCE_AUDIT.md` (compliance), `DECISION_LOG.md` (why), `LOOP_LOG.md` (chronology).
 
-**Last updated:** 2026-06-22 (end of Phase 3.5)
+**Last updated:** 2026-06-23 (end of Phase 4 implementation)
 
 ## Where we are
 
@@ -12,8 +12,8 @@
 | 1 | Design Token Foundation | ✅ Done |
 | 2 | Core UI System | ✅ Done |
 | 3 | App Shell | ✅ Done |
-| 3.5 | Shell Compliance Remediation | ✅ Done — PR open, awaiting approval |
-| 4 | Dashboard | ⏳ Not started (blocked on Phase 3.5 approval) |
+| 3.5 | Shell Compliance Remediation | ✅ Done — merged (PR #21) |
+| 4 | Dashboard | ✅ Built + refined — PR open, awaiting review |
 | 5–11 | Analysis → Hardening | ⏳ Not started |
 
 ## Migration model (strangler, Architecture §22)
@@ -32,7 +32,8 @@
 - **Shell:** `src/app/{AppRouter,AppShell,navigation,PlaceholderPage}.tsx` + `src/components/nav/{Sidebar,BottomTabBar,CommandMenu,UserMenu}.tsx` + `shell.css`.
 - **State:** TanStack Query (`src/services/queryClient.ts`) + Zustand (`src/stores/{ui,theme,commandMenu}Store.ts`).
 - **Flags:** `src/lib/flags.ts` (URL `?ff=` → localStorage → defaults-off).
-- **Routing:** React Router; routes per Architecture §4, all placeholders.
+- **Routing:** React Router; routes per Architecture §4. `/dashboard` renders the real screen behind `ui.screen.dashboard` (placeholder otherwise); all others still placeholders.
+- **Dashboard (Phase 4):** `src/features/dashboard/*` (page, cards, hooks, typed sample adapter) + `src/components/charts/{ScoreRing,LineChart}.tsx`. Improvement-system narrative; sample/derived data until the data layer lands (Phase 11).
 
 ## Responsive states (§10) — as implemented
 
