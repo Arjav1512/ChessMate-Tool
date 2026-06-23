@@ -69,7 +69,9 @@ export interface ComposedPlan {
   plan: StudyItemVM[];
 }
 
-export function composePlan(raw: RawWeakness[], opts: ComposeOptions): ComposedPlan {
+/** Returns null when there are no weaknesses yet (drives the no-data state). */
+export function composePlan(raw: RawWeakness[], opts: ComposeOptions): ComposedPlan | null {
+  if (raw.length === 0) return null;
   const weaknesses = raw.map(toWeaknessVM).sort((a, b) => b.impact - a.impact);
   const categories = groupCategories(weaknesses);
   const top = weaknesses[0];
@@ -81,9 +83,8 @@ export function composePlan(raw: RawWeakness[], opts: ComposeOptions): ComposedP
   const focus: WeeklyFocusVM = {
     week: opts.week,
     title: obj.objective,
-    rationale: obj.rationaleTemplate
-      .replace('{pct}', String(top.frequencyPct))
-      .replace('{n}', '4').replace('{converted}', '1'),
+    // Only {pct} is real (frequency from analysis); no fabricated specifics.
+    rationale: obj.rationaleTemplate.replace('{pct}', String(top.frequencyPct)),
     sessionsDone,
     sessionsTotal,
     phaseDeltaPct: opts.phaseDeltaPct,
