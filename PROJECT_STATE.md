@@ -53,10 +53,10 @@ Command menu (⌘K) is global on every tier. Coach is reached contextually, not 
 
 - Shell audit (`DESIGN_COMPLIANCE_AUDIT.md`): all 10 items ✅ after Phase 3.5. Deferred items are data/feature-phase dependent (Collections→P7, Appearance controls→P10, color-mix fallback→pre-GA).
 
-## Quality gates (end of Phase 5)
+## Quality gates (as of the Phase 6 PR)
 
-- typecheck ✅ · lint ✅ (0 errors) · unit/component **202 passing** ✅ · accessibility e2e **11/11** ✅ · build ✅.
-- CI: `.github/workflows/ci.yml` runs lint, type-check+build, unit (w/ coverage), e2e, and a dedicated `accessibility` job (shell + dashboard + analysis + landing axe); triggers on `main`/`prod/**`/`feature/**` PRs.
+- typecheck ✅ · lint ✅ (0 errors) · unit/component **215 passing** ✅ · Ivory a11y e2e **14/14** (shell + dashboard + analysis + improve) ✅ · build ✅.
+- CI: `.github/workflows/ci.yml` runs lint, type-check+build, unit (w/ coverage), e2e, and a dedicated `accessibility` job (shell + dashboard + analysis + improve + landing axe); triggers on `main`/`prod/**`/`feature/**` PRs.
 
 ## Not yet done / known deferrals
 

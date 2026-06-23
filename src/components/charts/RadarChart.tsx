@@ -32,6 +32,9 @@ function point(angle: number, radius: number): [number, number] {
 export function RadarChart({ data, ariaLabel }: RadarChartProps) {
   const gid = useId();
   const n = data.length;
+  if (n === 0) {
+    return <div className="iv-radar" role="img" aria-label={ariaLabel ?? 'Skill profile: no data yet'} />;
+  }
   const angleOf = (i: number) => (2 * Math.PI * i) / n - Math.PI / 2;
 
   const poly = (key: 'you' | 'peers') =>
