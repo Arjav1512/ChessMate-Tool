@@ -205,6 +205,9 @@
 
 ## Phase 6 — Improve Hub
 
+**Status:** ✅ **COMPLETE** — merged (PR #24; crash-guard hotfix PR #25). Behind `ui.screen.improve`; typed sample/derived (decision #3). Delivered weekly focus, RadarChart skill profile, weakness categories + filter, study plan (ingests `cm.improveQueue`), and **chess study goals** (not generic milestones). See `PHASE_6_*.md`, `IMPROVE_HUB_VISUAL_ARCHITECTURE.md`, D-013.
+> **Sub-view added (the "Phase 7" workstream):** **Improve · Review Mistakes** at `/improve/mistakes` — merged (PR #26). The single mistake feed (reuses the B-4 `lib/mistakeReview` engine ∪ Send-to-Improve queue), master/detail, one Primary per mistake. Per Gate-0 this is an **Improve sub-view, not a new IA destination**, so the roadmap below is unchanged. See `PHASE_7_*.md`, D-014.
+
 **Objectives**
 - Build `/improve` per System Design §9 — the product differentiator.
 - Header + provenance; **Weekly focus** hero (✦ label, title, rationale, 2 MetricCards, Primary "Continue · session N", halo); **Skill profile** RadarChart (you vs peers); **Weakness profile** category filter (Segmented) + 2×2 **WeaknessCategoryCards**; **Recommended study plan** (ordered StudyPlanRows, first highlighted); **Milestones** timeline.
@@ -233,6 +236,8 @@
 ---
 
 ## Phase 7 — Game Library
+
+**Status:** ⏳ **Next (unbuilt).** Note: the "Phase 7" *workstream* just merged (Review Mistakes) was an **Improve sub-view**, not this phase — Game Library + Import remains the next roadmap screen. See `NEXT_PHASE_RECOMMENDATION.md`.
 
 **Objectives**
 - Build `/games` per System Design §4.2: Header + import actions; **Quick-insight strip** (3 MetricCards: most common mistake / best opening / avg accuracy); **Filter toolbar** (search, result, color, time control, sort); **Collections** (saved smart-filters); **GameTable** (desktop) ↔ **GameCardList** (mobile, ≤767).

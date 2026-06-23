@@ -54,3 +54,15 @@
 - **Decisions (approved):** (1) Move List is a **persistent section**, not a peer tab; peer tabs are Analysis/Coach/Lines. (2) Move-quality taxonomy = `brilliant·best·good·inaccuracy·mistake·blunder`; legacy `excellent → best`. (3) **InsightCard** = one component with four variants (Turning Point / Blunder / Missed Opportunity / Recommendation). (4) Analysis **auto-runs on open** — board paints immediately, skeletons, progressive populate, no Analyze button. (5) **Send-to-Improve** queues to a typed sample/derived plan (localStorage) until the learning engine exists.
 - **Why:** §8 (insight-first, Coach-as-peer, never reinvent the board) + reuse-first; keeps the default view from regressing into an engine viewer (engine confined to the Lines tab).
 - **Trade-off:** analysis is sample/derived for v1 (real client-Stockfish runner + persisted analysis + `move_analysis` taxonomy migration deferred to Phase 11); board is display/stepping only.
+
+## D-013 · Improve Hub decisions (Phase 6)
+- **Decisions (approved):** (1) weakness category map `motif+recurring→Tactical · opening+color→Opening · phase:endgame→Endgame · phase:middlegame+positional→Positional`; (2) severity **High/Med/Low** badge, internal score stays 0–100; (3) skill-radar **Time** axis = sample/derived; (4) Improve **consumes** the Send-to-Improve queue (`cm.improveQueue`) into the study plan; (5) reuse Dashboard **patterns**, build Improve-owned components, do not refactor Dashboard.
+- **Refinement:** milestones are **chess study goals** ("Convert 10 rook endgames", "Review 20 tactical misses", "Reduce opening inaccuracies 15%"), not generic productivity tasks — Improve must feel like a coach.
+- **Why:** §9 insight→action; the differentiator must read as a chess improvement system, not an analytics dashboard.
+- **Trade-off:** sample/derived for v1; real `weaknessProfile`/plan/milestone wiring + curated `lib/learning` catalog expansion deferred to Phase 11.
+
+## D-014 · Mistake Review is an Improve sub-view, not a new screen (Phase 7 workstream)
+- **Decision:** the System Design has **no standalone "Mistake Review" screen** (§3/§4); deliver it as **Improve → Review Mistakes** (`/improve/mistakes`, view switcher under `/improve`, same `ui.screen.improve` flag). Keep the roadmap intact — **roadmap Phase 7 = Game Library + Import** stays the next screen.
+- **Decisions (Gate-0):** no standalone destination; Improve sub-view; sample/derived v1; taxonomy `excellent→best`; responsibility boundaries (Dashboard=overview · Analysis=understand games · Improve=weaknesses/plan/progress/review mistakes · Games=library/import).
+- **Why:** §14.3 — never change the IA without approval. Mistake-review functionality is spec-distributed (Analysis §8 send-to-improve, Improve §9 `replay`, Weakness §4.7); a feed reusing the B-4 engine fits inside Improve.
+- **Trade-off / guardrails:** **one source of truth** (`buildReviewFeed` = B-4 engine ∪ queue); **one Primary per mistake** ("Open in Analysis"); hands off to Analysis for deep study (never re-implements the board/engine). Live `useMistakeReview` swap deferred to Phase 11.

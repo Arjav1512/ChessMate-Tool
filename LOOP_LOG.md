@@ -63,3 +63,16 @@
 - CodeRabbit (PR #23): 8 findings → all resolved (reset-on-route-id, arrow-key scoping, Coach loading a11y name, EvalTimeline off-by-one, turning-point clamp, Send-to-Improve no-false-success, accuracy tie/%, currentcolor).
 - Production verification: prod build healthy; dev-preview surfaces correctly disabled in prod; flags OFF → legacy served (strangler intact); dark/light + mobile + routing + flag gating verified. Verdict: production-ready.
 - Gates: typecheck ✅ · lint ✅ (0 err) · unit 202 ✅ · a11y 11/11 ✅ · build ✅. **Merged (PR #23).**
+
+## 2026-06-23 · Phase 6 — Improve Hub
+- Discovery → visual architecture → 5 decisions locked (D-013); built behind `ui.screen.improve`: Weekly Focus hero (one Primary), RadarChart skill profile, weakness categories + filter, study plan (ingests `cm.improveQueue`), chess study goals.
+- New: `lib/improve/{types,mapping,composePlan}`, `lib/learning/objectives`, `features/improve/*`, `components/charts/RadarChart`.
+- CodeRabbit (PR #24): 5 findings → all resolved (composePlan empty guard, hooks null handling, RadarChart empty guard, fabricated-rationale removal, doc counts). PR #24 **merged early before the fix commit landed** → crash-guard **hotfix PR #25** cherry-picked the fixes (1 CodeRabbit doc-count comment resolved).
+- Gates: typecheck ✅ lint ✅ unit 215 ✅ improve a11y 3/3 ✅ build ✅. **Merged (PR #24 + #25).**
+
+## 2026-06-23 · Phase 7 workstream — Improve · Review Mistakes
+- Gate-0 resolved the scope conflict: no standalone screen → **Improve sub-view** (D-014); roadmap Phase 7 (Game Library) untouched.
+- Built `/improve/mistakes` (M1–M5): `features/improve/mistakes/*` reusing the **B-4 `lib/mistakeReview` engine** ∪ Send-to-Improve queue (`buildReviewFeed`, one source of truth), master/detail, one Primary per mistake ("Open in Analysis") + ghost "Add to study plan" (shared `cm.improveQueue`), phase/motif filters, four states. Taxonomy bridge via `mapLegacyClassification`.
+- Visual review gate: desktop/mobile/empty/loading/error + 66-mistake scalability + the Analysis→Review loop. Removed the temporary dev forced-state helper; states wired to the hook contract.
+- CodeRabbit (PR #26): 3 findings → all resolved (pathname trailing-slash, filtered-empty state + reset, queue-reactive feed via event/storage). Caught + fixed a CI a11y flake (axe sampled text mid-`.iv-page-enter` fade) with Playwright `reducedMotion: 'reduce'`.
+- Gates: typecheck ✅ lint ✅ (0 err) unit 225 ✅ a11y e2e 24/24 ✅ build ✅. **Merged (PR #26).**
