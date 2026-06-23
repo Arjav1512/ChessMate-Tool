@@ -39,6 +39,26 @@ function emptyFlags(): FlagMap {
   return FLAG_KEYS.reduce((acc, k) => { acc[k] = false; return acc; }, {} as FlagMap);
 }
 
+/**
+ * Cutover (Architecture §22, screen-by-screen): the Ivory shell + the four
+ * production-ready screens are ON by default. Coach/Weaknesses/Progress/Settings/
+ * Profile stay OFF (graceful PlaceholderPage) until their phases ship.
+ * Instant rollback is preserved via URL override, e.g. `?ff=-ui.newShell`.
+ */
+const DEFAULT_ON: readonly FlagKey[] = [
+  'ui.newShell',
+  'ui.screen.dashboard',
+  'ui.screen.analysis',
+  'ui.screen.improve',
+  'ui.screen.games',
+];
+
+function defaultFlags(): FlagMap {
+  const f = emptyFlags();
+  for (const k of DEFAULT_ON) f[k] = true;
+  return f;
+}
+
 const FLAG_KEY_SET = new Set<string>(FLAG_KEYS);
 
 /** Keep only known keys with strict boolean values; drop anything tampered/unknown. */
@@ -87,7 +107,7 @@ function readUrlOverrides(): Partial<FlagMap> {
 
 /** Compose the initial flag state from defaults ← storage ← URL. */
 export function resolveInitialFlags(): FlagMap {
-  return { ...emptyFlags(), ...readStorage(), ...readUrlOverrides() };
+  return { ...defaultFlags(), ...readStorage(), ...readUrlOverrides() };
 }
 
 interface FlagsState {
@@ -106,7 +126,7 @@ export const useFlagsStore = create<FlagsState>((set, get) => ({
     return { flags };
   }),
   reset: () => {
-    const flags = emptyFlags();
+    const flags = defaultFlags();
     writeStorage(flags);
     set({ flags });
   },
