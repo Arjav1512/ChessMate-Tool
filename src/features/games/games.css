@@ -1,0 +1,94 @@
+/* =============================================================================
+   Game Library + Import (System Design §4.2/§4.3). Token-bound; scoped to
+   .iv-games / .iv-gimport. Ivory-owned; legacy GameList untouched.
+   ========================================================================== */
+
+.iv-games, .iv-gimport { max-width: var(--content-max); margin: 0 auto; padding: var(--space-7) var(--space-7) var(--space-12); display: flex; flex-direction: column; gap: var(--space-5); }
+
+/* Header */
+.iv-games__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.iv-games__title { color: var(--text-hi); }
+.iv-games__sub { color: var(--text-low); margin-top: 2px; }
+.iv-games__actions { display: flex; gap: var(--space-3); align-items: center; }
+
+/* ── Quick-insight strip ── */
+.iv-games__insights { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+
+/* ── Collections ── */
+.iv-games__collections { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.iv-coll { font-size: 12px; padding: 5px 11px; border-radius: var(--r-pill); background: var(--surface-2); border: 1px solid var(--border); color: var(--text-low); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.iv-coll:hover { background: var(--hover-tint); color: var(--text-body); }
+.iv-coll:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-coll--on { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: color-mix(in srgb, var(--accent) 34%, transparent); color: var(--accent); }
+.iv-coll__count { color: var(--text-faint); font-family: var(--font-mono); font-size: 11px; }
+
+/* ── Filter toolbar ── */
+.iv-games__toolbar { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.iv-games__search { flex: 1; min-width: 200px; }
+.iv-games__modes { display: inline-flex; gap: 4px; margin-left: auto; }
+.iv-mode { width: 34px; height: 34px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--surface-1); color: var(--text-low); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.iv-mode--on { background: var(--surface-2); color: var(--text-hi); border-color: var(--border-strong); }
+.iv-mode:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ── Game table ── */
+.iv-gtable { width: 100%; border-collapse: collapse; }
+.iv-gtable thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-low); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--hairline); }
+.iv-gtable th button { background: none; border: none; color: inherit; font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.iv-gtable th button:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
+.iv-gtable tbody tr { border-bottom: 1px solid var(--hairline); cursor: pointer; }
+.iv-gtable tbody tr:hover { background: var(--hover-tint); }
+.iv-gtable tbody tr:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+.iv-gtable td { padding: 11px 10px; font-size: 13px; color: var(--text-body); vertical-align: middle; }
+.iv-gtable__opp { color: var(--text-hi); font-weight: 600; }
+.iv-gtable__meta { color: var(--text-low); font-family: var(--font-mono); font-size: 12px; }
+.iv-gtable__fav { background: none; border: none; cursor: pointer; color: var(--text-faint); font-size: 14px; padding: 2px; }
+.iv-gtable__fav--on { color: var(--accent); }
+.iv-gtable__fav:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
+
+/* result glyphs (text + symbol, never color-only) */
+.iv-res { font-family: var(--font-mono); font-weight: 600; }
+.iv-res--win { color: var(--success); }
+.iv-res--loss { color: var(--error); }
+.iv-res--draw { color: var(--text-mid); }
+
+/* status badge */
+.iv-status { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; }
+.iv-status--analyzed { color: var(--success); }
+.iv-status--pending { color: var(--text-low); }
+.iv-improve-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--accent); margin-left: 6px; }
+
+/* ── Card list (mobile / card mode) ── */
+.iv-gcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-3); }
+.iv-gcard { display: flex; flex-direction: column; gap: 6px; padding: var(--space-4); background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-lg); cursor: pointer; text-align: left; }
+.iv-gcard:hover { background: var(--hover-tint); }
+.iv-gcard:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-gcard__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.iv-gcard__opp { color: var(--text-hi); font-weight: 600; font-size: 14px; }
+.iv-gcard__meta { color: var(--text-low); font-size: 12px; }
+
+.iv-games__more { display: flex; justify-content: center; padding: var(--space-4) 0; }
+
+/* ── Import ── */
+.iv-gimport__sources { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+.iv-gimport__dropzone { border: 1.5px dashed var(--border-strong); border-radius: var(--r-lg); padding: var(--space-9) var(--space-5); text-align: center; color: var(--text-low); background: var(--surface-1); }
+.iv-gimport__dropzone--over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface-1)); }
+.iv-gimport__preview { display: flex; flex-direction: column; gap: 4px; }
+.iv-prow { display: flex; align-items: center; gap: var(--space-3); padding: 9px var(--space-3); border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface-1); }
+.iv-prow--invalid { border-color: color-mix(in srgb, var(--error) 40%, transparent); }
+.iv-prow--duplicate { opacity: 0.7; }
+.iv-prow__body { flex: 1; min-width: 0; }
+.iv-prow__title { color: var(--text-hi); font-size: 13px; font-weight: 600; }
+.iv-prow__sub { color: var(--text-low); font-size: 12px; }
+.iv-gimport__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; padding-top: var(--space-2); }
+.iv-gimport__progress { display: flex; flex-direction: column; gap: 6px; }
+.iv-gimport__progresslabel { font-size: 12px; color: var(--text-low); font-family: var(--font-mono); }
+.iv-gimport__success { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--space-6); background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-lg); }
+.iv-gimport__success-h { color: var(--text-hi); }
+
+/* ── Responsive ── */
+@media (max-width: 1023px) { .iv-games__insights { grid-template-columns: 1fr; } }
+@media (max-width: 767px) {
+  .iv-games, .iv-gimport { padding: var(--space-5) var(--space-4) var(--space-12); gap: var(--space-4); }
+  .iv-games__insights { grid-template-columns: 1fr; }
+  .iv-games__modes { display: none; } /* mobile is always card list */
+}

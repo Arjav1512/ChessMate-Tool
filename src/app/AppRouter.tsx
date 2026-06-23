@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../services/queryClient';
 import { IvToastProvider } from '../components/ui/iv';
@@ -13,6 +13,8 @@ import { AnalysisPage } from '../features/analysis/AnalysisPage';
 import { ImprovePage } from '../features/improve/ImprovePage';
 import { ImprovePlanView } from '../features/improve/ImprovePlanView';
 import { ReviewMistakesView } from '../features/improve/mistakes/ReviewMistakesView';
+import { LibraryPage } from '../features/games/LibraryPage';
+import { ImportPage } from '../features/games/ImportPage';
 import './shell.css';
 
 /** Show the real screen when its per-screen flag is on; placeholder otherwise. */
@@ -28,6 +30,20 @@ function AnalysisRoute() {
 /** /analysis index → open the sample workspace when flagged, else placeholder. */
 function AnalysisIndexRoute() {
   return useFlag('ui.screen.analysis') ? <Navigate to="/analysis/sample" replace /> : placeholderFor('analysis');
+}
+
+/** Game Library + Import behind ui.screen.games. */
+function GamesRoute() {
+  return useFlag('ui.screen.games') ? <LibraryPage /> : placeholderFor('games');
+}
+function GameImportRoute() {
+  return useFlag('ui.screen.games') ? <ImportPage /> : placeholderFor('import');
+}
+/** Game detail = Analysis (§3) — open the game in the workspace. */
+function GameDetailRoute() {
+  const { id } = useParams();
+  if (!useFlag('ui.screen.games')) return placeholderFor('game-detail');
+  return <Navigate to={`/analysis/${id ?? 'sample'}`} replace />;
 }
 
 /** Improve Hub at /improve behind ui.screen.improve. */
@@ -73,9 +89,9 @@ export function AppRouter() {
             <Route element={<AppShell />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardRoute />} />
-              <Route path="/games" element={placeholderFor('games')} />
-              <Route path="/games/import" element={placeholderFor('import')} />
-              <Route path="/games/:id" element={placeholderFor('game-detail')} />
+              <Route path="/games" element={<GamesRoute />} />
+              <Route path="/games/import" element={<GameImportRoute />} />
+              <Route path="/games/:id" element={<GameDetailRoute />} />
               <Route path="/analysis" element={<AnalysisIndexRoute />} />
               <Route path="/analysis/:id" element={<AnalysisRoute />} />
               <Route path="/improve" element={<ImproveRoute />}>
