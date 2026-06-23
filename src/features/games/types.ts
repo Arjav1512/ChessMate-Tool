@@ -50,6 +50,8 @@ export interface ImportPreviewItem {
   white: string;
   black: string;
   result: string;
+  date: string;        // from PGN headers; persisted on import
+  event: string;       // from PGN headers; persisted on import
   opening: string;
   status: ImportItemStatus;
   error?: string;

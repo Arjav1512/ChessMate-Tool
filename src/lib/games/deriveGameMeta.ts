@@ -23,7 +23,7 @@ export function deriveTimeControl(pgn: string): string {
   if (!tc) return '—';
   const m = /^(\d+)(?:\+(\d+))?$/.exec(tc);
   if (!m) return tc; // e.g. "40/9000" — keep as-is
-  const base = Math.round(Number(m[1]) / 60);
+  const base = Math.floor(Number(m[1]) / 60); // floor: 179s → 2 (Bullet), not 3 (Blitz)
   const inc = m[2] ? Number(m[2]) : 0;
   return `${base}+${inc}`;
 }
@@ -36,9 +36,12 @@ export function outcomeFor(result: string, userColor: 'white' | 'black' | null):
   return userWon ? 'win' : 'loss';
 }
 
-/** Stable signature for dedupe (no schema change): players + date + result. */
+/** Stable signature for dedupe (no schema change): players + date + result.
+ *  Canonicalized (trim + lowercase + collapse whitespace) so cosmetic
+ *  differences don't defeat duplicate detection. */
 export function gameSignature(g: Pick<Game, 'white_player' | 'black_player' | 'date' | 'result'>): string {
-  return `${g.white_player}|${g.black_player}|${g.date}|${g.result}`.toLowerCase();
+  const norm = (s: string) => (s ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+  return [norm(g.white_player), norm(g.black_player), norm(g.date), norm(g.result)].join('|');
 }
 
 export function toGameRowVM(game: Game, analyzed: boolean): GameRowVM {

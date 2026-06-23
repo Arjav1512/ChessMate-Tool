@@ -71,26 +71,36 @@ export function useGames(): State & { loadMore: () => void; reload: () => void }
   }, [user, toRows]);
 
   const loadMore = useCallback(async () => {
-    if (!user) return;
-    setState((s) => (s.loadingMore || !s.hasMore ? s : { ...s, loadingMore: true }));
+    // Re-entry guard: never run two page fetches at once.
+    if (!user || moreInFlight.current || !stateRef.current.hasMore) return;
+    moreInFlight.current = true;
+    const id = reqId.current;            // staleness: a reload() bumps reqId
+    setState((s) => ({ ...s, loadingMore: true }));
     const from = stateRef.current.rows.length;
-    const { data, error } = await supabase
-      .from('games').select('*').eq('user_id', user.id)
-      .order('uploaded_at', { ascending: false }).order('id', { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
-    if (error) { setState((s) => ({ ...s, loadingMore: false })); return; }
-    const games = (data ?? []) as Game[];
-    const analyzed = await fetchAnalyzedIds(user.id, games.map((g) => g.id));
-    setState((s) => {
-      const seen = new Set(s.rows.map((r) => r.id));
-      const next = toRows(games, analyzed).filter((r) => !seen.has(r.id));
-      return { ...s, rows: [...s.rows, ...next], loadingMore: false, hasMore: games.length === PAGE_SIZE };
-    });
+    try {
+      const { data, error } = await supabase
+        .from('games').select('*').eq('user_id', user.id)
+        .order('uploaded_at', { ascending: false }).order('id', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+      if (id !== reqId.current) return;  // a reload superseded this page fetch
+      if (error) { setState((s) => ({ ...s, loadingMore: false })); return; }
+      const games = (data ?? []) as Game[];
+      const analyzed = await fetchAnalyzedIds(user.id, games.map((g) => g.id));
+      if (id !== reqId.current) return;
+      setState((s) => {
+        const seen = new Set(s.rows.map((r) => r.id));
+        const next = toRows(games, analyzed).filter((r) => !seen.has(r.id));
+        return { ...s, rows: [...s.rows, ...next], loadingMore: false, hasMore: games.length === PAGE_SIZE };
+      });
+    } finally {
+      moreInFlight.current = false;
+    }
   }, [user, toRows]);
 
-  // Keep a ref of the latest rows length for loadMore's offset.
+  // Keep a ref of the latest state for loadMore's offset + re-entry lock.
   const stateRef = useRef(state);
   stateRef.current = state;
+  const moreInFlight = useRef(false);
 
   useEffect(() => { load(); }, [load]);
 

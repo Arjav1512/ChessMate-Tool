@@ -59,12 +59,16 @@ export function useImportGames(): UseImportGames {
       // Dedupe against the user's existing games (by derived signature).
       const sigs = user ? await existingSignatures(user.id) : new Set<string>();
       const items: ImportPreviewItem[] = parsed.games.map((g, index) => {
-        const sig = gameSignature({ white_player: g.headers.White ?? '', black_player: g.headers.Black ?? '', date: g.headers.Date ?? '', result: g.headers.Result ?? '' });
+        // Resolve the exact values that get persisted, then sign from those so
+        // preview-time dedupe matches a future re-import (header-missing → 'Unknown').
+        const white = g.headers.White || 'Unknown';
+        const black = g.headers.Black || 'Unknown';
+        const result = g.headers.Result || '*';
+        const date = g.headers.Date ?? '';
+        const sig = gameSignature({ white_player: white, black_player: black, date, result });
         return {
-          index,
-          white: g.headers.White || 'Unknown',
-          black: g.headers.Black || 'Unknown',
-          result: g.headers.Result || '*',
+          index, white, black, result, date,
+          event: g.headers.Event ?? '',
           opening: deriveOpening(g.pgnText),
           status: sigs.has(sig) ? 'duplicate' : 'new',
           pgnText: g.pgnText,
@@ -72,7 +76,7 @@ export function useImportGames(): UseImportGames {
       });
       // Surface games the parser skipped as invalid rows (recoverable context).
       if (parsed.skipped > 0) {
-        items.push({ index: items.length, white: '—', black: '—', result: '*', opening: '', status: 'invalid', error: parsed.firstError ?? 'Could not parse this game', pgnText: '' });
+        items.push({ index: items.length, white: '—', black: '—', result: '*', date: '', event: '', opening: '', status: 'invalid', error: parsed.firstError ?? 'Could not parse this game', pgnText: '' });
       }
       return items;
     } finally {
@@ -102,7 +106,7 @@ export function useImportGames(): UseImportGames {
         const { error } = await supabase.from('games').insert({
           user_id: user.id, pgn: item.pgnText,
           white_player: item.white, black_player: item.black, result: item.result,
-          date: '', event: '',
+          date: item.date, event: item.event,
           user_color: detectUserColor(white, black, displayName, user.email),
         });
         if (error) { result.errors.push({ index: item.index, reason: translateDbError(error).message }); result.skipped++; }

@@ -40,7 +40,7 @@ export function LibraryPage() {
   const [collectionId, setCollectionId] = useState('all');
   const [favorites, setFavorites] = useState<Set<string>>(() => readFavorites());
 
-  const collections = useMemo(() => allCollections(), []);
+  const [collections, setCollections] = useState(() => allCollections());
   const activeCollection = collections.find((c) => c.id === collectionId);
   const favoritesOnly = !!activeCollection?.favorites;
 
@@ -56,7 +56,7 @@ export function LibraryPage() {
   const onFav = (id: string) => setFavorites(new Set(toggleFavorite(id)));
   const saveCollection = () => {
     const name = window.prompt('Name this collection');
-    if (name?.trim()) { addCollection(name.trim(), filter); setCollectionId('all'); }
+    if (name?.trim()) { addCollection(name.trim(), filter); setCollections(allCollections()); setCollectionId('all'); }
   };
 
   const useCards = isNarrow || mode === 'card';
@@ -154,7 +154,7 @@ export function LibraryPage() {
               <tbody>
                 {shown.map((r) => (
                   <tr key={r.id} tabIndex={0} onClick={() => openGame(r.id)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') openGame(r.id); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) openGame(r.id); }}
                     aria-label={`${r.opponent}, ${r.outcome}, ${r.opening}, ${r.status}. Enter to open in Analysis.`}>
                     <td><button className={`iv-gtable__fav ${favorites.has(r.id) ? 'iv-gtable__fav--on' : ''}`} aria-label={favorites.has(r.id) ? 'Unfavorite' : 'Favorite'} aria-pressed={favorites.has(r.id)} onClick={(e) => { e.stopPropagation(); onFav(r.id); }}>★</button></td>
                     <td className="iv-gtable__opp">{r.opponent}</td>

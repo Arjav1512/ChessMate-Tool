@@ -36,9 +36,17 @@ describe('deriveGameMeta', () => {
     expect(outcomeFor('1-0', null)).toBe('unknown'); // never guess
   });
 
-  it('signature is stable + case-insensitive', () => {
+  it('signature is stable, case-insensitive, and whitespace-canonical', () => {
     expect(gameSignature({ white_player: 'You', black_player: 'Rival', date: '2026-06-21', result: '1-0' }))
       .toBe('you|rival|2026-06-21|1-0');
+    // trailing/extra whitespace must not defeat dedupe
+    expect(gameSignature({ white_player: ' You ', black_player: 'Ri  val', date: '2026-06-21', result: '1-0' }))
+      .toBe('you|ri val|2026-06-21|1-0');
+  });
+
+  it('floors base minutes so sub-3min is Bullet, not Blitz', () => {
+    expect(deriveTimeControl('[TimeControl "179"]')).toBe('2+0'); // 179s → 2 (floor)
+    expect(timeControlBucket(deriveTimeControl('[TimeControl "179"]'))).toBe('Bullet');
   });
 
   it('maps a game to a row VM with derived status', () => {
