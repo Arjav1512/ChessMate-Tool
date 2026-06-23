@@ -206,7 +206,7 @@
 ## Phase 6 — Improve Hub
 
 **Status:** ✅ **COMPLETE** — merged (PR #24; crash-guard hotfix PR #25). Behind `ui.screen.improve`; typed sample/derived (decision #3). Delivered weekly focus, RadarChart skill profile, weakness categories + filter, study plan (ingests `cm.improveQueue`), and **chess study goals** (not generic milestones). See `PHASE_6_*.md`, `IMPROVE_HUB_VISUAL_ARCHITECTURE.md`, D-013.
-> **Sub-view added (the "Phase 7" workstream):** **Improve · Review Mistakes** at `/improve/mistakes` — merged (PR #26). The single mistake feed (reuses the B-4 `lib/mistakeReview` engine ∪ Send-to-Improve queue), master/detail, one Primary per mistake. Per Gate-0 this is an **Improve sub-view, not a new IA destination**, so the roadmap below is unchanged. See `PHASE_7_*.md`, D-014.
+> **Sub-view added (the "Phase 7" workstream):** **Improve · Review Mistakes** at `/improve/mistakes` — merged (PR #26). The single mistake feed (reuses the B-4 `lib/mistakeReview` engine ∪ Send-to-Improve queue), master/detail, one Primary per mistake. Per Gate-0 this is an **Improve sub-view, not a new IA destination**, so the roadmap below is unchanged. See `REVIEW_MISTAKES_*.md`, D-014.
 
 **Objectives**
 - Build `/improve` per System Design §9 — the product differentiator.

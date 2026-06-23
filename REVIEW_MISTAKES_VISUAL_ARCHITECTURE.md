@@ -1,6 +1,6 @@
 # Improve · Review Mistakes — Visual Architecture Review (Phase 7)
 
-> **Authority:** `CHESSMATE_SYSTEM_DESIGN.md` §9 (Improve) + §8 (Analysis) + §4.7 + §6/§11; Architecture §4/§5/§7/§12. Inputs: `PHASE_7_DISCOVERY.md`, `PHASE_7_IMPLEMENTATION_PLAN.md` + Gate-0 decisions. Documentation wins.
+> **Authority:** `CHESSMATE_SYSTEM_DESIGN.md` §9 (Improve) + §8 (Analysis) + §4.7 + §6/§11; Architecture §4/§5/§7/§12. Inputs: `REVIEW_MISTAKES_DISCOVERY.md`, `REVIEW_MISTAKES_IMPLEMENTATION_PLAN.md` + Gate-0 decisions. Documentation wins.
 > **Status:** Architecture review only — no code, no branch, no PR. Diagrams are schematic.
 
 **Gate-0 decisions (locked):** (1) **No standalone Mistake Review destination.** (2) Roadmap intact — **Phase 7 = Game Library + Import**; this ships as an **Improve sub-view**, not a new phase screen. (3) **Improve → Review Mistakes** sub-view. (4) Sample/derived data for v1. (5) Move-quality taxonomy `brilliant·best·good·inaccuracy·mistake·blunder` (`excellent→best`). (6) Responsibility boundaries: Dashboard=overview · Analysis=understand games · **Improve=weaknesses + study plan + progress + review mistakes** · Games=library/import.

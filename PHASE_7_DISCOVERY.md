@@ -1,119 +1,117 @@
-# Phase 7 — Mistake Review System · Discovery & Gap Analysis
+# Phase 7 — Game Library + Import · Discovery & Gap Analysis
 
-> **Authority read:** `CHESSMATE_SYSTEM_DESIGN.md` (§3 IA, §4 screens, §8 Analysis, §9 Improve, §4.7 Weakness) · `CHESSMATE_IMPLEMENTATION_ARCHITECTURE.md` (§4 routes, §5, §7, §12 Learning) · `PROJECT_STATE.md` · `IMPLEMENTATION_ROADMAP.md` · `DECISION_LOG.md` · `LOOP_LOG.md`.
+> **Authority:** `CHESSMATE_SYSTEM_DESIGN.md` §4.2 (Game Library) + §4.3 (Game Import) · `CHESSMATE_IMPLEMENTATION_ARCHITECTURE.md` (§4 routes, §5, §7 data, §22 strangler) · `PROJECT_STATE.md` · `IMPLEMENTATION_ROADMAP.md` (Phase 7) · `NEXT_PHASE_RECOMMENDATION.md`.
 > **Status:** Discovery only — no code, no branch, no PR.
-> **Method:** re-read the spec for "mistake review", audited the existing B-4 assets (`lib/mistakeReview.ts`, `hooks/useMistakeReview.ts`, `components/stats/MistakeReview.tsx`), the `move_analysis` data path, and the Phase 5/6 Send-to-Improve loop.
+> **Method:** read §4.2/§4.3; audited `lib/pgn.ts`, `lib/pgnLimits.ts`, `src/workers/pgnWorker.ts`, legacy `components/game/GameList.tsx` + `AnalyzeGamesPage.tsx`, the Supabase `games` schema, and current routing.
+>
+> *(Note: the previous `PHASE_7_*.md` documented the Mistake Review workstream — an Improve sub-view — and have been renamed to `REVIEW_MISTAKES_*.md`. These canonical `PHASE_7_*` docs are the real roadmap Phase 7: Game Library + Import.)*
 
 ---
 
 ## Executive summary
 
-**⚠️ Blocking finding — scope/IA conflict (decision required before build).**
-The brief calls this "Phase 7 — Mistake Review System," but:
-- The **authoritative roadmap** (`IMPLEMENTATION_ROADMAP.md` §Phase 7, `SPRINT_BACKLOG.md`) defines **Phase 7 = Game Library + Import**.
-- The **System Design IA (§3) and screen inventory (§4) contain no "Mistake Review" screen.** `grep` for "mistake review" in `CHESSMATE_SYSTEM_DESIGN.md` returns nothing. Mistake-review *functionality* is specified, but **distributed** across existing surfaces:
-  - **Analysis (§8):** turning points, move-quality, and the **"Send mistake to Improve"** action.
-  - **Improve (§9/§12):** `replay` study sessions = "the user's own lost games matching the motif" — the spec's home for reviewing mistakes as training.
-  - **Weakness Profile (§4.7):** recurring weaknesses ranked by impact with a practice CTA.
+Game Library + Import is the **#2 primary-nav destination** and the **front door of the improvement loop** (§3: Games → Analysis → Improve). It is also the **first real-data screen**: unlike Dashboard/Analysis/Improve/Review-Mistakes (all typed sample/derived), Games ingests genuine user PGNs into the `games` table — so this phase **begins de-sampling the product** and is the precondition for Phase 11.
 
-So a **standalone "Mistake Review" top-level screen is not in the approved IA** — shipping one as a new nav destination would violate §14.3 ("Never change IA without explicit approval"). **Documentation wins → this needs your explicit decision** (see "Decisions required").
+**The good news:** the hard data plumbing already exists and is tested — `lib/pgn.ts` (parse/validate/split), `lib/pgnLimits.ts` (5 MiB guard), `src/workers/pgnWorker.ts` (off-main-thread parsing), and the legacy `GameList.tsx` already does paginated load, **server-side search across all games**, and **upload/paste import with parse→insert progress**. The problem is purely the **Obsidian UI** (`--cm-*`, modal-based) — the engine is sound.
 
-**What is real and strong:** the legacy **B-4 "Train On Your Mistakes"** engine already exists and is excellent, reusable, pure: `lib/mistakeReview.ts` turns `move_analysis` rows into a prioritized, filterable review feed (severity + motif importance + recurrence), with drillable FENs and best-move SAN. The only problem with the legacy feature is its **Obsidian UI** (`MistakeReview.tsx`, `--cm-*`) — the data layer is sound.
+**The main gap:** the `games` table is minimal (`id, user_id, pgn, white_player, black_player, result, date, event, user_color, uploaded_at, created_at`). It has **no `opening`, no `time_control`, and no analysis-status column** — all of which §4.2 requires (filters + quick-insight + "analyzed vs pending"). For v1 these are **derived** (opening/ECO + TimeControl from PGN headers at parse time; status by presence of `game_analysis_results`/`move_analysis`), consistent with the project's sample/derived pattern; persisted columns are a Phase-11 migration.
 
-**Recommended path (spec-compliant):** implement Mistake Review **not as a new primary-nav screen** but as an **Ivory feed surfaced from existing IA**, most naturally:
-1. as the materialization of Improve's **`replay` sessions** (§9/§12) — "Review your mistakes" within `/improve`, and/or
-2. as a **filtered Games view** ("Losses to review" collection, §3 Game Library collections), and/or
-3. reachable from **Analysis** (jump to a flagged position).
-Reuse the B-4 engine; build the Ivory UI; wire the Send-to-Improve queue. This honors the intent (a dedicated mistake-review experience) without an unapproved IA change. **Confirm the placement before implementation.**
+**Recommended approach:** extract the legacy data logic into Ivory hooks, build the §4.3 **Import** route first (one parsed game unblocks real Analysis → Review Mistakes → Improve), then the §4.2 **Library** screen, all behind `ui.screen.games`. "Connect Chess.com/Lichess" has **no existing integration** → keep it as a secondary, **deferred/stub** action for v1 (paste + upload are the real paths).
 
-**Net:** the work is low-risk and asset-rich (engine + data exist), but the **placement/sequencing decision is the gate**.
+**Effort:** Medium. **Risk:** Low–Medium (first real DB-backed screen → auth/RLS, pagination, dedupe — all already handled in the legacy code we're reusing).
 
 ---
 
 ## Major findings
-
-1. **No Mistake Review screen in the spec IA** (§3/§4) — placement must be inside an approved surface (Improve / Games / Analysis), or you must approve an IA change.
-2. **Roadmap resequencing** — Phase 7 was Game Library + Import; this reorders. Game Library would then move later (it's a dependency for the "Losses to review" collection placement, so order matters).
-3. **B-4 engine is reusable as-is** — `lib/mistakeReview.ts` + `useMistakeReview` (data from `move_analysis`). Only the UI needs rebuilding in Ivory.
-4. **Taxonomy mismatch (recurring theme)** — `mistakeReview`/`useMistakeReview` use the legacy `MoveClassification` (`best · excellent · good · …`) and legacy `Motif` set; the Ivory move-quality is `brilliant · best · good · inaccuracy · mistake · blunder` (Phase-5 `lib/analysis/moveQuality`, decision `excellent→best`). A mapping bridge is required.
-5. **Data availability caveat** — `move_analysis` is only populated for analyzed games; in v1 the Analysis Workspace runs on **typed sample/derived** data (decisions #2/#3), so a live mistake feed may be sparse. The feature should run on sample/derived data for v1, consistent with prior phases.
-6. **Heavy overlap with Phase 6 (Improve replay) and Phase 9 (Weakness Profile)** — scope must be drawn to avoid building the same thing twice.
+1. **First real-data screen** — Games is where typed sample data ends and live `games`-table data begins. Sets the pattern for Phase 11 de-sampling.
+2. **Engine exists, UI doesn't** — parse/validate/split + worker + paginated load + server search + import-with-progress are all present in `lib/pgn`/`pgnWorker`/`GameList`; only the Ivory UI is missing.
+3. **Schema gaps vs §4.2** — no `opening`/`time_control`/analysis-status columns → derive for v1 (PGN headers + analysis aggregates), persist in Phase 11.
+4. **Connect account is net-new** — no Chess.com/Lichess integration exists; secondary action → defer/stub for v1.
+5. **Game detail = Analysis** — §3 says selecting a game → Analysis; `/games/:id` should route into the Analysis Workspace, not a separate screen.
+6. **Quick-insight strip needs analysis aggregates** (most common mistake / best opening / avg accuracy) — derive where analysis exists, empty/skeleton otherwise.
 
 ---
 
-## Reusable vs Replace vs Create
+## Reuse vs Replace vs Create
 
 | Item | Disposition | Notes |
 |---|---|---|
-| `lib/mistakeReview.ts` (prioritized/filterable feed engine) | **Reuse** | Pure; severity+motif+recurrence ranking, drillable FEN, best-move SAN. |
-| `hooks/useMistakeReview.ts` (move_analysis → MistakeInput[]) | **Reuse** (rehome to `features/…`) | Real data path; session-cached. |
-| `lib/motifs.ts` (`MOTIF_INFO`, `Motif`) · `lib/moveAnalysis.ts` (`Phase`) | **Reuse** | Filter dimensions. |
-| `move_analysis` table + indexes | **Reuse** | Already indexed for `(user_id, classification)`. |
-| Phase-5 `BoardContainer` (read-only mini, last-move tint) | **Reuse** | The drill/position board. |
-| Phase-5 `lib/analysis/moveQuality` (spec taxonomy + `excellent→best`) | **Reuse** | Map legacy `MoveClassification` → Ivory move-quality. |
-| Phase-2 primitives (`SegmentedControl`/chips, `Card`, `Chip`/`MoveQualityChip`, `Badge`, `Skeleton`, `EmptyState`, `ErrorState`, `Button`) | **Reuse** | Filters + cards + states. |
-| Send-to-Improve queue (`sendToImprove.ts` / `improve/queue.ts`) | **Reuse / integrate** | Mistakes tagged in Analysis feed the review + Improve plan. |
-| `components/stats/MistakeReview.tsx` (legacy Obsidian UI) | **Replace** | `--cm-*` tokens, legacy `ChessBoard`; rebuild in Ivory. |
-| Legacy `ChessBoard`/`EvaluationGauge` usage in the feature | **Replace** | Use Phase-5 `BoardContainer`. |
-| Ivory Mistake Review feature (feed list, filter bar, drill card, "send to improve") | **Create** | `features/mistakes/*` (or within `features/improve`), behind a flag. |
-| Taxonomy/motif bridge (legacy → Ivory) | **Create** | Small mapper. |
-| Route/placement + flag | **Create** | Per the placement decision (Improve sub-view / Games collection / Analysis entry). |
-| Sample/derived adapter (until live data) | **Create** | Mirrors Phase 4–6 pattern. |
-| a11y e2e for the new surface | **Create** | Wire into CI `accessibility` job. |
+| `lib/pgn.ts` (`parsePGN`, `validatePGN`, `splitPGN`, `moveToSAN`) | **Reuse** | Tested; parse + multi-game split + header extraction. |
+| `lib/pgnLimits.ts` (`checkPgnSize`, `MAX_PGN_BYTES` 5 MiB) | **Reuse** | Upload/paste size guard. |
+| `src/workers/pgnWorker.ts` (+ test) | **Reuse** | Off-main-thread parsing of large/multi-game PGNs. |
+| `GameList.tsx` **data logic** (paginated load, `hasMore`/load-more, server-side search, upload/paste → worker → insert with parse/insert progress, dedupe) | **Reuse (extract)** | Lift into Ivory hooks (`useGames`, `useImportGames`); discard the UI. |
+| Supabase `games` table + RLS | **Reuse** | Add derived metadata client-side for v1; columns later. |
+| Phase-2 primitives (MetricCard, Search/Input, SegmentedControl, Dropdown, Badge→StatusBadge, Button, Toast, EmptyState, Skeleton) | **Reuse** | All §4.2/§4.3 required components exist. |
+| Phase-3 shell + routing + `useFlag` | **Reuse** | `/games`, `/games/import`, `/games/:id` route slots already stubbed. |
+| Analysis Workspace (Phase 5) | **Reuse (integrate)** | Open game → `/analysis/:id`; first-run → `/games/import`. |
+| `GameList.tsx` / `AnalyzeGamesPage.tsx` / paste-modal **UI** (`--cm-*`, modal) | **Replace** | Rebuild as Ivory `/games` screen + `/games/import` route. |
+| Legacy `GameViewer` | **Replace** (not needed) | Analysis is the viewer now. |
+| **Game Library screen** (`/games`): header + import actions, Quick-insight strip, Filter toolbar, Collections, GameTable (desktop) ↔ GameCardList (mobile) | **Create** | `features/games/*`. |
+| **GameRow (full)** + **StatusBadge** (analyzed/pending) + **ImprovementTag** | **Create** | §4.2 components. |
+| **Import route** (`/games/import`): source picker (paste/upload/connect-stub), textarea + dropzone, parsed-preview list, progress/status, recoverable errors, empty state | **Create** | §4.3. |
+| Hooks: `useGames` (paginated + filtered + search), `useImportGames` (worker + insert + progress), `deriveGameMeta` (opening/ECO + time-control + status) | **Create** | Wrap the reused logic. |
+| **Collections** (saved smart-filters) | **Create** | §4.2; localStorage for v1 (server later). |
+| Routing: real `/games` + `/games/import`; `/games/:id` → redirect to `/analysis/:id` | **Create** | Behind `ui.screen.games`. |
+| `e2e/games-a11y.spec.ts` | **Create** | Wire into CI. |
 
 ---
 
-## Requirements
+## Workflow analysis
 
-### Data model
-- **Inputs:** `move_analysis` (fen, san, best_move, cp_loss, phase, motif_tags, move_number, color, classification) per analyzed game (existing). View-models: `MistakeCardVM` (drill FEN, played SAN, best-move SAN, move-quality, phase, motifs, priority, gameId/ply for "open in Analysis").
-- **No new tables** for v1 (sample/derived where `move_analysis` is sparse; real swap is the hook). Persisted "reviewed/resolved" state is a Phase-11 consideration.
+### Import workflow (§4.3)
+`Choose source (paste / upload / connect) → paste textarea or drop file → parse (worker) → parsed-preview list → confirm → insert with progress → toast + land in Library (queued for analysis)`.
+- Reuse: `checkPgnSize` (reject > 5 MiB with a clear message), `splitPGN`/`parsePGN` in `pgnWorker`, the insert-with-progress flow from `GameList`.
+- Create: the Ivory route, source picker, dropzone, preview list, progress/status UI; **recoverable errors** (per-game parse failures shown, valid games still importable); dedupe on re-import.
+- v1: **paste + upload real**; **connect = secondary, deferred/stub** (no OAuth yet).
 
-### Routing
-- **Decision-dependent.** Options: (a) `/improve` sub-view/tab ("Review mistakes"); (b) `/games?filter=losses` collection → feed; (c) entry from `/analysis`. **No new top-level route without IA approval.** Behind a per-screen flag (e.g. `ui.screen.mistakes` only if a dedicated route is approved; otherwise reuse `ui.screen.improve`/`ui.screen.games`).
+### Library workflow (§4.2)
+`Land → quick-insight strip → search/filter/sort or pick a collection → scan rows (status + improvement tags) → open a game → Analysis`.
+- Success metric: **locate any game in ≤2 actions**; **status unambiguous at a glance** (StatusBadge analyzed/pending).
+- Reuse: paginated load + server search.
 
-### State management
-- **Server/derived state:** TanStack Query / the existing session-cache hook for the feed. **UI state (Zustand/local):** active phase/motif filter, current drill index. URL: filter + selected mistake (shareable).
+### Filtering / Search / Collections
+- **Filters (§4.2):** result (win/loss/draw), color (white/black), **time control** (derived), sort (date/accuracy/…). SegmentedControl + Dropdown.
+- **Search:** server-side across all games (reuse), not just the loaded page.
+- **Collections:** saved smart-filters ("Losses to review", "Endgame slips") — the natural deep-link target for Improve/Review-Mistakes. localStorage for v1 (`cm.collections`), server in Phase 11.
+
+### Game metadata
+- Present (table): players, result, date, event, user_color, pgn.
+- **Derived (v1):** opening/ECO + time control from PGN headers (`parsePGN`); **analysis status** from presence of `game_analysis_results`/`move_analysis`; accuracy / most-common-mistake from analysis aggregates (where present).
+
+### Mobile behavior (§4.11)
+- GameTable → **GameCardList** (≤767); filters → toolbar/sheet; quick-insight stacks; import is a full route (textarea-first); 44px targets; bottom tab bar (Games active).
 
 ### Accessibility (§11)
-- Filter = radiogroup/segmented (reuse Phase 2); each mistake card a labelled item ("Move 24, blunder, hung the queen"); board = `BoardContainer` (SAN as accessible source); move-quality as chip+symbol+label (never color-only); keyboard + visible focus; route focus → h1; reduced-motion; AA contrast (labels `--text-low`). Wire an axe e2e into CI.
-
-### Mobile (§4.11/§10)
-- Filter chips horizontally scroll; feed as full-width cards; drill board fits width; bottom tab bar; 44px targets; one Primary ("Send to Improve" or "Open in Analysis").
-
-### Integration points
-- **Analysis Workspace:** each mistake card → "Open in Analysis" (`/analysis/:gameId` at the flagged ply); the Analysis "Send to Improve" already feeds the same motif space.
-- **Improve Hub:** the review feed is the natural source for `replay` study sessions (§9/§12); a tagged mistake should appear in both the feed and the Improve plan (shared `cm.improveQueue` + `move_analysis`). Avoid duplicating the plan UI.
-- **Dashboard:** "Recently analyzed" / weakness summaries link here; the review count could surface as a dashboard signal (no new dashboard work required).
+- Table semantics (`role`/headers) or a well-labelled list; sortable headers announced; filters = radiogroup/labelled selects; StatusBadge text not color-only; search labelled; dropzone keyboard-operable with an `<input type=file>` fallback; route focus → h1; recoverable import errors announced (`aria-live`); AA contrast (`--text-low` for small text). Wire `/games` + `/games/import` axe into CI.
 
 ---
 
 ## Spec mismatches
-1. **IA:** no Mistake Review screen in §3/§4 (blocking placement decision).
-2. **Roadmap:** Phase 7 = Game Library + Import (resequencing).
-3. **Taxonomy:** legacy `MoveClassification`/`Motif` vs Ivory move-quality — needs a mapper (`excellent→best`).
-4. **Overlap:** functionality intersects Improve `replay` (§9/§12) + Weakness Profile (§4.7) — scope boundary needed.
+1. **Schema:** `games` lacks `opening`/`time_control`/analysis-status → derive for v1, persist Phase 11.
+2. **Connect account:** no Chess.com/Lichess integration → secondary, deferred/stub.
+3. **Game detail:** `/games/:id` is not a standalone screen — it routes into Analysis (§3).
+4. **Quick-insight strip:** needs analysis aggregates → derive where available; empty state otherwise.
 
 ## Technical risks
-- Sparse live data (`move_analysis` only for analyzed games; v1 analysis is sample/derived) → run on sample/derived for v1.
-- Taxonomy/motif mapping correctness.
-- "Drill" expectation: there is no training engine — a "drill" here = step the position / open in Analysis (set expectations; no SRS in v1, per B-4's own scope note).
+- **First DB-backed screen:** auth/RLS, pagination correctness, import **dedupe**, `user_color` detection — all already solved in the legacy code being reused (mitigates risk).
+- Worker/bundler wiring for `pgnWorker` under the new shell.
+- Derivation correctness (opening/time-control parsing varies by PGN source).
 
 ## Performance risks
-- `move_analysis` read volume per user — already indexed (`(user_id, classification)`, `(game_id, ply)`); aggregation is client-side and bounded (limit 24). Virtualize if the feed grows. Low risk.
+- Large libraries → keep pagination/load-more (reuse); virtualize the table only if needed.
+- Large/multi-game PGNs → already off-main-thread (worker) + 5 MiB cap.
+- Server search debounced; avoid N+1 on status derivation (batch the analysis-existence lookup).
 
 ## UX risks
-- **Duplication** with Improve/Analysis (the biggest risk) — could feel like a third place that shows the same mistakes. Mitigate by making this the *single* mistake **feed** that the others link into, not a parallel plan.
-- **Analytics-dump feel** — lead with the position + the lesson + one action, not a stats list (carry the Phase-4/6 lesson).
-- **Placement confusion** — if buried, users won't find it; if a new nav item, it breaks IA. The placement decision resolves this.
+- **"Never just a list" (§4.2):** quick-insight + collections + status badges must make it feel like a tool, not a table dump.
+- Import errors must be **explained + recoverable** (partial success: import the valid games, list the skipped with reasons).
+- Don't reintroduce a modal (legacy pattern) — Import is a routed screen.
 
----
+## Decisions required (Gate 0)
+1. **Derive vs migrate** opening/time-control/status for v1 — recommend **derive** (PGN headers + aggregates), persist Phase 11.
+2. **Connect account** — recommend **defer/stub** (paste + upload for v1).
+3. **Real data now** — confirm Games runs on the live `games` table (begins de-sampling), not fixtures.
+4. **Collections storage** — localStorage v1 → server Phase 11.
+5. **Flag granularity** — one `ui.screen.games` for both Library + Import, or a separate `ui.screen.gameImport`.
 
-## Decisions required (gate before any implementation)
-1. **Confirm Phase 7 = Mistake Review** (resequence Game Library to a later phase) — or keep the roadmap and treat Mistake Review as a Phase-6 addendum / Phase-9 item.
-2. **Placement** (spec-compliant): Improve sub-view ▸ / Games "Losses to review" collection / Analysis entry / (or approve a new IA destination).
-3. **Data:** sample/derived for v1 (consistent with decisions #2/#3) — confirm.
-4. **Scope boundary** vs Improve `replay` + Weakness Profile (avoid duplication).
-5. **Taxonomy/motif mapping** to the Ivory move-quality set.
-
-See `PHASE_7_IMPLEMENTATION_PLAN.md` for the milestone breakdown, acceptance criteria, and how each milestone is gated on these decisions.
+See `PHASE_7_IMPLEMENTATION_PLAN.md` for milestones, dependencies, acceptance criteria, testing, and visual review gates.
