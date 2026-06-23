@@ -17,14 +17,14 @@ export interface LearningObjective {
 const CATALOG: Record<string, LearningObjective> = {
   rook_conversion: {
     objective: 'Convert winning rook endgames',
-    rationaleTemplate: 'You reached a winning rook endgame in {n} of your last 10 games but converted only {converted}. Highest-impact fix.',
+    rationaleTemplate: 'Endgame conversion is your biggest rating leak — it shows up in {pct}% of your analyzed games. Highest-impact fix this week.',
     sessionTypes: ['drill', 'replay', 'tactics', 'coach_review'],
     positionSet: 'rook_endgames',
     estMinutes: { drill: 12, replay: 8, tactics: 10, coach_review: 5 },
   },
   hanging_pieces: {
     objective: 'Stop hanging pieces',
-    rationaleTemplate: 'One-move blunders decided {n} of your recent losses. A short tactics habit fixes most of these.',
+    rationaleTemplate: 'One-move blunders show up in {pct}% of your games. A short tactics habit fixes most of these.',
     sessionTypes: ['tactics', 'replay', 'coach_review'],
     positionSet: 'hanging_pieces',
     estMinutes: { tactics: 10, replay: 6, coach_review: 5 },

@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { mapCategory, severityBand, worstSeverity, impactScore } from '../../lib/improve/mapping';
 import { composePlan } from '../../lib/improve/composePlan';
 import { ImprovePage } from './ImprovePage';
+import { RadarChart } from '../../components/charts/RadarChart';
 import { IvToastProvider } from '../../components/ui/iv';
 import { findA11yViolations } from '../../test/axe';
 import { sampleRawWeaknesses } from './sampleImprove';
@@ -37,12 +38,12 @@ describe('plan composition', () => {
   const opts = { week: 7, sessionsDone: 2, phaseDeltaPct: 4, queue: [] };
 
   it('picks the highest-impact weakness as the Weekly Focus', () => {
-    const { focus } = composePlan(sampleRawWeaknesses, opts);
+    const { focus } = composePlan(sampleRawWeaknesses, opts)!;
     expect(focus.title).toMatch(/rook endgames/i);
     expect(focus.weaknessKey).toBe('rook_conversion');
   });
   it('orders sessions with the first incomplete = next', () => {
-    const { plan } = composePlan(sampleRawWeaknesses, opts);
+    const { plan } = composePlan(sampleRawWeaknesses, opts)!;
     const focusItems = plan.filter((p) => p.weaknessKey === 'rook_conversion');
     expect(focusItems[0].status).toBe('done');
     expect(focusItems[1].status).toBe('done');
@@ -52,17 +53,33 @@ describe('plan composition', () => {
     const { plan } = composePlan(sampleRawWeaknesses, {
       ...opts,
       queue: [{ gameId: 'g1', ply: 5, motif: 'hanging-piece', san: 'Qxh7' }],
-    });
+    })!;
     const imported = plan.find((p) => p.source === 'send-to-improve');
     expect(imported).toBeTruthy();
     expect(imported!.title).toMatch(/hanging piece/i);
   });
   it('groups weaknesses into §9 categories', () => {
-    const { categories } = composePlan(sampleRawWeaknesses, opts);
+    const { categories } = composePlan(sampleRawWeaknesses, opts)!;
     const cats = categories.map((c) => c.category);
     expect(cats).toContain('endgame');
     expect(cats).toContain('tactical');
     expect(cats).toContain('opening');
+  });
+
+  it('returns null for empty input (no-data path, no crash)', () => {
+    expect(composePlan([], opts)).toBeNull();
+  });
+
+  it('rationale uses only real {pct} (no fabricated specifics)', () => {
+    const { focus } = composePlan(sampleRawWeaknesses, opts)!;
+    expect(focus.rationale).not.toMatch(/\{n\}|\{converted\}|\{pct\}/);
+  });
+});
+
+describe('RadarChart empty guard', () => {
+  it('renders a labelled placeholder for empty data (no crash)', () => {
+    render(<RadarChart data={[]} />);
+    expect(screen.getByRole('img', { name: /no data/i })).toBeInTheDocument();
   });
 });
 
