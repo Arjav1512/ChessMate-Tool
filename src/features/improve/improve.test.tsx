@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { mapCategory, severityBand, worstSeverity, impactScore } from '../../lib/improve/mapping';
 import { composePlan } from '../../lib/improve/composePlan';
 import { ImprovePage } from './ImprovePage';
+import { ImprovePlanView } from './ImprovePlanView';
 import { RadarChart } from '../../components/charts/RadarChart';
 import { IvToastProvider } from '../../components/ui/iv';
 import { findA11yViolations } from '../../test/axe';
@@ -87,7 +88,13 @@ describe('RadarChart empty guard', () => {
 function renderPage() {
   return render(
     <IvToastProvider>
-      <MemoryRouter><ImprovePage /></MemoryRouter>
+      <MemoryRouter initialEntries={['/improve']}>
+        <Routes>
+          <Route path="/improve" element={<ImprovePage />}>
+            <Route index element={<ImprovePlanView />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
     </IvToastProvider>,
   );
 }
