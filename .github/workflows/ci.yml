@@ -176,7 +176,7 @@ jobs:
           CI: true
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'placeholder_anon_key' }}
-        run: npx playwright test e2e/shell-a11y.spec.ts e2e/dashboard-a11y.spec.ts e2e/analysis-a11y.spec.ts e2e/improve-a11y.spec.ts e2e/improve-mistakes-a11y.spec.ts e2e/accessibility.spec.ts --project=chromium
+        run: npx playwright test e2e/shell-a11y.spec.ts e2e/dashboard-a11y.spec.ts e2e/analysis-a11y.spec.ts e2e/improve-a11y.spec.ts e2e/improve-mistakes-a11y.spec.ts e2e/games-a11y.spec.ts e2e/accessibility.spec.ts --project=chromium
 
       - name: Upload a11y report
         if: always()
