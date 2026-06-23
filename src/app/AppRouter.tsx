@@ -10,6 +10,7 @@ import { applyThemeAttributes, useThemeStore } from '../stores/themeStore';
 import { useFlag } from '../lib/flags';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { AnalysisPage } from '../features/analysis/AnalysisPage';
+import { ImprovePage } from '../features/improve/ImprovePage';
 import './shell.css';
 
 /** Show the real screen when its per-screen flag is on; placeholder otherwise. */
@@ -25,6 +26,11 @@ function AnalysisRoute() {
 /** /analysis index → open the sample workspace when flagged, else placeholder. */
 function AnalysisIndexRoute() {
   return useFlag('ui.screen.analysis') ? <Navigate to="/analysis/sample" replace /> : placeholderFor('analysis');
+}
+
+/** Improve Hub at /improve behind ui.screen.improve. */
+function ImproveRoute() {
+  return useFlag('ui.screen.improve') ? <ImprovePage /> : placeholderFor('improve');
 }
 
 /** Placeholder element for a destination defined in navigation config. */
@@ -70,7 +76,7 @@ export function AppRouter() {
               <Route path="/games/:id" element={placeholderFor('game-detail')} />
               <Route path="/analysis" element={<AnalysisIndexRoute />} />
               <Route path="/analysis/:id" element={<AnalysisRoute />} />
-              <Route path="/improve" element={placeholderFor('improve')} />
+              <Route path="/improve" element={<ImproveRoute />} />
               <Route path="/weaknesses" element={placeholderFor('weaknesses')} />
               <Route path="/progress" element={placeholderFor('progress')} />
               <Route path="/coach" element={placeholderFor('coach')} />
