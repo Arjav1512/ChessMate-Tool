@@ -99,6 +99,12 @@ export function ReviewMistakesView() {
         )}
       </div>
 
+      {filtered.length === 0 ? (
+        <div className="iv-rm__nomatch" role="status">
+          <p>No mistakes match these filters.</p>
+          <Button variant="ghost" onClick={() => setFilter({ phase: 'all', motif: 'all' })}>Clear filters</Button>
+        </div>
+      ) : (
       <div className="iv-rm__grid">
         {/* Feed (navigable index) */}
         <ul className="iv-rm__list" aria-label="Your mistakes, most costly first">
@@ -143,6 +149,7 @@ export function ReviewMistakesView() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

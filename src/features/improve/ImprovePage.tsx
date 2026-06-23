@@ -20,7 +20,7 @@ export function ImprovePage() {
   const h1Ref = useRef<HTMLHeadingElement>(null);
   useEffect(() => { h1Ref.current?.focus(); }, []);
 
-  const view: ImproveView = location.pathname.endsWith('/mistakes') ? 'mistakes' : 'plan';
+  const view: ImproveView = location.pathname.replace(/\/+$/, '').endsWith('/mistakes') ? 'mistakes' : 'plan';
 
   return (
     <div className="iv-improve iv-page-enter">

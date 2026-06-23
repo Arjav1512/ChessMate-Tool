@@ -85,6 +85,15 @@ describe('ReviewMistakesView', () => {
     expect(after).toBeGreaterThan(0);
   });
 
+  it('shows a no-match state with a reset when filters exclude everything', () => {
+    renderView();
+    fireEvent.click(screen.getByRole('radio', { name: 'Opening' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Hung piece' }));
+    expect(screen.getByText(/no mistakes match/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /clear filters/i }));
+    expect(screen.queryByText(/no mistakes match/i)).not.toBeInTheDocument();
+  });
+
   it('has no axe violations', async () => {
     const { container } = renderView();
     expect(await findA11yViolations(container)).toEqual([]);
