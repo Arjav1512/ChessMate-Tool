@@ -11,6 +11,8 @@ import { useFlag } from '../lib/flags';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { AnalysisPage } from '../features/analysis/AnalysisPage';
 import { ImprovePage } from '../features/improve/ImprovePage';
+import { ImprovePlanView } from '../features/improve/ImprovePlanView';
+import { ReviewMistakesView } from '../features/improve/mistakes/ReviewMistakesView';
 import './shell.css';
 
 /** Show the real screen when its per-screen flag is on; placeholder otherwise. */
@@ -76,7 +78,10 @@ export function AppRouter() {
               <Route path="/games/:id" element={placeholderFor('game-detail')} />
               <Route path="/analysis" element={<AnalysisIndexRoute />} />
               <Route path="/analysis/:id" element={<AnalysisRoute />} />
-              <Route path="/improve" element={<ImproveRoute />} />
+              <Route path="/improve" element={<ImproveRoute />}>
+                <Route index element={<ImprovePlanView />} />
+                <Route path="mistakes" element={<ReviewMistakesView />} />
+              </Route>
               <Route path="/weaknesses" element={placeholderFor('weaknesses')} />
               <Route path="/progress" element={placeholderFor('progress')} />
               <Route path="/coach" element={placeholderFor('coach')} />
