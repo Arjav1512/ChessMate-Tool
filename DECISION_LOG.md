@@ -49,3 +49,8 @@
 - **Decision:** dashboard hooks resolve from `features/dashboard/sampleDashboard.ts`, shaped to the future API; Improvement Score is a real pure fn (Arch §13) fed sample inputs.
 - **Why:** locked decision #3 — `rating_history`/plan/milestone tables don't exist yet. Swap to live reads is one adapter file (Phase 11).
 - **Trade-off:** dashboard numbers are illustrative until the data layer lands; clearly labelled.
+
+## D-012 · Analysis Workspace decisions (Phase 5)
+- **Decisions (approved):** (1) Move List is a **persistent section**, not a peer tab; peer tabs are Analysis/Coach/Lines. (2) Move-quality taxonomy = `brilliant·best·good·inaccuracy·mistake·blunder`; legacy `excellent → best`. (3) **InsightCard** = one component with four variants (Turning Point / Blunder / Missed Opportunity / Recommendation). (4) Analysis **auto-runs on open** — board paints immediately, skeletons, progressive populate, no Analyze button. (5) **Send-to-Improve** queues to a typed sample/derived plan (localStorage) until the learning engine exists.
+- **Why:** §8 (insight-first, Coach-as-peer, never reinvent the board) + reuse-first; keeps the default view from regressing into an engine viewer (engine confined to the Lines tab).
+- **Trade-off:** analysis is sample/derived for v1 (real client-Stockfish runner + persisted analysis + `move_analysis` taxonomy migration deferred to Phase 11); board is display/stepping only.

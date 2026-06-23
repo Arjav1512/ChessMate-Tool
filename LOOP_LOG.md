@@ -55,3 +55,11 @@
 - Tests: component/integration (`dashboard.test.tsx` 12 + `dashboard.empty.test.tsx` 1); e2e a11y (`dashboard-a11y.spec.ts` 3) wired into CI accessibility job.
 - Gates (local): typecheck ✅ · lint ✅ (0 err) · unit 190 ✅ · e2e 36 passed ✅ · build ✅ · dashboard axe (jsdom + real-browser contrast) ✅.
 - Behind flag; legacy app untouched. PR to be opened (base `prod/mistake-review-b4`); not merged.
+
+## 2026-06-23 · Phase 5 — Analysis Workspace
+- Discovery + visual architecture approved (`ANALYSIS_WORKSPACE_DISCOVERY.md`, `ANALYSIS_WORKSPACE_VISUAL_ARCHITECTURE.md`, `PHASE_5_IMPLEMENTATION_PLAN.md`); 5 decisions locked (Move List persistent + Tabs Analysis/Coach/Lines; taxonomy `excellent→best`; InsightCard one component/4 variants; auto-run progressive; Send-to-Improve on sample plan).
+- Built M1–M5 behind `ui.screen.analysis`: BoardContainer (flip/last-move/aspect-ratio/mini), EvalBar, PlayerBars, BoardControls, EvalTimeline (playhead + turning points), stepper store; spec-taxonomy classifier; Tabs + InsightCard (4 variants) + persistent MoveList + AccuracySummary + counts + Lines; Coach peer tab + subordinate note; Send-to-Improve; route wiring; all four states; mobile re-think.
+- Audit → remediation: fixed move-list contrast (AA), a11y chart-selector ambiguity; added 12 unit tests + analysis a11y e2e (wired into CI).
+- CodeRabbit (PR #23): 8 findings → all resolved (reset-on-route-id, arrow-key scoping, Coach loading a11y name, EvalTimeline off-by-one, turning-point clamp, Send-to-Improve no-false-success, accuracy tie/%, currentcolor).
+- Production verification: prod build healthy; dev-preview surfaces correctly disabled in prod; flags OFF → legacy served (strangler intact); dark/light + mobile + routing + flag gating verified. Verdict: production-ready.
+- Gates: typecheck ✅ · lint ✅ (0 err) · unit 202 ✅ · a11y 11/11 ✅ · build ✅. **Merged (PR #23).**

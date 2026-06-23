@@ -171,6 +171,8 @@
 
 ## Phase 5 — Analysis Workspace
 
+**Status:** ✅ **COMPLETE** — merged (PR #23). Behind `ui.screen.analysis`; client-side analysis on typed sample/derived data (decisions #2/#3/#4). Spec taxonomy `brilliant·best·good·inaccuracy·mistake·blunder` (legacy `excellent→best`). See `ANALYSIS_WORKSPACE_DISCOVERY.md`, `ANALYSIS_WORKSPACE_VISUAL_ARCHITECTURE.md`, `PHASE_5_IMPLEMENTATION_PLAN.md`. Deferred to Phase 11: real client-Stockfish runner, persisted analysis, `move_analysis` taxonomy migration.
+
 **Objectives**
 - Build `/analysis/:id` per System Design §8 (the most detailed screen).
 - Board column: PlayerBars (avatar, mono rating·color, clock), **BoardContainer** + **EvalBar**, BoardControls (⏮‹›⏭ + Flip + material), **EvalTimeline** card.
