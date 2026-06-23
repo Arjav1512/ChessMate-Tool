@@ -20,3 +20,21 @@ export function readImproveQueue(): QueuedImport[] {
     return [];
   }
 }
+
+/**
+ * Append a mistake to the same Send-to-Improve queue the Study Plan ingests, so
+ * "Add to study plan" (Review Mistakes) and Analysis "Send to Improve" share one
+ * source of truth. Deduped by gameId+ply. Returns true if newly added.
+ */
+export function addToImproveQueue(item: QueuedImport): boolean {
+  if (typeof window === 'undefined') return false;
+  const queue = readImproveQueue();
+  if (queue.some((q) => q.gameId === item.gameId && q.ply === item.ply)) return false;
+  queue.push(item);
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+    return true;
+  } catch {
+    return false;
+  }
+}
