@@ -55,7 +55,7 @@ Command menu (⌘K) is global on every tier. Coach is reached contextually, not 
 
 ## Quality gates (as of the Phase 6 PR)
 
-- typecheck ✅ · lint ✅ (0 errors) · unit/component **212 passing** ✅ · Ivory a11y e2e **14/14** (shell + dashboard + analysis + improve) ✅ · build ✅.
+- typecheck ✅ · lint ✅ (0 errors) · unit/component **215 passing** ✅ · Ivory a11y e2e **14/14** (shell + dashboard + analysis + improve) ✅ · build ✅.
 - CI: `.github/workflows/ci.yml` runs lint, type-check+build, unit (w/ coverage), e2e, and a dedicated `accessibility` job (shell + dashboard + analysis + improve + landing axe); triggers on `main`/`prod/**`/`feature/**` PRs.
 
 ## Not yet done / known deferrals
