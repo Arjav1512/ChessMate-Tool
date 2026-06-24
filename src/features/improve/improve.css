@@ -11,7 +11,9 @@
 
 /* Rows */
 .iv-imp-row { display: grid; gap: var(--space-4); }
-.iv-imp-row--top { grid-template-columns: 1.4fr 1fr; }
+.iv-imp-row--top { grid-template-columns: 1.7fr 1fr; } /* Phase 8A: Focus dominates; radar quieter companion */
+/* Phase 8A: Plan & progress — study plan (primary) above study goals (secondary) */
+.iv-imp-planprogress { display: flex; flex-direction: column; gap: var(--space-4); }
 .iv-imp-row--bottom { grid-template-columns: 1.4fr 1fr; }
 
 /* Section heads */

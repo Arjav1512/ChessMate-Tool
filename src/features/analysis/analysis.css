@@ -72,6 +72,8 @@
 
 /* ----- Analysis column panels ----- */
 .iv-aw__tabcontent { display: flex; flex-direction: column; gap: var(--space-3); }
+/* Phase 8A: demoted stats (accuracy + move-quality counts) — quieter, below the insight. */
+.iv-aw__stats { display: flex; flex-direction: column; gap: var(--space-3); }
 .iv-aw__movelist { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--space-3); max-height: 280px; overflow-y: auto; }
 
 /* Accuracy summary */

@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button, EmptyState, Skeleton } from '../../components/ui/iv';
 import { useDashboardEmptyState } from './hooks';
-import {
-  ImprovementScoreCard, RatingTrendCard, BiggestWeaknessesCard, FocusCard,
-  RecentGamesCard, CoachSummaryCard, RoadmapTimeline,
-} from './cards';
+// Phase 8A simplification: the page composes 3 regions — a momentum line, the
+// Weekly Focus hero, and a "your plan" link-strip. RatingTrendCard (→ Progress,
+// Phase 9), RecentGamesCard (Games owns it), CoachSummaryCard, and the full
+// ImprovementScore/BiggestWeaknesses/Roadmap cards remain exported in `cards.tsx`
+// for relocation/reuse but are no longer rendered here.
+import { FocusCard, MomentumLine, PlanStripCard } from './cards';
 import './dashboard.css';
 
 function greetingFor(date = new Date()): string {
@@ -60,21 +62,10 @@ export function DashboardPage() {
         />
       ) : (
         <>
-          <div className="dash-row dash-row--score">
-            <ImprovementScoreCard />
-            <RatingTrendCard />
-          </div>
-          <div className="dash-row dash-row--mid">
-            <BiggestWeaknessesCard />
-            <FocusCard />
-          </div>
-          <div className="dash-row dash-row--bottom">
-            <RecentGamesCard />
-            <div className="dash-rightstack dash-order-stack">
-              <RoadmapTimeline />
-              <CoachSummaryCard />
-            </div>
-          </div>
+          {/* 1 · momentum (supporting) → 2 · Weekly Focus (hero) → 3 · plan link */}
+          <MomentumLine />
+          <FocusCard />
+          <PlanStripCard />
         </>
       )}
     </div>

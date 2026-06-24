@@ -104,13 +104,17 @@ describe('RecentGamesCard + RoadmapTimeline + CoachSummaryCard', () => {
 describe('DashboardPage (integration §7)', () => {
   beforeEach(() => { /* fresh client per render */ });
 
-  it('renders the greeting and all narrative sections (success state)', async () => {
+  it('renders the simplified 3-region composition (Phase 8A)', async () => {
     renderWithProviders(<DashboardPage />);
     expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(/Good (morning|afternoon|evening), Magnus/);
-    // Narrative spine captions present.
-    expect(await screen.findByText('How am I improving?')).toBeInTheDocument();
-    expect(screen.getByText("What’s holding me back?")).toBeInTheDocument();
-    expect(screen.getByText('What outcome can I expect?')).toBeInTheDocument();
+    // Momentum line + Weekly Focus hero + "Your plan" link-strip; the rating
+    // chart / recently-analyzed / coach-summary regions are no longer rendered.
+    expect(await screen.findByText('Your plan')).toBeInTheDocument();
+    expect(screen.getByText('What should I work on?')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /See your plan/ })).toBeInTheDocument();
+    // Removed regions are gone from the page.
+    expect(screen.queryByText('What outcome can I expect?')).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /Rating over/ })).not.toBeInTheDocument();
   });
 
   it('has exactly the primary "Continue improving" action in the greeting', async () => {
@@ -121,7 +125,7 @@ describe('DashboardPage (integration §7)', () => {
 
   it('has no axe violations', async () => {
     const { container } = renderWithProviders(<DashboardPage />);
-    await screen.findByText('How am I improving?');
+    await screen.findByText('Your plan');
     expect(await findA11yViolations(container)).toEqual([]);
   });
 });
