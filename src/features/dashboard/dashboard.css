@@ -19,7 +19,27 @@
 .dash-greeting__sub { color: var(--text-mid); margin-top: 6px; }
 .dash-greeting__actions { display: flex; gap: var(--space-3); flex-shrink: 0; }
 
-/* ----- Rows ----- */
+/* ----- Phase 8A: momentum line (demoted score) ----- */
+.dash-momentum { display: flex; align-items: center; gap: var(--space-4); width: 100%; text-align: left; background: none; border: none; padding: 0 2px; cursor: pointer; }
+.dash-momentum:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r-md); }
+.dash-momentum__score { font-family: var(--font-mono); font-size: 30px; font-weight: 600; color: var(--accent); line-height: 1; flex-shrink: 0; }
+.dash-momentum__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dash-momentum__verdict { color: var(--text-hi); font-size: 16px; font-weight: 600; display: inline-flex; align-items: baseline; gap: 8px; }
+.dash-momentum__delta { font-family: var(--font-mono); font-size: 13px; }
+.dash-momentum__meta { color: var(--text-low); font-size: 13px; font-family: var(--font-mono); }
+
+/* ----- Phase 8A: "your plan" link-strip (merged weaknesses + roadmap) ----- */
+.dash-planstrip__body { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.dash-planstrip__item { display: flex; align-items: center; gap: var(--space-3); background: none; border: none; text-align: left; cursor: pointer; padding: 8px; border-radius: var(--r-md); width: 100%; }
+.dash-planstrip__item:hover { background: var(--hover-tint); }
+.dash-planstrip__item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dash-planstrip__icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: var(--r-md); display: inline-flex; align-items: center; justify-content: center; font-size: 16px; background: var(--surface-2); border: 1px solid var(--border); color: var(--mq-color, var(--text-body)); }
+.dash-planstrip__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dash-planstrip__label { color: var(--text-hi); font-size: 13px; font-weight: 600; }
+.dash-planstrip__sub { color: var(--text-low); font-size: 12px; }
+@media (max-width: 767px) { .dash-planstrip__body { grid-template-columns: 1fr; } }
+
+/* ----- Rows (retained for relocated cards on other screens) ----- */
 .dash-row { display: grid; gap: var(--space-5); }
 .dash-row--score { grid-template-columns: 320px 1fr; }
 .dash-row--mid { grid-template-columns: 1fr 360px; }

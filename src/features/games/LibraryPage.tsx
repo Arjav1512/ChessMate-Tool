@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Dropdown, EmptyState, ErrorState, MetricCard, SearchInput, SegmentedControl, Skeleton } from '../../components/ui/iv';
+import { Button, Dropdown, EmptyState, ErrorState, SearchInput, SegmentedControl, Skeleton } from '../../components/ui/iv';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useGames } from './useGames';
 import { filterGames, timeControlOptions } from './filterGames';
-import { computeInsights } from './insights';
 import { allCollections, readFavorites, toggleFavorite, addCollection, type CollectionDef } from './collections';
 import { DEFAULT_FILTER, type ColorFilter, type GameFilter, type GameRowVM, type ResultFilter, type SortKey } from './types';
 import './games.css';
@@ -24,9 +23,10 @@ function StatusCell({ r }: { r: GameRowVM }) {
 }
 
 /**
- * Game Library (System Design §4.2) — "never just a list": quick-insight strip,
- * collections, filter toolbar, status badges. Real `games` data (DEV sample
- * fallback for the unauthenticated preview). Open a game → Analysis.
+ * Game Library (System Design §4.2) — a fast finder: collections, filter toolbar,
+ * status badges, and the table as the primary content (Phase 8A removed the
+ * quick-insight strip). Real `games` data (DEV sample fallback for the
+ * unauthenticated preview). Open a game → Analysis.
  */
 export function LibraryPage() {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ export function LibraryPage() {
   const activeCollection = collections.find((c) => c.id === collectionId);
   const favoritesOnly = !!activeCollection?.favorites;
 
-  const insights = useMemo(() => computeInsights(rows), [rows]);
+  const analyzedCount = useMemo(() => rows.filter((r) => r.status === 'analyzed').length, [rows]);
   const tcOptions = useMemo(() => timeControlOptions(rows), [rows]);
   const shown = useMemo(() => filterGames(rows, filter, { favoritesOnly, favorites }), [rows, filter, favoritesOnly, favorites]);
 
@@ -66,7 +66,7 @@ export function LibraryPage() {
       <div className="iv-games__head">
         <div>
           <h1 ref={h1Ref} tabIndex={-1} className="iv-games__title iv-h1" style={{ outline: 'none' }}>Your games</h1>
-          <p className="iv-games__sub iv-body-sm">{rows.length} game{rows.length === 1 ? '' : 's'} · find any game, jump into analysis.</p>
+          <p className="iv-games__sub iv-body-sm">{rows.length} game{rows.length === 1 ? '' : 's'} · {analyzedCount} analyzed · find any game, jump into analysis.</p>
         </div>
         <div className="iv-games__actions">
           <Button variant="ghost" disabled title="Coming soon">Connect · soon</Button>
@@ -78,8 +78,7 @@ export function LibraryPage() {
         <ErrorState message={error} onRetry={() => window.location.reload()} />
       ) : loading ? (
         <>
-          <div className="iv-games__insights">{[0, 1, 2].map((i) => <Skeleton key={i} height={76} />)}</div>
-          {[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} height={48} />)}
+          {[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} height={48} />)}
         </>
       ) : rows.length === 0 ? (
         <EmptyState
@@ -90,13 +89,8 @@ export function LibraryPage() {
         />
       ) : (
         <>
-          {/* Quick-insight strip */}
-          <div className="iv-games__insights">
-            <MetricCard label="Most common mistake" value={insights.mostCommonMistake ?? '—'} sublabel={insights.mostCommonMistake ? undefined : 'Analyze games to see'} />
-            <MetricCard label="Best opening" value={insights.bestOpening?.name ?? '—'} sublabel={insights.bestOpening ? `${insights.bestOpening.winPct}% win · ${insights.bestOpening.games} games` : 'Need more games'} />
-            <MetricCard label="Avg accuracy" value={insights.avgAccuracy != null ? `${insights.avgAccuracy}%` : '—'} sublabel={insights.avgAccuracy != null ? undefined : 'Analyze games to see'} />
-          </div>
-
+          {/* Phase 8A: quick-insight strip removed — the library leads with the
+              finder (collections + filters + table), not analytics. */}
           {/* Collections */}
           <div className="iv-games__collections" role="group" aria-label="Collections">
             {collections.map((c) => (
