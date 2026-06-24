@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button, EmptyState, Skeleton } from '../../components/ui/iv';
 import { useDashboardEmptyState } from './hooks';
-import {
-  ImprovementScoreCard, RatingTrendCard, BiggestWeaknessesCard, FocusCard,
-  RecentGamesCard, CoachSummaryCard, RoadmapTimeline,
-} from './cards';
+// Phase 8A simplification: the page composes 3 regions — a momentum line, the
+// Weekly Focus hero, and a "your plan" link-strip. RatingTrendCard (→ Progress,
+// Phase 9), RecentGamesCard (Games owns it), CoachSummaryCard, and the full
+// ImprovementScore/BiggestWeaknesses/Roadmap cards remain exported in `cards.tsx`
+// for relocation/reuse but are no longer rendered here.
+import { FocusCard, MomentumLine, PlanStripCard } from './cards';
 import './dashboard.css';
 
 function greetingFor(date = new Date()): string {
@@ -37,13 +39,13 @@ export function DashboardPage() {
     <div className="dash iv-page-enter">
       <div className="dash-greeting">
         <div className="dash-greeting__text">
-          <h1 ref={h1Ref} tabIndex={-1} className="iv-h2" style={{ outline: 'none', color: 'var(--text-hi)' }}>
+          <h1 ref={h1Ref} tabIndex={-1} className="iv-h1" style={{ outline: 'none', color: 'var(--text-hi)' }}>
             {greetingFor()}, {name}
           </h1>
           <p className="dash-greeting__sub iv-body-sm">Here’s where to put your time today.</p>
         </div>
         <div className="dash-greeting__actions">
-          <Button variant="secondary" onClick={() => navigate('/games/import')}>Import games</Button>
+          <Button variant="ghost" onClick={() => navigate('/games/import')}>Import games</Button>
           <Button onClick={() => navigate('/improve')}>Continue improving →</Button>
         </div>
       </div>
@@ -59,23 +61,16 @@ export function DashboardPage() {
           action={<Button onClick={() => navigate('/games/import')}>Import your first game</Button>}
         />
       ) : (
-        <>
-          <div className="dash-row dash-row--score">
-            <ImprovementScoreCard />
-            <RatingTrendCard />
+        // 8A.1: balanced composition — Weekly Focus hero (left) + a supporting
+        // rail (momentum + "your plan") on the right, so the canvas fills
+        // intentionally on wide viewports without re-adding analytics cards.
+        <div className="dash-hero-row">
+          <FocusCard />
+          <div className="dash-rail">
+            <MomentumLine />
+            <PlanStripCard />
           </div>
-          <div className="dash-row dash-row--mid">
-            <BiggestWeaknessesCard />
-            <FocusCard />
-          </div>
-          <div className="dash-row dash-row--bottom">
-            <RecentGamesCard />
-            <div className="dash-rightstack dash-order-stack">
-              <RoadmapTimeline />
-              <CoachSummaryCard />
-            </div>
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

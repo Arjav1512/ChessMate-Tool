@@ -5,7 +5,7 @@ import AxeBuilder from '@axe-core/playwright';
  * Accessibility gate for the new Ivory app shell (Phase 3.5).
  *
  * The shell is reachable without auth via the `?shell` dev preview, which mounts
- * the routed shell with placeholder screens. These tests certify the shell
+ * the routed shell (post-cutover `/` → the real Dashboard). These tests certify the shell
  * CHROME (sidebar nav, command menu, keyboard model, contrast) — the surface
  * Phase 3.5 is responsible for. Real-browser rendering means color-contrast is
  * meaningful here (jsdom component tests cannot compute it).
@@ -57,9 +57,19 @@ test.describe('Accessibility — Ivory app shell', () => {
     await expect(dialog).toBeHidden();
   });
 
-  test('skip-to-content link is keyboard reachable', async ({ page }) => {
-    await page.keyboard.press('Tab');
+  test('skip-to-content link is the first tab stop and keyboard-focusable', async ({ page }) => {
+    // Contract: the skip link is the first focusable element in the shell (before
+    // the nav) and can take keyboard focus. Asserted structurally to avoid racing
+    // the route-focus pattern (real screens focus their <h1> on mount).
     const skip = page.getByRole('link', { name: /Skip to content/i });
+    await expect(skip).toHaveAttribute('href', '#ivs-main');
+    const firstIsSkip = await page.evaluate(() => {
+      const focusables = [...document.querySelectorAll<HTMLElement>('a[href], button, input, select, textarea, [tabindex]')]
+        .filter((e) => e.tabIndex >= 0 && !e.hasAttribute('disabled'));
+      return focusables[0]?.classList.contains('ivs-skiplink') ?? false;
+    });
+    expect(firstIsSkip).toBe(true);
+    await skip.focus();
     await expect(skip).toBeFocused();
   });
 });

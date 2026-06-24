@@ -15,7 +15,6 @@ import { InsightCard } from './InsightCard';
 import { MoveList } from './MoveList';
 import { LinesTab } from './LinesTab';
 import { CoachTab } from './CoachTab';
-import { CoachNote } from './CoachNote';
 import { useAnalysis } from './hooks';
 import { useSendToImprove } from './sendToImprove';
 import './analysis.css';
@@ -116,7 +115,8 @@ export function AnalysisPage() {
           onRevealBest={() => setTab('lines')}
           onAskCoach={() => setTab('coach')}
         />
-        <CoachNote move={currentMove} onOpenCoach={() => setTab('coach')} />
+        {/* Phase 8A: standalone CoachNote merged into the InsightCard — its inline
+            "Ask coach" is the single coach entry point (one voice, not two). */}
       </TabPanel>
       <TabPanel active={activeTab === 'coach'}>
         <CoachTab game={game} move={currentMove} currentFen={currentFen} />
@@ -153,9 +153,13 @@ export function AnalysisPage() {
         {isMobile
           ? <SegmentedControl ariaLabel="Analysis views" value={activeTab} onChange={setTab} options={TABS} />
           : <Tabs ariaLabel="Analysis views" value={activeTab} onChange={setTab} tabs={TABS} />}
-        <AccuracySummary user={analysis.accuracyUser} opponent={analysis.accuracyOpponent} />
-        <MoveQualityCounts counts={counts} />
+        {/* Phase 8A: the insight leads (hero); accuracy + move-quality counts are
+            demoted below it as a quiet stats caption, not a band above it. */}
         <div className="iv-aw__tabcontent">{tabContent}</div>
+        <div className="iv-aw__stats">
+          <AccuracySummary user={analysis.accuracyUser} opponent={analysis.accuracyOpponent} />
+          <MoveQualityCounts counts={counts} />
+        </div>
         <div className="iv-aw__movelist">
           <MoveList moves={moves} currentPly={currentPly} onSeek={setPly} />
         </div>
