@@ -7,24 +7,24 @@
 .dash {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: var(--space-7) var(--space-7) var(--space-12);
+  padding: var(--space-8) var(--space-7) var(--space-12);
   display: flex;
   flex-direction: column;
-  gap: var(--space-7);
+  gap: var(--space-8); /* refinement: more air between major regions (§3) */
 }
 
 /* ----- Greeting ----- */
-.dash-greeting { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.dash-greeting { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-2); }
 .dash-greeting__text { min-width: 0; }
-.dash-greeting__sub { color: var(--text-mid); margin-top: 4px; }
+.dash-greeting__sub { color: var(--text-mid); margin-top: 6px; }
 .dash-greeting__actions { display: flex; gap: var(--space-3); flex-shrink: 0; }
 
 /* ----- Rows ----- */
-.dash-row { display: grid; gap: var(--space-4); }
+.dash-row { display: grid; gap: var(--space-5); }
 .dash-row--score { grid-template-columns: 320px 1fr; }
 .dash-row--mid { grid-template-columns: 1fr 360px; }
 .dash-row--bottom { grid-template-columns: 1.4fr 1fr; }
-.dash-rightstack { display: flex; flex-direction: column; gap: var(--space-4); }
+.dash-rightstack { display: flex; flex-direction: column; gap: var(--space-5); }
 
 .dash-card__head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: var(--space-4); gap: var(--space-3); }
 .dash-card__titles { display: flex; flex-direction: column; gap: 2px; }
@@ -149,9 +149,10 @@
   .dash-row--score, .dash-row--mid, .dash-row--bottom { grid-template-columns: 1fr; }
 }
 @media (max-width: 767px) {
-  .dash { padding: var(--space-5) var(--space-4) var(--space-12); gap: var(--space-5); }
-  .dash-greeting__actions { width: 100%; }
-  .dash-greeting__actions > * { flex: 1; }
+  .dash { padding: var(--space-5) var(--space-4) var(--space-12); gap: var(--space-6); }
+  /* Stack header actions full-width so the primary reads clearly (not split 50/50). */
+  .dash-greeting__actions { width: 100%; flex-direction: column-reverse; }
+  .dash-greeting__actions > * { width: 100%; }
   /* Flatten every row so cards become direct flex items of .dash and can be
      reordered into the score-first hierarchy (§4.11):
      score → focus → rating → weaknesses → recent → coach/roadmap. */

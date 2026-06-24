@@ -60,7 +60,7 @@ export function ImportPage() {
   return (
     <div className="iv-gimport iv-page-enter">
       <div>
-        <h1 ref={h1Ref} tabIndex={-1} className="iv-games__title iv-h2" style={{ outline: 'none' }}>Add games</h1>
+        <h1 ref={h1Ref} tabIndex={-1} className="iv-games__title iv-h1" style={{ outline: 'none' }}>Add games</h1>
         <p className="iv-games__sub iv-body-sm">Paste a PGN or upload a file. We’ll parse, preview, and queue them for analysis.</p>
       </div>
 

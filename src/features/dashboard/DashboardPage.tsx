@@ -37,13 +37,13 @@ export function DashboardPage() {
     <div className="dash iv-page-enter">
       <div className="dash-greeting">
         <div className="dash-greeting__text">
-          <h1 ref={h1Ref} tabIndex={-1} className="iv-h2" style={{ outline: 'none', color: 'var(--text-hi)' }}>
+          <h1 ref={h1Ref} tabIndex={-1} className="iv-h1" style={{ outline: 'none', color: 'var(--text-hi)' }}>
             {greetingFor()}, {name}
           </h1>
           <p className="dash-greeting__sub iv-body-sm">Here’s where to put your time today.</p>
         </div>
         <div className="dash-greeting__actions">
-          <Button variant="secondary" onClick={() => navigate('/games/import')}>Import games</Button>
+          <Button variant="ghost" onClick={() => navigate('/games/import')}>Import games</Button>
           <Button onClick={() => navigate('/improve')}>Continue improving →</Button>
         </div>
       </div>

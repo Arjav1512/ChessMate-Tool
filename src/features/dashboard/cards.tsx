@@ -158,7 +158,10 @@ export function FocusCard() {
               <MetricCard label="Phase acc" value={`+${q.data.phaseDeltaPct}%`} delta={{ value: q.data.phaseDeltaPct, direction: 'up' }} />
             </div>
             <div className="dash-focus__cta">
-              <Button onClick={() => navigate('/improve')}>Start session →</Button>
+              {/* Dashboard summary action: secondary so the page has one primary
+                  ("Continue improving" in the header). The real focus primary
+                  lives on Improve. */}
+              <Button variant="secondary" onClick={() => navigate('/improve')}>Start session →</Button>
               <span className="dash-focus__time">~{q.data.estMinutes} min</span>
             </div>
           </>

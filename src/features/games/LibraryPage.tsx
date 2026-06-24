@@ -65,7 +65,7 @@ export function LibraryPage() {
     <div className="iv-games iv-page-enter">
       <div className="iv-games__head">
         <div>
-          <h1 ref={h1Ref} tabIndex={-1} className="iv-games__title iv-h2" style={{ outline: 'none' }}>Your games</h1>
+          <h1 ref={h1Ref} tabIndex={-1} className="iv-games__title iv-h1" style={{ outline: 'none' }}>Your games</h1>
           <p className="iv-games__sub iv-body-sm">{rows.length} game{rows.length === 1 ? '' : 's'} · find any game, jump into analysis.</p>
         </div>
         <div className="iv-games__actions">
