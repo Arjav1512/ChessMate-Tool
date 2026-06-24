@@ -11,7 +11,9 @@
 
 /* Rows */
 .iv-imp-row { display: grid; gap: var(--space-4); }
-.iv-imp-row--top { grid-template-columns: 1.4fr 1fr; }
+.iv-imp-row--top { grid-template-columns: 1.7fr 1fr; } /* Phase 8A: Focus dominates; radar quieter companion */
+/* Phase 8A: Plan & progress — study plan (primary) above study goals (secondary) */
+.iv-imp-planprogress { display: flex; flex-direction: column; gap: var(--space-4); }
 .iv-imp-row--bottom { grid-template-columns: 1.4fr 1fr; }
 
 /* Section heads */
@@ -28,8 +30,12 @@
 .iv-imp-focus__cta { display: flex; align-items: center; gap: var(--space-3); }
 
 /* ── Skill profile / radar ── */
-.iv-radar { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
-.iv-radar__svg { max-width: 360px; }
+/* Balance the skill card: center the radar in the card's full height (no empty
+   band below) and let it fill more of the width. */
+.iv-imp-order-skill { display: flex; flex-direction: column; }
+.iv-imp-order-skill .iv-radar { flex: 1; justify-content: center; }
+.iv-radar { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); }
+.iv-radar__svg { max-width: 400px; }
 .iv-radar__label { font-family: var(--font-sans); font-size: 11px; font-weight: 600; fill: var(--text-mid); }
 .iv-radar__legend { display: flex; gap: var(--space-4); font-size: 12px; color: var(--text-low); }
 .iv-radar__legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -100,8 +106,8 @@
 .iv-rm__nomatch { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-8) var(--space-4); color: var(--text-low); border: 1px dashed var(--border); border-radius: var(--r-lg); }
 
 /* Feed list */
-.iv-rm__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 620px; overflow-y: auto; }
-.iv-rm-row { display: flex; align-items: center; gap: var(--space-3); width: 100%; text-align: left; background: none; border: 1px solid transparent; border-radius: var(--r-md); padding: 10px var(--space-3); cursor: pointer; }
+.iv-rm__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 640px; overflow-y: auto; }
+.iv-rm-row { display: flex; align-items: center; gap: var(--space-3); width: 100%; text-align: left; background: none; border: 1px solid transparent; border-radius: var(--r-md); padding: 13px var(--space-3); cursor: pointer; }
 .iv-rm-row:hover { background: var(--hover-tint); }
 .iv-rm-row:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .iv-rm-row--sel { background: var(--surface-2); border-color: var(--border); }

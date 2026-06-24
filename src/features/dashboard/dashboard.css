@@ -7,24 +7,53 @@
 .dash {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: var(--space-7) var(--space-7) var(--space-12);
+  padding: var(--space-8) var(--space-7) var(--space-12);
   display: flex;
   flex-direction: column;
-  gap: var(--space-7);
+  gap: var(--space-8); /* refinement: more air between major regions (§3) */
 }
 
 /* ----- Greeting ----- */
-.dash-greeting { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.dash-greeting { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-2); }
 .dash-greeting__text { min-width: 0; }
-.dash-greeting__sub { color: var(--text-mid); margin-top: 4px; }
+.dash-greeting__sub { color: var(--text-mid); margin-top: 6px; }
 .dash-greeting__actions { display: flex; gap: var(--space-3); flex-shrink: 0; }
 
-/* ----- Rows ----- */
-.dash-row { display: grid; gap: var(--space-4); }
+/* ----- Phase 8A.1: balanced hero + supporting rail ----- */
+.dash-hero-row { display: grid; grid-template-columns: 1.6fr 1fr; gap: var(--space-5); align-items: stretch; }
+.dash-hero-row > .iv-card { height: 100%; }
+.dash-rail { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+@media (max-width: 1023px) { .dash-hero-row { grid-template-columns: 1fr; } }
+
+/* ----- Phase 8A: momentum line (demoted score) — a small card in the rail ----- */
+.dash-momentum { display: flex; align-items: center; gap: var(--space-4); width: 100%; text-align: left; cursor: pointer;
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--space-4) var(--space-5); }
+.dash-momentum:hover { background: var(--hover-tint); }
+.dash-momentum:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dash-momentum__score { font-family: var(--font-mono); font-size: 30px; font-weight: 600; color: var(--accent); line-height: 1; flex-shrink: 0; }
+.dash-momentum__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dash-momentum__verdict { color: var(--text-hi); font-size: 16px; font-weight: 600; display: inline-flex; align-items: baseline; gap: 8px; }
+.dash-momentum__delta { font-family: var(--font-mono); font-size: 13px; }
+.dash-momentum__meta { color: var(--text-low); font-size: 13px; font-family: var(--font-mono); }
+
+/* ----- Phase 8A: "your plan" link-strip (merged weaknesses + roadmap) ----- */
+/* In the rail the plan items stack vertically (single column). */
+.dash-planstrip__body { display: flex; flex-direction: column; gap: var(--space-3); }
+.dash-planstrip__item { display: flex; align-items: center; gap: var(--space-3); background: none; border: none; text-align: left; cursor: pointer; padding: 8px; border-radius: var(--r-md); width: 100%; }
+.dash-planstrip__item:hover { background: var(--hover-tint); }
+.dash-planstrip__item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dash-planstrip__icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: var(--r-md); display: inline-flex; align-items: center; justify-content: center; font-size: 16px; background: var(--surface-2); border: 1px solid var(--border); color: var(--mq-color, var(--text-body)); }
+.dash-planstrip__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dash-planstrip__label { color: var(--text-hi); font-size: 13px; font-weight: 600; }
+.dash-planstrip__sub { color: var(--text-low); font-size: 12px; }
+@media (max-width: 767px) { .dash-planstrip__body { grid-template-columns: 1fr; } }
+
+/* ----- Rows (retained for relocated cards on other screens) ----- */
+.dash-row { display: grid; gap: var(--space-5); }
 .dash-row--score { grid-template-columns: 320px 1fr; }
 .dash-row--mid { grid-template-columns: 1fr 360px; }
 .dash-row--bottom { grid-template-columns: 1.4fr 1fr; }
-.dash-rightstack { display: flex; flex-direction: column; gap: var(--space-4); }
+.dash-rightstack { display: flex; flex-direction: column; gap: var(--space-5); }
 
 .dash-card__head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: var(--space-4); gap: var(--space-3); }
 .dash-card__titles { display: flex; flex-direction: column; gap: 2px; }
@@ -149,9 +178,10 @@
   .dash-row--score, .dash-row--mid, .dash-row--bottom { grid-template-columns: 1fr; }
 }
 @media (max-width: 767px) {
-  .dash { padding: var(--space-5) var(--space-4) var(--space-12); gap: var(--space-5); }
-  .dash-greeting__actions { width: 100%; }
-  .dash-greeting__actions > * { flex: 1; }
+  .dash { padding: var(--space-5) var(--space-4) var(--space-12); gap: var(--space-6); }
+  /* Stack header actions full-width so the primary reads clearly (not split 50/50). */
+  .dash-greeting__actions { width: 100%; flex-direction: column-reverse; }
+  .dash-greeting__actions > * { width: 100%; }
   /* Flatten every row so cards become direct flex items of .dash and can be
      reordered into the score-first hierarchy (§4.11):
      score → focus → rating → weaknesses → recent → coach/roadmap. */

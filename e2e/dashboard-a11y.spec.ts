@@ -29,9 +29,11 @@ test.describe('Accessibility — Dashboard', () => {
     expect(results.violations.filter((v) => v.id === 'color-contrast')).toEqual([]);
   });
 
-  test('route focus lands on the H1 and charts are labelled', async ({ page }) => {
+  test('route focus lands on the H1; one primary; Weekly Focus is the hero', async ({ page }) => {
+    // Phase 8A: Dashboard simplified to momentum line · Weekly Focus hero · plan
+    // strip. The Rating chart moved to Progress; the score is now a momentum line.
     await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
-    await expect(page.getByRole('img', { name: /Improvement score \d+ of 100/ })).toBeVisible();
-    await expect(page.getByRole('img', { name: /Rating over/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Continue improving/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Improvement score \d+ of 100/i })).toBeVisible();
   });
 });

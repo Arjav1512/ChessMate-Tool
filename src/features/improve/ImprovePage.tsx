@@ -25,7 +25,7 @@ export function ImprovePage() {
   return (
     <div className="iv-improve iv-page-enter">
       <div className="iv-imp-header">
-        <h1 ref={h1Ref} tabIndex={-1} className="iv-imp-header__title iv-h2" style={{ outline: 'none' }}>Your improvement plan</h1>
+        <h1 ref={h1Ref} tabIndex={-1} className="iv-imp-header__title iv-h1" style={{ outline: 'none' }}>Your improvement plan</h1>
         <p className="iv-imp-header__prov iv-body-sm">Built from {data.analyzedGames} analyzed games · refreshes as you play.</p>
         <div className="iv-imp-viewswitch">
           <SegmentedControl

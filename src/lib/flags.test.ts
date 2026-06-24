@@ -10,9 +10,19 @@ describe('feature flags (§23) — resolution order', () => {
   beforeEach(() => { window.localStorage.clear(); setUrl(''); });
   afterEach(() => { window.localStorage.clear(); setUrl(''); });
 
-  it('defaults every flag to OFF (production unchanged)', () => {
+  it('post-cutover defaults: Ivory shell + 4 ready screens ON, rest OFF', () => {
     const flags = resolveInitialFlags();
-    for (const k of FLAG_KEYS) expect(flags[k]).toBe(false);
+    const on = ['ui.newShell', 'ui.screen.dashboard', 'ui.screen.analysis', 'ui.screen.improve', 'ui.screen.games'];
+    for (const k of on) expect(flags[k as (typeof FLAG_KEYS)[number]]).toBe(true);
+    // Unbuilt screens stay OFF → graceful PlaceholderPage.
+    for (const k of ['ui.screen.coach', 'ui.screen.weaknesses', 'ui.screen.progress', 'ui.screen.settings', 'ui.screen.profile'] as const) {
+      expect(flags[k]).toBe(false);
+    }
+  });
+
+  it('emergency rollback: ?ff=-ui.newShell forces the legacy shell off-default', () => {
+    setUrl('ff=-ui.newShell');
+    expect(resolveInitialFlags()['ui.newShell']).toBe(false);
   });
 
   it('localStorage enables a flag', () => {

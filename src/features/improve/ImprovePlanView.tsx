@@ -52,7 +52,9 @@ export function ImprovePlanView() {
         }}
       />
 
-      <div className="iv-imp-row iv-imp-row--bottom">
+      {/* Phase 8A: Study Goals folded under the Study Plan as one "Plan &
+          progress" region (no longer two ordered lists competing side-by-side). */}
+      <div className="iv-imp-planprogress">
         <StudyPlanCard plan={data.plan} onStart={startItem} />
         <MilestonesCard milestones={data.milestones} />
       </div>

@@ -1,19 +1,15 @@
-import { MetricCard, Skeleton } from '../../components/ui/iv';
+import { MetricCard } from '../../components/ui/iv';
 
 export interface AccuracySummaryProps {
   user: number | null;
   opponent: number | null;
 }
 
-/** Accuracy summary (§8): your accuracy + delta vs opponent, opponent accuracy. */
+/** Accuracy summary (§8): your accuracy + delta vs opponent, opponent accuracy.
+ *  Secondary/supporting — collapses (renders nothing) until accuracy is available
+ *  rather than showing placeholder-looking skeleton cards (8A.1 fix). */
 export function AccuracySummary({ user, opponent }: AccuracySummaryProps) {
-  if (user == null || opponent == null) {
-    return (
-      <div className="iv-aw__accuracy">
-        <Skeleton height={48} /><Skeleton height={48} />
-      </div>
-    );
-  }
+  if (user == null || opponent == null) return null;
   const delta = user - opponent;
   return (
     <div className="iv-aw__accuracy">

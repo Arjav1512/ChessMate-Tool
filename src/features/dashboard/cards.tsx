@@ -158,7 +158,10 @@ export function FocusCard() {
               <MetricCard label="Phase acc" value={`+${q.data.phaseDeltaPct}%`} delta={{ value: q.data.phaseDeltaPct, direction: 'up' }} />
             </div>
             <div className="dash-focus__cta">
-              <Button onClick={() => navigate('/improve')}>Start session →</Button>
+              {/* Dashboard summary action: secondary so the page has one primary
+                  ("Continue improving" in the header). The real focus primary
+                  lives on Improve. */}
+              <Button variant="secondary" onClick={() => navigate('/improve')}>Start session →</Button>
               <span className="dash-focus__time">~{q.data.estMinutes} min</span>
             </div>
           </>
@@ -251,6 +254,79 @@ export function RoadmapTimeline() {
           ))}
         </div>
       </CardState>
+    </Card>
+  );
+}
+
+// ─── Momentum line (Phase 8A: demoted Improvement Score → compact verdict) ──
+// Reuses useImprovementScore; supporting context (never error-blocks the page).
+export function MomentumLine() {
+  const q = useImprovementScore();
+  const navigate = useNavigate();
+  if (q.isLoading) return <Skeleton height={64} />;
+  if (q.isError || !q.data) return null;
+  const up = q.data.deltaPts >= 0;
+  return (
+    <button className="dash-momentum" onClick={() => navigate('/improve')}
+      aria-label={`Improvement score ${q.data.score} of 100, ${up ? 'up' : 'down'} ${Math.abs(q.data.deltaPts)} in 30 days. ${q.data.verdict}. Last game ${q.data.lastGameAccuracy}% accuracy, ${q.data.streakDays} day streak.`}>
+      <span className="dash-momentum__score" aria-hidden>{q.data.score}</span>
+      <span className="dash-momentum__body">
+        <span className="dash-momentum__verdict">
+          {q.data.verdict}
+          <span className="dash-momentum__delta" style={{ color: up ? 'var(--success)' : 'var(--error)' }}>
+            <span aria-hidden>{up ? '▲' : '▼'}</span> {Math.abs(q.data.deltaPts)}
+          </span>
+        </span>
+        <span className="dash-momentum__meta">{q.data.lastGameAccuracy}% last game · {q.data.streakDays}d streak</span>
+      </span>
+    </button>
+  );
+}
+
+// ─── Your plan (Phase 8A: merged Biggest Weaknesses + Roadmap → Improve entry) ──
+// One weakness + the active milestone, linking into Improve (stops mirroring it).
+export function PlanStripCard() {
+  const w = useTopWeaknesses();
+  const r = useRoadmap();
+  const navigate = useNavigate();
+  const isLoading = w.isLoading || r.isLoading;
+  const top = w.data?.[0];
+  const milestone = r.data?.find((n) => n.status === 'in_progress') ?? r.data?.[0];
+  return (
+    <Card className="dash-planstrip">
+      <div className="dash-card__head">
+        <div className="dash-card__titles">
+          <span className="iv-label dash-card__title">Your plan</span>
+          <span className="dash-card__q">What should I work on?</span>
+        </div>
+        <button className="dash-link" onClick={() => navigate('/improve')}>See your plan →</button>
+      </div>
+      {isLoading ? (
+        <Skeleton height={72} />
+      ) : (
+        <div className="dash-planstrip__body">
+          {top && (
+            <button className="dash-planstrip__item" onClick={() => navigate('/improve')}
+              aria-label={`Top weakness: ${top.name}. ${top.action}`}>
+              <span className="dash-planstrip__icon" style={{ ['--mq-color' as string]: top.impact === 'high' ? 'var(--error)' : top.impact === 'medium' ? 'var(--warning)' : 'var(--text-mid)' }}>{top.icon}</span>
+              <span className="dash-planstrip__text">
+                <span className="dash-planstrip__label">Focus: {top.name}</span>
+                <span className="dash-planstrip__sub">{top.action} →</span>
+              </span>
+            </button>
+          )}
+          {milestone && (
+            <button className="dash-planstrip__item" onClick={() => navigate('/improve')}
+              aria-label={`Next milestone: ${milestone.label}`}>
+              <span className="dash-planstrip__icon" aria-hidden>◎</span>
+              <span className="dash-planstrip__text">
+                <span className="dash-planstrip__label">Next milestone</span>
+                <span className="dash-planstrip__sub">{milestone.label}</span>
+              </span>
+            </button>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
