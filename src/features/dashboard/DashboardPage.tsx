@@ -61,12 +61,16 @@ export function DashboardPage() {
           action={<Button onClick={() => navigate('/games/import')}>Import your first game</Button>}
         />
       ) : (
-        <>
-          {/* 1 · momentum (supporting) → 2 · Weekly Focus (hero) → 3 · plan link */}
-          <MomentumLine />
+        // 8A.1: balanced composition — Weekly Focus hero (left) + a supporting
+        // rail (momentum + "your plan") on the right, so the canvas fills
+        // intentionally on wide viewports without re-adding analytics cards.
+        <div className="dash-hero-row">
           <FocusCard />
-          <PlanStripCard />
-        </>
+          <div className="dash-rail">
+            <MomentumLine />
+            <PlanStripCard />
+          </div>
+        </div>
       )}
     </div>
   );
