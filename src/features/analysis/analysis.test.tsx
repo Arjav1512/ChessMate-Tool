@@ -11,6 +11,10 @@ import { AnalysisPage } from './AnalysisPage';
 import { IvToastProvider } from '../../components/ui/iv';
 import type { AnalysisMoveVM } from './types';
 
+// Phase 8B: useAnalysis now reads auth; with no user it uses the sample path
+// (the demo experience these tests assert). Mock useAuth to return no user.
+vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
+
 function move(partial: Partial<AnalysisMoveVM>): AnalysisMoveVM {
   return {
     ply: 10, moveNumber: 5, color: 'w', san: 'Qxh7', from: 'd3', to: 'h7',
