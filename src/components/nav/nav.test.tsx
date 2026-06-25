@@ -22,22 +22,22 @@ function renderSidebar() {
 }
 
 describe('Sidebar (§6 / IA §3)', () => {
-  it('renders the primary destinations in IA order with correct links', () => {
+  it('renders the built primary destinations in IA order with correct links', () => {
     renderSidebar();
     for (const [label, href] of [
       ['Dashboard', '/dashboard'],
       ['Games', '/games'],
       ['Analysis', '/analysis'],
       ['Improve', '/improve'],
-      ['Coach', '/coach'],
     ] as const) {
       expect(screen.getByRole('link', { name: new RegExp(label) })).toHaveAttribute('href', href);
     }
   });
 
-  it('does NOT expose Settings/Profile as primary nav (they live in the user menu, §3)', () => {
+  it('hides unbuilt destinations from the sidebar (Phase S1 — Coach not yet shipped)', () => {
     renderSidebar();
     const nav = screen.getByRole('navigation', { name: 'Primary' });
+    expect(nav).not.toHaveTextContent('Coach');
     expect(nav).not.toHaveTextContent('Settings');
     expect(nav).not.toHaveTextContent('Profile');
   });
@@ -48,8 +48,8 @@ describe('Sidebar (§6 / IA §3)', () => {
   });
 });
 
-describe('UserMenu (§3 — Settings/Profile/Sign out)', () => {
-  it('opens an account menu with Profile, Settings and Sign out', () => {
+describe('UserMenu (§3 — account menu)', () => {
+  it('opens an account menu with Sign out; unbuilt Profile/Settings are hidden (Phase S1)', () => {
     const onSignOut = vi.fn();
     render(
       <MemoryRouter>
@@ -58,8 +58,9 @@ describe('UserMenu (§3 — Settings/Profile/Sign out)', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Account menu' }));
     expect(screen.getByRole('menu', { name: 'Account' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Profile' })).toHaveAttribute('href', '/profile');
-    expect(screen.getByRole('menuitem', { name: 'Settings' })).toHaveAttribute('href', '/settings');
+    // Profile/Settings are not yet shipped → hidden from the menu.
+    expect(screen.queryByRole('menuitem', { name: 'Profile' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Settings' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
     expect(onSignOut).toHaveBeenCalledOnce();
     // Selecting an item closes the menu.

@@ -45,7 +45,7 @@ export function UserMenu({
     <div className={`ivs-usermenu ivs-usermenu--${variant}`} ref={ref}>
       {open && (
         <div className="ivs-usermenu__pop" role="menu" aria-label="Account">
-          {USER_MENU.map((item) => (
+          {USER_MENU.filter((item) => item.built).map((item) => (
             <NavLink
               key={item.key}
               to={item.path}

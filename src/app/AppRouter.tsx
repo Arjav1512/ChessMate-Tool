@@ -59,7 +59,7 @@ function placeholderFor(key: string) {
     // Fail fast + diagnosable if a route key drifts from navigation config.
     throw new Error(`placeholderFor: unknown route key "${key}"`);
   }
-  return <PlaceholderPage title={d.label} purpose={d.purpose} phase={d.phase} path={d.path} />;
+  return <PlaceholderPage title={d.label} purpose={d.purpose} />;
 }
 
 /**
