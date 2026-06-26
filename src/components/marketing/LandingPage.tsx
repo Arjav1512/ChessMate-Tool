@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '../layout/ThemeToggle';
 import { useResponsive } from '../../hooks/useResponsive';
+import './landing.css';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -23,6 +24,7 @@ interface LandingPageProps {
 export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
   return (
     <div
+      className="landing-ivory"
       style={{
         minHeight: '100vh',
         background: 'var(--cm-bg-base)',
@@ -80,7 +82,7 @@ function NavBar({ onSignIn, onGetStarted }: { onSignIn: () => void; onGetStarted
               fontSize: '20px',
               lineHeight: 1,
               color: 'var(--cm-accent)',
-              filter: 'drop-shadow(0 1px 6px rgba(240,168,64,0.4))',
+              filter: 'drop-shadow(0 1px 6px rgba(224,178,110,0.35))',
             }}
           >
             ♟
@@ -166,7 +168,7 @@ function Hero({ onGetStarted, onSignIn }: { onGetStarted: () => void; onSignIn: 
           transform: 'translateX(-50%)',
           width: '720px',
           height: '720px',
-          background: 'radial-gradient(circle, rgba(240,168,64,0.18), rgba(240,168,64,0) 70%)',
+          background: 'radial-gradient(circle, rgba(224,178,110,0.16), rgba(224,178,110,0) 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -296,8 +298,8 @@ function DemoBoard() {
 
   // Bg5 just played (last move) → threat on Nf6
   const highlights: Record<string, string> = {
-    '3-6': 'rgba(240,168,64,0.45)',  // Bg5 last move (from)
-    '2-5': 'rgba(239,68,68,0.25)',   // Nf6 threatened piece
+    '3-6': 'var(--board-lastmove)',  // Bg5 last move (from)
+    '2-5': 'rgba(216,91,74,0.28)',   // Nf6 threatened piece
   };
 
   const WHITE_PIECES = new Set(['♔', '♕', '♖', '♗', '♘', '♙']);
@@ -328,9 +330,7 @@ function DemoBoard() {
               style={{
                 fontSize: 'clamp(16px, 3vw, 26px)',
                 lineHeight: 1,
-                color: isWhite
-                  ? dark ? '#f5e8c8' : '#ede0c4'
-                  : dark ? '#1c1c28' : '#2c2c3e',
+                color: isWhite ? 'var(--piece-white)' : 'var(--piece-black)',
                 textShadow: isWhite
                   ? '0 1px 4px rgba(0,0,0,0.65)'
                   : '0 1px 3px rgba(255,255,255,0.25)',
