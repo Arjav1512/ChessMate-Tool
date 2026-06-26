@@ -1,0 +1,59 @@
+/*
+ * Landing — Ivory re-theme (Phase S1 · PR1).
+ *
+ * The marketing landing was authored against the legacy "Obsidian" token set
+ * (`--cm-*`, indigo accent). Rather than rewrite its ~900 lines of inline styles,
+ * we remap every legacy token to its Ivory equivalent under a single scope class.
+ * Structure, content, hierarchy, and CTAs are unchanged — only the palette,
+ * surfaces, borders, and mono font resolve to the Ivory design system, so the
+ * public landing and the authenticated app read as one product.
+ *
+ * Ivory base tokens (`--bg`, `--accent`, `--text-*`, …) are defined on :root by
+ * default (dark + ivory), so they resolve here without any data-* attributes.
+ */
+.landing-ivory {
+  /* Surfaces & backgrounds */
+  --cm-bg-base: var(--bg);
+  --cm-bg-surface: var(--surface-1);
+  --cm-bg-elevated: var(--surface-2);
+  --cm-bg-hover: var(--hover-tint);
+
+  /* Text */
+  --cm-text-primary: var(--text-hi);
+  --cm-text-secondary: var(--text-mid);
+  --cm-text-muted: var(--text-low);
+  --cm-text-inverse: var(--on-accent);
+
+  /* Borders */
+  --cm-border-subtle: var(--border);
+  --cm-border-default: var(--border);
+  --cm-border-strong: var(--border-strong);
+
+  /* Accent (ivory, not indigo/orange) */
+  --cm-accent: var(--accent);
+  --cm-accent-bright: var(--accent-bright);
+  --cm-accent-strong: var(--accent-bright);
+  --cm-accent-dim: var(--accent-glow);
+  --cm-accent-ring: var(--accent-glow);
+
+  /* Status */
+  --cm-success: var(--success);
+  --cm-success-dim: rgba(111, 190, 133, 0.16);
+  --cm-warning: var(--warning);
+  --cm-warning-dim: rgba(224, 174, 69, 0.16);
+  --cm-error: var(--error);
+  --cm-error-bright: var(--error);
+  --cm-error-dim: rgba(216, 91, 74, 0.16);
+
+  /* Board (hero preview) — warm Ivory wood */
+  --cm-board-light: var(--board-light);
+  --cm-board-dark: var(--board-dark);
+
+  /* Mono font */
+  --font-family-mono: var(--font-mono);
+
+  /* Inherit the Ivory page background + base text */
+  background: var(--bg-grad);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+}
