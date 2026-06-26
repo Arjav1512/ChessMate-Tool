@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import { Tabs, TabPanel, SegmentedControl } from '../../components/ui/iv';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Tabs, TabPanel, SegmentedControl, ErrorState } from '../../components/ui/iv';
 import { useBreakpoint } from '../../hooks/useResponsive';
 import { useAnalysisStepper } from '../../stores/analysisStepperStore';
 import { emptyCounts } from '../../lib/analysis/moveQuality';
@@ -41,6 +41,7 @@ const TABS = [
 
 export function AnalysisPage() {
   const { id = 'sample' } = useParams();
+  const navigate = useNavigate();
   const { width } = useBreakpoint();
   const isMobile = width < 768;
   const { game, moves, analysis } = useAnalysis(id);
@@ -95,6 +96,23 @@ export function AnalysisPage() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [currentPly, total, setPly, flip]);
+
+  // A real game that can't be loaded (unknown id, deleted game, or RLS denied)
+  // resolves to `failed`. Show a recovered error state instead of an empty board
+  // with "—" players (Phase 0 W2 — polished production states, not raw fallbacks).
+  if (analysis.status === 'failed') {
+    return (
+      <div className="iv-page-enter" style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: 'var(--space-8) var(--space-7)' }}>
+        <ErrorState
+          icon={<span style={{ fontSize: 26 }} aria-hidden>♟</span>}
+          title="We couldn’t open this game"
+          message="This game may have been removed, or it isn’t available on your account. Head back to your library and pick another to analyze."
+          onRetry={() => navigate('/games')}
+          retryLabel="Back to games"
+        />
+      </div>
+    );
+  }
 
   const topPlayer = orientation === 'w'
     ? { name: game.black, rating: game.blackRating, color: 'b' as const, isUser: game.userColor === 'b' }
