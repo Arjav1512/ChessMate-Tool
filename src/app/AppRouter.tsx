@@ -98,11 +98,14 @@ export function AppRouter() {
                 <Route index element={<ImprovePlanView />} />
                 <Route path="mistakes" element={<ReviewMistakesView />} />
               </Route>
-              <Route path="/weaknesses" element={placeholderFor('weaknesses')} />
-              <Route path="/progress" element={placeholderFor('progress')} />
-              <Route path="/coach" element={placeholderFor('coach')} />
-              <Route path="/settings" element={placeholderFor('settings')} />
-              <Route path="/profile" element={placeholderFor('profile')} />
+              {/* Phase 0 (W1 — navigation stabilization): unfinished screens are
+                  intentionally NOT registered as routes. Coach, Settings, Profile,
+                  Weaknesses, and Progress are already hidden from every nav surface
+                  (navigation.ts `built:false`); a direct/stale URL now falls through
+                  to the catch-all below and redirects to the dashboard, so there is
+                  no user-facing dead-end ("Coming soon" page) anywhere. Re-listing a
+                  screen when it ships is a one-line route here plus flipping `built`
+                  in navigation.ts. */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Routes>
