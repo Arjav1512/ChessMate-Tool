@@ -1,6 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+
+// ImprovePage reads auth (via the real-data Review-Mistakes count); with no user
+// it uses the DEV sample feed these integration tests assert. Mock useAuth.
+vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
+
 import { mapCategory, severityBand, worstSeverity, impactScore } from '../../lib/improve/mapping';
 import { composePlan } from '../../lib/improve/composePlan';
 import { ImprovePage } from './ImprovePage';
