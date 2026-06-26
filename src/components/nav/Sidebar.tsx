@@ -49,7 +49,7 @@ export function Sidebar({
       )}
 
       <nav className="ivs-nav" aria-label="Primary">
-        {PRIMARY_NAV.map((item) => (
+        {PRIMARY_NAV.filter((item) => item.built).map((item) => (
           <NavLink key={item.key} to={item.path} className="ivs-navitem" title={item.label}>
             <span className="ivs-navitem__glyph" aria-hidden>{item.glyph}</span>
             <span className="ivs-navitem__label">{item.label}</span>

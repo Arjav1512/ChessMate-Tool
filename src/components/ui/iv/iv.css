@@ -122,7 +122,7 @@
 .iv-search__kbd {
   position: absolute; right: 10px;
   font-family: var(--font-mono); font-size: 11px;
-  color: var(--text-faint);
+  color: var(--text-mid); /* was --text-faint (3.49:1) — AA fix at 11px (Phase S1) */
   border: 1px solid var(--border); border-radius: var(--r-xs);
   padding: 2px 6px; pointer-events: none;
 }
