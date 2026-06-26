@@ -23,7 +23,11 @@
 .dash-hero-row { display: grid; grid-template-columns: 1.6fr 1fr; gap: var(--space-5); align-items: stretch; }
 .dash-hero-row > .iv-card { height: 100%; }
 .dash-rail { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
-@media (max-width: 1023px) { .dash-hero-row { grid-template-columns: 1fr; } }
+/* Phase 0 (W5): the 2-column hero+rail needs real width to avoid cramped wraps
+   in the rail (e.g. "You're improving steadily", "Endgame conversion"). Keep two
+   columns only at desktop (≥1280); laptop/tablet/mobile get the comfortable
+   single-column stack, which also fills the lower canvas more intentionally. */
+@media (max-width: 1279px) { .dash-hero-row { grid-template-columns: 1fr; } }
 
 /* ----- Phase 8A: momentum line (demoted score) — a small card in the rail ----- */
 .dash-momentum { display: flex; align-items: center; gap: var(--space-4); width: 100%; text-align: left; cursor: pointer;
