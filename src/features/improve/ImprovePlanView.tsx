@@ -20,7 +20,10 @@ export function ImprovePlanView() {
     ?? data.categories[0]?.category ?? 'tactical';
 
   const startItem = (item: StudyItemVM) => {
-    if (item.type === 'coach_review') { navigate('/coach'); return; }
+    // Phase 0 (W1): the Coach screen isn't shipped, so coach-review items must not
+    // deep-link to an unfinished screen. Keep the item honest with a "coming soon"
+    // note instead of a dead-end redirect.
+    if (item.type === 'coach_review') { toast('Coach sessions are coming soon — keep reviewing your mistakes to improve.', 'info'); return; }
     if (item.type === 'replay') { navigate('/improve/mistakes'); return; }
     toast(`Starting: ${item.title}`, 'info');
   };
