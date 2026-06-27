@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { buildReviewFeed, applyFilter, motifOptions } from './adapter';
+
+// B2: useReviewMistakes reads auth; with no user it uses the DEV sample feed
+// (the populated experience these view tests assert). Mock useAuth → no user.
+vi.mock('../../../contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
 import { sampleDetectedMistakes, makeSampleMistakes } from './sampleMistakes';
 import { ReviewMistakesView } from './ReviewMistakesView';
 import { IvToastProvider } from '../../../components/ui/iv';
