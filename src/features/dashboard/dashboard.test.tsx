@@ -10,9 +10,10 @@ import {
 import { DashboardPage } from './DashboardPage';
 import { findA11yViolations } from '../../test/axe';
 
-// Avoid booting Supabase auth in jsdom — the dashboard only reads user for the greeting.
+// B4: the dashboard hooks read auth; with no user they take the DEV sample path
+// (the populated cards these tests assert). Mock useAuth → no user.
 vi.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { email: 'magnus@chess.com', user_metadata: { display_name: 'Magnus' } } }),
+  useAuth: () => ({ user: null }),
 }));
 
 function renderWithProviders(ui: React.ReactNode, initialEntries = ['/dashboard']) {
@@ -106,7 +107,7 @@ describe('DashboardPage (integration §7)', () => {
 
   it('renders the simplified 3-region composition (Phase 8A)', async () => {
     renderWithProviders(<DashboardPage />);
-    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(/Good (morning|afternoon|evening), Magnus/);
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(/Good (morning|afternoon|evening), there/);
     // Momentum line + Weekly Focus hero + "Your plan" link-strip; the rating
     // chart / recently-analyzed / coach-summary regions are no longer rendered.
     expect(await screen.findByText('Your plan')).toBeInTheDocument();
