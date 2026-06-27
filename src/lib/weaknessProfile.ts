@@ -48,6 +48,12 @@ export interface Weakness {
   evidence: string[];
   trend: Trend;
   sampleSize: number;
+  /** 0–100: how often this weakness shows up (real share of relevant games /
+   *  phase moves). Drives ranking + the Improve focus rationale — never fabricated. */
+  frequencyPct: number;
+  /** 0–100: representative real accuracy for this weakness's context (per-phase
+   *  strength for phase weaknesses, else the user's overall analyzed accuracy). */
+  phaseAccuracy: number;
 }
 
 /** One of the user's own moves (from move_analysis): phase, classification, motifs. */
@@ -84,6 +90,8 @@ export interface WeaknessProfile {
   phaseMoveCount: number;
   /** Compact one-liner for the AI coach context. Empty when nothing significant. */
   summaryLine: string;
+  /** 0–100 mean accuracy across the user's analyzed games (real; 0 when none). */
+  overallAccuracy: number;
 }
 
 type Outcome = 'win' | 'loss' | 'draw';
@@ -176,6 +184,11 @@ export function buildWeaknessProfile(games: WeaknessGame[], moves: UserMove[] = 
   const analyzed = byTime.filter((g) => g.analysis);
   const baseline = score(decided);
 
+  // Real mean accuracy across analyzed games — the honest fallback "accuracy" for
+  // weaknesses that aren't phase-scoped (opening/color/recurring). 0 when none.
+  const analyzedAccs = analyzed.map((g) => g.analysis!.accuracy).filter((a): a is number => typeof a === 'number');
+  const overallAccuracy = analyzedAccs.length ? Math.round(analyzedAccs.reduce((s, a) => s + a, 0) / analyzedAccs.length) : 0;
+
   const weaknesses: Weakness[] = [];
 
   // ── 1. Opening weaknesses ────────────────────────────────────────────────
@@ -208,6 +221,8 @@ export function buildWeaknessProfile(games: WeaknessGame[], moves: UserMove[] = 
         evidence,
         trend: trendOf(gs, score),
         sampleSize: gs.length,
+        frequencyPct: Math.round((gs.length / decided.length) * 100),
+        phaseAccuracy: avgAcc !== null ? Math.round(avgAcc) : overallAccuracy,
       });
     }
   }
@@ -229,6 +244,8 @@ export function buildWeaknessProfile(games: WeaknessGame[], moves: UserMove[] = 
         evidence: [`${gs.length} games as ${color} · ${pct(wr)} score`],
         trend: trendOf(gs, score),
         sampleSize: gs.length,
+        frequencyPct: Math.round((gs.length / decided.length) * 100),
+        phaseAccuracy: overallAccuracy,
       });
     }
   }
@@ -258,6 +275,8 @@ export function buildWeaknessProfile(games: WeaknessGame[], moves: UserMove[] = 
         // blunderRate is "higher = fewer blunders" so it aligns with trendOf.
         trend: trendOf(analyzed, blunderRate),
         sampleSize: analyzed.length,
+        frequencyPct: Math.round(rate * 100),
+        phaseAccuracy: overallAccuracy,
       });
     }
   }
@@ -303,6 +322,8 @@ export function buildWeaknessProfile(games: WeaknessGame[], moves: UserMove[] = 
         ],
         trend: 'unknown',
         sampleSize: worst.moves,
+        frequencyPct: Math.round((worst.mistakes / worst.moves) * 100),
+        phaseAccuracy: worst.strength,
       });
     }
   }
@@ -333,6 +354,8 @@ export function buildWeaknessProfile(games: WeaknessGame[], moves: UserMove[] = 
         evidence: [`${occurrences} time${occurrences === 1 ? '' : 's'} across ${gamesWith.size} games · ${pct(frequency)} of analyzed`],
         trend: 'unknown',
         sampleSize: gamesWith.size,
+        frequencyPct: Math.round(frequency * 100),
+        phaseAccuracy: overallAccuracy,
       });
     }
   }
@@ -354,5 +377,6 @@ export function buildWeaknessProfile(games: WeaknessGame[], moves: UserMove[] = 
     phaseStrengths,
     phaseMoveCount: moves.length,
     summaryLine,
+    overallAccuracy,
   };
 }
