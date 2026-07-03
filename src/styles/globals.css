@@ -91,3 +91,63 @@
     animation: none;
   }
 }
+
+/* =============================================================================
+   Ivory compatibility scope.
+
+   Views authored against the legacy "Obsidian" token set (`--cm-*`, indigo
+   accent) — the marketing landing and the pre-auth AuthForm — carry ~hundreds
+   of inline `var(--cm-*)` styles. Rather than rewrite them, we remap every
+   legacy token to its Ivory equivalent under a single class. Any pre-auth
+   surface that should read as Ivory just adds `ivory-scope` to its root.
+
+   Ivory base tokens (`--bg`, `--accent`, `--text-*`, …) are defined on :root
+   in tokens.css, so they resolve here without any data-* attributes. Class
+   specificity beats :root, so this wins regardless of stylesheet order.
+   ========================================================================== */
+.ivory-scope {
+  /* Surfaces & backgrounds */
+  --cm-bg-base: var(--bg);
+  --cm-bg-surface: var(--surface-1);
+  --cm-bg-elevated: var(--surface-2);
+  --cm-bg-hover: var(--hover-tint);
+
+  /* Text */
+  --cm-text-primary: var(--text-hi);
+  --cm-text-secondary: var(--text-mid);
+  --cm-text-muted: var(--text-low);
+  --cm-text-inverse: var(--on-accent);
+
+  /* Borders */
+  --cm-border-subtle: var(--border);
+  --cm-border-default: var(--border);
+  --cm-border-strong: var(--border-strong);
+
+  /* Accent (ivory, not indigo/orange) */
+  --cm-accent: var(--accent);
+  --cm-accent-bright: var(--accent-bright);
+  --cm-accent-strong: var(--accent-bright);
+  --cm-accent-dim: var(--accent-glow);
+  --cm-accent-ring: var(--accent-glow);
+
+  /* Status */
+  --cm-success: var(--success);
+  --cm-success-dim: rgba(111, 190, 133, 0.16);
+  --cm-warning: var(--warning);
+  --cm-warning-dim: rgba(224, 174, 69, 0.16);
+  --cm-error: var(--error);
+  --cm-error-bright: var(--error);
+  --cm-error-dim: rgba(216, 91, 74, 0.16);
+
+  /* Board (hero preview) — warm Ivory wood */
+  --cm-board-light: var(--board-light);
+  --cm-board-dark: var(--board-dark);
+
+  /* Mono font */
+  --font-family-mono: var(--font-mono);
+
+  /* Inherit the Ivory page background + base text */
+  background: var(--bg-grad);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+}

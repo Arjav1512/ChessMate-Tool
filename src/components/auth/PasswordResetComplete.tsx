@@ -61,6 +61,7 @@ export function PasswordResetComplete() {
 
   return (
     <div
+      className="ivory-scope"
       style={{
         minHeight: '100vh',
         background: 'var(--cm-bg-base)',

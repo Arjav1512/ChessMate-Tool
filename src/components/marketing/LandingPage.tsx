@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Upload,
   Brain,
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '../layout/ThemeToggle';
 import { useResponsive } from '../../hooks/useResponsive';
-import './landing.css';
+import { useLandingReveal } from '../../hooks/useRevealAnimations';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -22,9 +22,12 @@ interface LandingPageProps {
 // ─── Top-level container ────────────────────────────────────────────────────
 
 export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useLandingReveal(rootRef);
   return (
     <div
-      className="landing-ivory"
+      ref={rootRef}
+      className="ivory-scope"
       style={{
         minHeight: '100vh',
         background: 'var(--cm-bg-base)',
@@ -60,7 +63,7 @@ function NavBar({ onSignIn, onGetStarted }: { onSignIn: () => void; onGetStarted
         zIndex: 30,
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        background: 'rgba(12,14,18,0.72)',
+        background: 'color-mix(in srgb, var(--cm-bg-base) 72%, transparent)',
         borderBottom: '1px solid var(--cm-border-subtle)',
       }}
     >
@@ -174,7 +177,6 @@ function Hero({ onGetStarted, onSignIn }: { onGetStarted: () => void; onSignIn: 
       />
 
       <div
-        className="fade-up"
         style={{
           position: 'relative',
           maxWidth: '780px',
@@ -183,6 +185,7 @@ function Hero({ onGetStarted, onSignIn }: { onGetStarted: () => void; onSignIn: 
         }}
       >
         <span
+          data-reveal="hero"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -200,6 +203,7 @@ function Hero({ onGetStarted, onSignIn }: { onGetStarted: () => void; onSignIn: 
         </span>
 
         <h1
+          data-reveal="hero"
           style={{
             fontSize: 'clamp(38px, 6vw, 60px)',
             fontWeight: 700,
@@ -213,6 +217,7 @@ function Hero({ onGetStarted, onSignIn }: { onGetStarted: () => void; onSignIn: 
         </h1>
 
         <p
+          data-reveal="hero"
           style={{
             fontSize: 'clamp(15px, 2vw, 18px)',
             color: 'var(--cm-text-secondary)',
@@ -226,7 +231,7 @@ function Hero({ onGetStarted, onSignIn }: { onGetStarted: () => void; onSignIn: 
           inaccuracy, blunder, and breakthrough.
         </p>
 
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div data-reveal="hero" style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button onClick={onGetStarted} style={{ ...primaryBtn, padding: '12px 22px', fontSize: '14px' }}>
             Get started free <ArrowRight size={14} />
           </button>
@@ -236,6 +241,7 @@ function Hero({ onGetStarted, onSignIn }: { onGetStarted: () => void; onSignIn: 
         </div>
 
         <p
+          data-reveal="hero"
           style={{
             marginTop: '24px',
             fontSize: '12px',
@@ -254,8 +260,9 @@ function Hero({ onGetStarted, onSignIn }: { onGetStarted: () => void; onSignIn: 
 function DemoSection() {
   return (
     <section style={sectionWrap}>
-      <div className="fade-up" style={sectionInner}>
+      <div style={sectionInner}>
         <div
+          data-reveal="section"
           style={{
             background: 'var(--cm-bg-surface)',
             border: '1px solid var(--cm-border-subtle)',
@@ -500,6 +507,7 @@ function FeaturesGrid() {
           subtitle="No fluff. Each feature was built to answer a question a real player asks themselves after a tough game."
         />
         <div
+          data-reveal="stagger"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
@@ -569,6 +577,7 @@ function HowItWorks() {
           title="Three steps from upload to insight."
         />
         <div
+          data-reveal="stagger"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
@@ -608,6 +617,7 @@ function ExampleAnalysis() {
       <div style={sectionInner}>
         <SectionHeader eyebrow="Example output" title="A taste of the analysis." />
         <div
+          data-reveal="section"
           style={{
             background: 'var(--cm-bg-surface)',
             border: '1px solid var(--cm-border-subtle)',
@@ -711,6 +721,7 @@ function ProgressPreview() {
           subtitle="Every uploaded game updates your stats. Color-split, W/L/D, mistakes and blunders all tracked."
         />
         <div
+          data-reveal="section"
           style={{
             background: 'var(--cm-bg-surface)',
             border: '1px solid var(--cm-border-subtle)',
@@ -726,12 +737,13 @@ function ProgressPreview() {
               </linearGradient>
             </defs>
             <path
+              data-reveal="chart-area"
               d={`${path} L 360 80 L 0 80 Z`}
               fill="url(#lp-grad)"
             />
-            <path d={path} stroke="var(--cm-accent)" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path data-reveal="chart-line" d={path} stroke="var(--cm-accent)" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
             {points.map(([x, y], i) => (
-              <circle key={i} cx={x} cy={y} r="3" fill="var(--cm-accent)" />
+              <circle key={i} data-reveal="chart-dot" cx={x} cy={y} r="3" fill="var(--cm-accent)" />
             ))}
           </svg>
           <div
@@ -901,6 +913,7 @@ function PricingSection({ onGetStarted }: { onGetStarted: () => void }) {
           subtitle="Stockfish analysis, PGN imports, and progress tracking are always free. Richer features are on the roadmap."
         />
         <div
+          data-reveal="stagger"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
@@ -1005,6 +1018,7 @@ function FinalCTA({ onGetStarted }: { onGetStarted: () => void }) {
         }}
       >
         <div
+          data-reveal="section"
           style={{
             background:
               'linear-gradient(135deg, var(--cm-bg-surface), var(--cm-bg-elevated))',
