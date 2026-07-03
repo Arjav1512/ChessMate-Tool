@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { BOTTOM_TABS, PRIMARY_NAV } from '../../app/navigation';
+import { NavIcon } from './navIcons';
 
 const TAB_LABEL: Record<string, string> = { dashboard: 'Home' };
 
@@ -14,7 +15,7 @@ export function BottomTabBar() {
     <nav className="ivs-bottombar" aria-label="Primary">
       {items.map((item) => (
         <NavLink key={item.key} to={item.path} className="ivs-bottombar__item">
-          <span className="ivs-bottombar__glyph" aria-hidden>{item.glyph}</span>
+          <span className="ivs-bottombar__glyph"><NavIcon navKey={item.key} size={20} /></span>
           <span>{TAB_LABEL[item.key] ?? item.label}</span>
         </NavLink>
       ))}

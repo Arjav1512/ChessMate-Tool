@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { COMMAND_DESTINATIONS } from '../../app/navigation';
 import { useCommandMenuStore } from '../../stores/commandMenuStore';
+import { NavIcon } from './navIcons';
 
 interface CommandItem {
   id: string;
   group: 'Go to' | 'Actions';
   label: string;
-  glyph: string;
+  /** nav-icon key (destination key or action id) for a consistent Lucide icon. */
+  iconKey: string;
   run: () => void;
 }
 
@@ -27,12 +29,12 @@ export function CommandMenu() {
 
   const items: CommandItem[] = useMemo(() => {
     const goTo: CommandItem[] = COMMAND_DESTINATIONS.map((d) => ({
-      id: `go-${d.key}`, group: 'Go to', label: d.label, glyph: d.glyph,
+      id: `go-${d.key}`, group: 'Go to', label: d.label, iconKey: d.key,
       run: () => navigate(d.path),
     }));
     const actions: CommandItem[] = [
-      { id: 'act-import', group: 'Actions', label: 'Import PGN', glyph: '⊕', run: () => navigate('/games/import') },
-      { id: 'act-focus', group: 'Actions', label: 'Start focus session', glyph: '▲', run: () => navigate('/improve') },
+      { id: 'act-import', group: 'Actions', label: 'Import PGN', iconKey: 'act-import', run: () => navigate('/games/import') },
+      { id: 'act-focus', group: 'Actions', label: 'Start focus session', iconKey: 'act-focus', run: () => navigate('/improve') },
     ];
     return [...goTo, ...actions];
   }, [navigate]);
@@ -113,7 +115,7 @@ export function CommandMenu() {
                   onMouseEnter={() => setActive(i)}
                   onClick={() => execute(item)}
                 >
-                  <span className="ivs-cmdk__glyph" aria-hidden>{item.glyph}</span>
+                  <span className="ivs-cmdk__glyph"><NavIcon navKey={item.iconKey} size={16} /></span>
                   {item.label}
                 </button>
               </div>

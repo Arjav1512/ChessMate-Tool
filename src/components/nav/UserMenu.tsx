@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { USER_MENU } from '../../app/navigation';
 import { Avatar } from '../ui/iv';
+import { NavIcon } from './navIcons';
 
 /**
  * User/profile menu (System Design §3 "user/profile menu pinned bottom of
@@ -53,12 +54,12 @@ export function UserMenu({
               className="ivs-usermenu__item"
               onClick={() => setOpen(false)}
             >
-              <span aria-hidden>{item.glyph}</span>
+              <NavIcon navKey={item.key} size={16} />
               {item.label}
             </NavLink>
           ))}
           <button role="menuitem" className="ivs-usermenu__item" onClick={() => { setOpen(false); onSignOut(); }}>
-            <span aria-hidden>⏻</span>
+            <NavIcon navKey="signout" size={16} />
             Sign out
           </button>
         </div>

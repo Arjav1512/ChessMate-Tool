@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { PRIMARY_NAV } from '../../app/navigation';
 import { useUiStore } from '../../stores/uiStore';
 import { useCommandMenuStore } from '../../stores/commandMenuStore';
 import { SearchInput } from '../ui/iv';
 import { UserMenu } from './UserMenu';
+import { NavIcon } from './navIcons';
 
 /**
  * Persistent left sidebar (System Design §6 Navigation Components, IA §3):
@@ -51,7 +53,7 @@ export function Sidebar({
       <nav className="ivs-nav" aria-label="Primary">
         {PRIMARY_NAV.filter((item) => item.built).map((item) => (
           <NavLink key={item.key} to={item.path} className="ivs-navitem" title={item.label}>
-            <span className="ivs-navitem__glyph" aria-hidden>{item.glyph}</span>
+            <span className="ivs-navitem__glyph"><NavIcon navKey={item.key} /></span>
             <span className="ivs-navitem__label">{item.label}</span>
           </NavLink>
         ))}
@@ -65,7 +67,7 @@ export function Sidebar({
           onClick={toggleSidebar}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? '»' : '«'}
+          {collapsed ? <ChevronsRight size={16} aria-hidden /> : <ChevronsLeft size={16} aria-hidden />}
         </button>
       )}
 
