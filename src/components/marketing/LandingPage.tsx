@@ -258,6 +258,7 @@ function Hero({ onGetStarted, onSignIn }: { onGetStarted: () => void; onSignIn: 
 // ─── Demo section — fake board + eval gauge ────────────────────────────────
 
 function DemoSection() {
+  const { isMobile } = useResponsive();
   return (
     <section style={sectionWrap}>
       <div style={sectionInner}>
@@ -267,15 +268,15 @@ function DemoSection() {
             background: 'var(--cm-bg-surface)',
             border: '1px solid var(--cm-border-subtle)',
             borderRadius: '16px',
-            padding: '24px',
+            padding: isMobile ? '16px' : '24px',
             boxShadow: '0 24px 64px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03)',
           }}
         >
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)',
-              gap: '24px',
+              gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) minmax(0,1fr)',
+              gap: isMobile ? '18px' : '24px',
               alignItems: 'center',
             }}
           >
