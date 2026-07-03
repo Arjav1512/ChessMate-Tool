@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEntrance } from '../../hooks/useRevealAnimations';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -26,6 +27,8 @@ export function AuthForm({ onBackToLanding }: AuthFormProps = {}) {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { signIn, signUp, signInWithGoogle, signInWithGitHub, authError, clearAuthError } = useAuth();
   const { showToast } = useToast();
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEntrance(cardRef);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +97,7 @@ export function AuthForm({ onBackToLanding }: AuthFormProps = {}) {
   };
 
   return (
-    <div style={{
+    <div className="ivory-scope" style={{
       minHeight: '100vh',
       background: 'var(--cm-bg-base)',
       display: 'flex',
@@ -102,7 +105,7 @@ export function AuthForm({ onBackToLanding }: AuthFormProps = {}) {
       justifyContent: 'center',
       padding: '24px',
     }}>
-      <div className="fade-up" style={{ width: '100%', maxWidth: '400px' }}>
+      <div ref={cardRef} style={{ width: '100%', maxWidth: '400px' }}>
         {onBackToLanding && (
           <button
             type="button"

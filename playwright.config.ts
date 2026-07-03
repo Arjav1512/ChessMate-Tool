@@ -16,6 +16,10 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // Disable CSS animations (e.g. the .iv-page-enter fade) so axe measures final
+    // opacity deterministically — otherwise a slow runner can sample text
+    // mid-fade and report false color-contrast failures.
+    reducedMotion: 'reduce',
   },
 
   projects: [

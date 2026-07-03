@@ -1,0 +1,156 @@
+/* =============================================================================
+   Improve Hub (System Design §9). Token-bound; scoped to .iv-improve / .iv-imp-*.
+   Improve-owned components (decision #5) — does not touch Dashboard/Analysis.
+   ========================================================================== */
+
+.iv-improve { max-width: var(--content-max); margin: 0 auto; padding: var(--space-7) var(--space-7) var(--space-12); display: flex; flex-direction: column; gap: var(--space-7); }
+
+/* Header */
+.iv-imp-header__title { color: var(--text-hi); }
+.iv-imp-header__prov { color: var(--text-low); margin-top: 4px; }
+
+/* Rows */
+.iv-imp-row { display: grid; gap: var(--space-4); }
+.iv-imp-row--top { grid-template-columns: 1.7fr 1fr; } /* Phase 8A: Focus dominates; radar quieter companion */
+/* Phase 8A: Plan & progress — study plan (primary) above study goals (secondary) */
+.iv-imp-planprogress { display: flex; flex-direction: column; gap: var(--space-4); }
+.iv-imp-row--bottom { grid-template-columns: 1.4fr 1fr; }
+
+/* Section heads */
+.iv-imp-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-4); }
+.iv-imp-head__title { color: var(--text-hi); }
+
+/* ── Weekly Focus (hero, one Primary) ── */
+.iv-imp-focus__label { color: var(--accent); display: inline-flex; align-items: center; gap: 6px; margin-bottom: var(--space-2); }
+.iv-imp-focus__title { color: var(--text-hi); margin-bottom: var(--space-2); }
+.iv-imp-focus__rationale { color: var(--text-mid); font-size: 13px; line-height: 1.55; margin-bottom: var(--space-4); max-width: 56ch; }
+.iv-imp-focus__progress { margin-bottom: var(--space-4); }
+.iv-imp-focus__progresslabel { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-low); margin-bottom: 6px; }
+.iv-imp-focus__metrics { display: flex; gap: var(--space-5); margin-bottom: var(--space-4); }
+.iv-imp-focus__cta { display: flex; align-items: center; gap: var(--space-3); }
+
+/* ── Skill profile / radar ── */
+/* Balance the skill card: center the radar in the card's full height (no empty
+   band below) and let it fill more of the width. */
+.iv-imp-order-skill { display: flex; flex-direction: column; }
+.iv-imp-order-skill .iv-radar { flex: 1; justify-content: center; }
+.iv-radar { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); }
+.iv-radar__svg { max-width: 400px; }
+.iv-radar__label { font-family: var(--font-sans); font-size: 11px; font-weight: 600; fill: var(--text-mid); }
+.iv-radar__legend { display: flex; gap: var(--space-4); font-size: 12px; color: var(--text-low); }
+.iv-radar__legend span { display: inline-flex; align-items: center; gap: 6px; }
+.iv-radar__swatch { width: 14px; height: 0; border-top: 2px solid var(--accent); display: inline-block; }
+.iv-radar__swatch--peers { border-top: 2px dashed var(--text-faint); }
+
+/* ── Weakness profile ── */
+.iv-imp-weak__grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.iv-imp-cat { display: flex; flex-direction: column; gap: var(--space-3); }
+.iv-imp-cat--weakest { border-color: color-mix(in srgb, var(--error) 45%, transparent); }
+.iv-imp-cat__head { display: flex; align-items: center; gap: var(--space-3); }
+.iv-imp-cat__icon { width: 34px; height: 34px; border-radius: var(--r-md); display: inline-flex; align-items: center; justify-content: center; font-size: 17px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-body); flex-shrink: 0; }
+.iv-imp-cat__name { color: var(--text-hi); font-size: 15px; font-weight: 600; flex: 1; }
+.iv-imp-cat__acc { font-family: var(--font-mono); font-size: 12px; color: var(--text-low); }
+.iv-imp-sub { display: flex; align-items: center; gap: var(--space-3); width: 100%; background: none; border: none; text-align: left; cursor: pointer; padding: 8px; border-radius: var(--r-sm); }
+.iv-imp-sub:hover { background: var(--hover-tint); }
+.iv-imp-sub:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-imp-sub__body { flex: 1; min-width: 0; }
+.iv-imp-sub__name { color: var(--text-body); font-size: 13px; font-weight: 600; }
+.iv-imp-sub__rec { color: var(--accent); font-size: 12px; margin-top: 2px; }
+.iv-imp-sub__arrow { color: var(--text-faint); }
+
+/* ── Study plan ── */
+.iv-imp-plan { display: flex; flex-direction: column; }
+.iv-imp-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid transparent; border-radius: var(--r-md); width: 100%; background: none; text-align: left; cursor: pointer; }
+.iv-imp-item + .iv-imp-item { margin-top: 6px; }
+.iv-imp-item:hover { background: var(--hover-tint); }
+.iv-imp-item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-imp-item--next { background: color-mix(in srgb, var(--mq-best) 12%, transparent); border-color: color-mix(in srgb, var(--mq-best) 32%, transparent); }
+.iv-imp-item--done { opacity: 0.6; }
+.iv-imp-item__icon { width: 30px; height: 30px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; font-size: 14px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-mid); flex-shrink: 0; }
+.iv-imp-item__body { flex: 1; min-width: 0; }
+.iv-imp-item__title { color: var(--text-hi); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.iv-imp-item__desc { color: var(--text-low); font-size: 12px; margin-top: 2px; }
+.iv-imp-item__time { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); flex-shrink: 0; }
+.iv-imp-item__tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 1px 6px; border-radius: var(--r-pill); }
+.iv-imp-item__tag--next { background: var(--mq-best); color: var(--on-accent); }
+.iv-imp-item__tag--import { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+
+/* ── Milestones (chess study goals) ── */
+.iv-imp-ms { display: flex; flex-direction: column; }
+.iv-imp-ms__node { display: flex; gap: var(--space-3); padding-bottom: var(--space-4); position: relative; }
+.iv-imp-ms__node:not(:last-child)::before { content: ''; position: absolute; left: 10px; top: 24px; bottom: 0; width: 2px; background: var(--hairline); }
+.iv-imp-ms__dot { width: 21px; height: 21px; border-radius: 50%; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; margin-top: 1px; z-index: 1; }
+.iv-imp-ms__dot--achieved { background: var(--success); color: var(--on-accent); }
+.iv-imp-ms__dot--in_progress { background: color-mix(in srgb, var(--accent) 22%, transparent); border: 2px solid var(--accent); }
+.iv-imp-ms__dot--future { background: transparent; border: 1px solid var(--border-strong); }
+.iv-imp-ms__body { flex: 1; min-width: 0; }
+.iv-imp-ms__label { color: var(--text-body); font-size: 14px; font-weight: 500; }
+.iv-imp-ms__node--in_progress .iv-imp-ms__label { color: var(--text-hi); font-weight: 600; }
+.iv-imp-ms__meta { color: var(--text-low); font-size: 12px; font-family: var(--font-mono); margin-top: 2px; }
+.iv-imp-ms__bar { margin-top: 6px; max-width: 220px; }
+
+/* ── View switcher (Plan / Review mistakes) ── */
+.iv-imp-viewswitch { margin-top: var(--space-4); }
+
+/* ── Review Mistakes ── */
+.iv-rm { display: flex; flex-direction: column; gap: var(--space-4); }
+.iv-rm__lead { color: var(--text-low); }
+.iv-rm__filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.iv-rm__motifs { display: flex; flex-wrap: wrap; gap: 6px; }
+.iv-rm-chip { font-size: 12px; padding: 5px 10px; border-radius: var(--r-pill); background: var(--surface-2); border: 1px solid var(--border); color: var(--text-low); cursor: pointer; }
+.iv-rm-chip:hover { background: var(--hover-tint); color: var(--text-body); }
+.iv-rm-chip:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-rm-chip--on { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: color-mix(in srgb, var(--accent) 34%, transparent); color: var(--accent); }
+
+.iv-rm__grid { display: grid; grid-template-columns: minmax(280px, 38%) 1fr; gap: var(--space-4); align-items: start; }
+.iv-rm__nomatch { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-8) var(--space-4); color: var(--text-low); border: 1px dashed var(--border); border-radius: var(--r-lg); }
+
+/* Feed list */
+.iv-rm__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 640px; overflow-y: auto; }
+.iv-rm-row { display: flex; align-items: center; gap: var(--space-3); width: 100%; text-align: left; background: none; border: 1px solid transparent; border-radius: var(--r-md); padding: 13px var(--space-3); cursor: pointer; }
+.iv-rm-row:hover { background: var(--hover-tint); }
+.iv-rm-row:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-rm-row--sel { background: var(--surface-2); border-color: var(--border); }
+.iv-rm-row__q { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 12px; color: var(--text-mid); min-width: 30px; }
+.iv-rm-row__body { flex: 1; min-width: 0; }
+.iv-rm-row__top { display: flex; align-items: center; gap: 8px; color: var(--text-hi); font-size: 13px; font-weight: 600; font-family: var(--font-mono); }
+.iv-rm-row__move { color: var(--text-low); font-weight: 400; font-size: 11px; }
+.iv-rm-row__tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 1px 6px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); font-family: var(--font-sans); }
+.iv-rm-row__sub { display: block; color: var(--text-low); font-size: 12px; margin-top: 2px; }
+
+/* Quality tag */
+.iv-rm-q { display: inline-flex; align-items: center; gap: 6px; }
+.iv-rm-q__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.iv-rm-q__label { font-size: 12px; font-weight: 600; color: var(--text-body); }
+
+/* Detail = the mistake card (one Primary) */
+.iv-rm-detail { display: grid; grid-template-columns: minmax(0, 320px) 1fr; gap: var(--space-5); background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--space-5); }
+.iv-rm-detail__body { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.iv-rm-detail__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.iv-rm-detail__phase { font-family: var(--font-mono); font-size: 12px; color: var(--text-low); }
+.iv-rm-detail__moves { color: var(--text-body); font-size: 14px; }
+.iv-rm-detail__moves strong { font-family: var(--font-mono); color: var(--text-hi); }
+.iv-rm-detail__best { color: var(--mq-best) !important; }
+.iv-rm-detail__cp { color: var(--text-low); font-family: var(--font-mono); font-size: 12px; }
+.iv-rm-detail__lesson { color: var(--text-mid); font-size: 13px; line-height: 1.55; }
+.iv-rm-detail__cta { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: auto; padding-top: var(--space-2); }
+
+/* ── Responsive ── */
+@media (max-width: 1023px) {
+  .iv-imp-row--top, .iv-imp-row--bottom { grid-template-columns: 1fr; }
+  .iv-imp-weak__grid { grid-template-columns: 1fr; }
+  .iv-rm__grid { grid-template-columns: 1fr; }
+  .iv-rm-detail { grid-template-columns: 1fr; order: -1; } /* selected mistake first on narrow */
+  .iv-rm__list { max-height: none; }
+}
+@media (max-width: 767px) {
+  .iv-improve { padding: var(--space-5) var(--space-4) var(--space-12); gap: var(--space-5); }
+  /* Weekly focus first (§9) — flatten rows so order can be controlled. */
+  .iv-imp-row--top, .iv-imp-row--bottom { display: contents; }
+  .iv-imp-order-focus { order: 1; }
+  .iv-imp-order-weak { order: 2; }
+  .iv-imp-order-plan { order: 3; }
+  .iv-imp-order-ms { order: 4; }
+  .iv-imp-order-skill { order: 5; }
+  .iv-imp-focus__metrics { gap: var(--space-4); }
+}
