@@ -194,6 +194,43 @@
   --accent-glow:   rgba(214, 142, 102, 0.12);
 }
 
+/* ---------------------------------------------------------------------------
+   Accent — LIGHT theme. The pale pastels above are tuned for dark surfaces;
+   on warm paper they have almost no contrast, so accent text (eyebrows, the
+   hero highlight, "STEP" labels, links) and the solid accent buttons wash out.
+   Deepen each accent to a readable tone and flip `on-accent` to light so the
+   now-solid buttons keep legible text. Two-attribute selector outranks the
+   single-attribute base blocks regardless of source order.
+   --------------------------------------------------------------------------- */
+[data-theme="light"][data-accent="ivory"] {
+  --accent:        #9E6F14;
+  --accent-bright: #7F5A0F;
+  --on-accent:     #FBF9F4;
+  --accent-grad:   linear-gradient(135deg, #B0801F, #9E6F14);
+  --accent-glow:   rgba(158, 111, 20, 0.14);
+}
+[data-theme="light"][data-accent="periwinkle"] {
+  --accent:        #4B54C4;
+  --accent-bright: #3D45AD;
+  --on-accent:     #FBF9F4;
+  --accent-grad:   linear-gradient(135deg, #5A63D6, #4B54C4);
+  --accent-glow:   rgba(75, 84, 196, 0.14);
+}
+[data-theme="light"][data-accent="sage"] {
+  --accent:        #4E7A3E;
+  --accent-bright: #3F6631;
+  --on-accent:     #FBF9F4;
+  --accent-grad:   linear-gradient(135deg, #5C8C4A, #4E7A3E);
+  --accent-glow:   rgba(78, 122, 62, 0.14);
+}
+[data-theme="light"][data-accent="clay"] {
+  --accent:        #B0602C;
+  --accent-bright: #994F22;
+  --on-accent:     #FBF9F4;
+  --accent-grad:   linear-gradient(135deg, #C26E36, #B0602C);
+  --accent-glow:   rgba(176, 96, 44, 0.14);
+}
+
 /* ===========================================================================
    §5.1 / §5.10 THEME TWEAK — BOARD (default Wood).
    =========================================================================== */
