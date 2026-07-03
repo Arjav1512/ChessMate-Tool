@@ -4,7 +4,19 @@
    affect the legacy Obsidian app (strangler).
    ========================================================================== */
 
-.ivs-shell { min-height: 100vh; background: var(--bg-grad), var(--bg); color: var(--text-body); font-family: var(--font-sans); }
+/* The Ivory spacing scale (tokens.css) is a step scale: --space-8 = 32px, etc.
+   The legacy style.css redefines the SAME `--space-*` names on :root as a raw
+   pixel scale (--space-8 = 8px) and, loading later, wins the cascade — which
+   silently shrank the whole Ivory shell to ~25% of its intended spacing.
+   Re-declare the Ivory scale on the shell root so its subtree resolves the
+   correct values (an element's own declaration beats the inherited :root one),
+   with zero effect on the legacy Obsidian app outside .ivs-shell. */
+.ivs-shell {
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-5: 20px;  --space-6: 24px;  --space-7: 28px;  --space-8: 32px;
+  --space-10: 40px; --space-12: 48px; --space-14: 56px;
+  min-height: 100vh; background: var(--bg-grad), var(--bg); color: var(--text-body); font-family: var(--font-sans);
+}
 .ivs-shell__body { display: flex; min-height: 100vh; }
 .ivs-shell__content { flex: 1; min-width: 0; overflow-x: hidden; }
 
@@ -37,7 +49,7 @@
   border-color: color-mix(in srgb, var(--accent) 24%, transparent);
   color: var(--text-hi);
 }
-.ivs-navitem__glyph { width: 20px; text-align: center; font-size: 15px; flex-shrink: 0; }
+.ivs-navitem__glyph { width: 20px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .ivs-navitem__badge { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--on-accent); background: var(--accent); border-radius: var(--r-pill); padding: 0 6px; }
 .ivs-sidebar--collapsed .ivs-navitem__label,
 .ivs-sidebar--collapsed .ivs-navitem__badge,
@@ -125,7 +137,7 @@
 }
 .ivs-bottombar__item[aria-current="page"] { color: var(--text-hi); }
 .ivs-bottombar__item[aria-current="page"] .ivs-bottombar__glyph { color: var(--accent); }
-.ivs-bottombar__glyph { font-size: 18px; line-height: 1; }
+.ivs-bottombar__glyph { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 .ivs-shell__content--mobile { padding-bottom: 80px; }
 
 /* ----- Command menu (⌘K, §6) ----- */
@@ -152,5 +164,5 @@
   color: var(--text-body); font-size: 14px; cursor: pointer; text-align: left;
 }
 .ivs-cmdk__item[aria-selected="true"], .ivs-cmdk__item:hover { background: var(--hover-tint); color: var(--text-hi); }
-.ivs-cmdk__glyph { width: 20px; text-align: center; color: var(--text-low); }
+.ivs-cmdk__glyph { width: 20px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-low); flex-shrink: 0; }
 .ivs-cmdk__empty { padding: var(--space-6); text-align: center; color: var(--text-low); font-size: 13px; }
