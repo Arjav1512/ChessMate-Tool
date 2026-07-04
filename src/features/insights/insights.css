@@ -49,6 +49,7 @@
 .ins-break__n { color: var(--text-hi); font-weight: 600; font-family: var(--font-mono); margin-right: 4px; }
 .ins-note { color: var(--text-mid); font-size: 14px; margin: 0; }
 .ins-up { color: var(--success); }
+.ins-down { color: var(--error); }
 
 /* Accuracy gauge card — centred */
 .ins-gauge { align-items: center; text-align: center; }
@@ -90,6 +91,8 @@
 .ins-cell { width: 15px; height: 15px; border-radius: 3px; flex-shrink: 0; }
 .ins-heatmap__row .ins-cell { flex: 1 1 0; min-width: 0; width: auto; aspect-ratio: 1; height: auto; }
 .ins-cell--l0 { background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--hairline); }
+/* Days after today — occupy the slot but never imply future activity. */
+.ins-cell--future { visibility: hidden; }
 .ins-cell--l1 { background: color-mix(in srgb, var(--accent) 32%, var(--surface-3)); }
 .ins-cell--l2 { background: color-mix(in srgb, var(--accent) 58%, var(--surface-2)); }
 .ins-cell--l3 { background: color-mix(in srgb, var(--accent) 82%, transparent); }

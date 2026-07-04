@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Target, BookOpen, Layers, Timer, Crown, TrendingUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Card, Badge, Chip, Avatar, Tabs, TabPanel, ProgressBar } from '../../components/ui/iv';
+import { Card, Badge, Chip, Avatar, Tabs, TabPanel, ProgressBar, Button, Skeleton, EmptyState, ErrorState } from '../../components/ui/iv';
 import { ScoreRing } from '../../components/charts/ScoreRing';
 import { LineChart } from '../../components/charts/LineChart';
-import { sampleInsights } from './sampleInsights';
+import { useInsights } from './useInsights';
 import './insights.css';
 
 const AREA_ICON: Record<string, LucideIcon> = {
-  tactics: Target, openings: BookOpen, middlegame: Layers,
-  timemgmt: Timer, endgame: Crown, conversion: TrendingUp,
+  tactics: Target, openings: BookOpen, opening: BookOpen, middlegame: Layers,
+  timemgmt: Timer, endgame: Crown, positional: Layers, conversion: TrendingUp,
 };
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -23,12 +24,14 @@ const TABS = [
 /**
  * Insights — a personal performance dashboard (structure modelled on the Wispr
  * Flow "Insights" screen; content adapted to ChessMate). Composed entirely from
- * existing Ivory primitives (Card / Badge / Chip / Avatar / ScoreRing /
- * LineChart / ProgressBar / Tabs). Ships on typed sample data (sampleInsights),
- * shaped like the future API so the swap to live data is adapter-only.
+ * existing Ivory primitives. All numbers come from `useInsights`, which derives
+ * them from the same sources the rest of the app renders (games library,
+ * analysis results, dashboard streak/rating, Improve skill profile) — so this
+ * page always agrees with the other screens.
  */
 export function InsightsPage() {
-  const d = sampleInsights;
+  const { vm, status } = useInsights();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<InsightsTab>('play');
   const h1Ref = useRef<HTMLHeadingElement>(null);
   useEffect(() => { h1Ref.current?.focus(); }, []);
@@ -38,139 +41,190 @@ export function InsightsPage() {
       <header className="ins-head">
         <div className="ins-head__text">
           <h1 ref={h1Ref} tabIndex={-1} className="iv-h1">Insights</h1>
-          <p className="ins-status">{d.status}</p>
+          {vm && <p className="ins-status">{vm.status}</p>}
         </div>
       </header>
 
-      <Tabs ariaLabel="Insights views" value={tab} onChange={setTab} tabs={TABS} />
+      {status === 'loading' && (
+        <div className="ins-grid" aria-label="Loading insights">
+          {[0, 1, 2].map((i) => (
+            <Card key={i} className={`ins-card ${i === 2 ? 'ins-card--wide' : ''}`}>
+              <Skeleton width={120} height={36} /><div style={{ height: 8 }} /><Skeleton width="60%" /><div style={{ height: 16 }} /><Skeleton height={56} />
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {/* ── Your Play ── */}
-      <TabPanel active={tab === 'play'}>
-        <div className="ins-grid">
-          {/* Accuracy gauge — the ring carries the number; no duplicate big value. */}
-          <Card className="ins-card ins-gauge">
-            <div className="iv-label ins-metric__label">Avg accuracy</div>
-            <ScoreRing value={d.accuracy} size={132} ariaLabel={`Average accuracy ${d.accuracy} of 100`} />
-            <Badge impact="low">Top {d.percentile}%</Badge>
-          </Card>
+      {status === 'empty' && (
+        <Card className="ins-card">
+          <EmptyState
+            icon={<span style={{ fontSize: 26 }} aria-hidden>♟</span>}
+            title="Analyze a game to unlock your insights"
+            body="Import a game and run analysis — accuracy, strengths, streaks and progression all build from your own games."
+            action={<Button onClick={() => navigate('/games/import')}>Import games</Button>}
+          />
+        </Card>
+      )}
 
-          {/* Moves analyzed + breakdown */}
-          <Card className="ins-card">
-            <div className="ins-metric__value">{d.movesAnalyzed.toLocaleString()}</div>
-            <div className="iv-label ins-metric__label">Moves analyzed</div>
-            <div className="ins-divider" />
-            <p className="ins-break"><span className="ins-break__n">{d.mistakesFound}</span> mistakes found</p>
-            <p className="ins-break"><span className="ins-break__n">{d.brilliantMoves}</span> brilliant moves</p>
-          </Card>
+      {status === 'failed' && (
+        <ErrorState
+          icon={<span style={{ fontSize: 26 }} aria-hidden>♟</span>}
+          title="We couldn’t load your insights"
+          message="Something went wrong reading your games and analysis. Try again in a moment."
+          onRetry={() => window.location.reload()}
+          retryLabel="Reload"
+        />
+      )}
 
-          {/* Games analyzed + trend + color split */}
-          <Card className="ins-card ins-card--wide">
-            <div className="ins-metric__head">
-              <div className="ins-metric__value">{d.gamesAnalyzed}</div>
-              {/* Positive trend = the existing green metric-delta pattern (Badge
-                  impact levels are severity colors — "high" reads as an error). */}
-              <span className="iv-metric__delta iv-metric__delta--up">
-                <span aria-hidden>▲</span> {d.gamesTrendPct}% this month
-              </span>
-            </div>
-            <div className="iv-label ins-metric__label">Games analyzed</div>
-            <div className="ins-divider" />
-            <p className="ins-note">That’s about {d.studyHours} hours of study.</p>
-            <div className="ins-split" role="img" aria-label={`Color split: White ${d.whitePct}%, Black ${100 - d.whitePct}%`}>
-              <span className="ins-split__seg ins-split__seg--w" style={{ width: `${d.whitePct}%` }}>♙ White</span>
-              <span className="ins-split__seg ins-split__seg--b" style={{ width: `${100 - d.whitePct}%` }}>♟ Black</span>
-            </div>
-          </Card>
+      {status === 'ready' && vm && (
+        <>
+          <Tabs ariaLabel="Insights views" value={tab} onChange={setTab} tabs={TABS} />
 
-          {/* Strength breakdown */}
-          <Card className="ins-card ins-strength">
-            <div className="ins-panel-head">
-              <h2 className="iv-h3">Strength breakdown</h2>
-              <span className="iv-label">Top area · {d.topArea}</span>
-            </div>
-            <div className="ins-strength__primary">
-              <ProgressBar value={d.strengths[0].pct} max={100} ariaLabel={`${d.strengths[0].label} strength ${d.strengths[0].pct} of 100`} />
-              <div className="ins-strength__primary-meta">
-                <span className="ins-strength__pct-lg">{d.strengths[0].pct}%</span>
-                <span className="ins-strength__note">{d.strengths[0].note}</span>
-              </div>
-            </div>
-            <ul className="ins-strength__list">
-              {d.strengths.slice(1).map((s) => {
-                const Icon = AREA_ICON[s.key] ?? Target;
-                return (
-                  <li className="ins-strength__row" key={s.key}>
-                    <span className="ins-strength__icon" aria-hidden><Icon size={16} /></span>
-                    <Chip>{s.pct}%</Chip>
-                    <span className="ins-strength__label">{s.label}</span>
-                    <span className="ins-strength__note">{s.note}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </Card>
+          {/* ── Your Play ── */}
+          <TabPanel active={tab === 'play'}>
+            <div className="ins-grid">
+              {/* Accuracy gauge — same number the Analysis screen reports. */}
+              <Card className="ins-card ins-gauge">
+                <div className="iv-label ins-metric__label">Avg accuracy</div>
+                <ScoreRing value={vm.accuracy} size={132} ariaLabel={`Average accuracy ${vm.accuracy} of 100`} />
+                {vm.accuracyEdge !== 0 && (
+                  <Badge impact="low">{vm.accuracyEdge > 0 ? `+${vm.accuracyEdge}` : vm.accuracyEdge} vs opponents</Badge>
+                )}
+              </Card>
 
-          {/* Study streak heatmap */}
-          <Card className="ins-card ins-streak">
-            <div className="ins-panel-head">
-              <h2 className="iv-h3">{d.currentStreak} day streak</h2>
-              <span className="iv-label">Longest streak · {d.longestStreak} days</span>
-            </div>
-            <div className="ins-heatmap" role="img" aria-label={`Study activity over recent weeks — current streak ${d.currentStreak} days, longest ${d.longestStreak} days`}>
-              <div className="ins-heatmap__months" aria-hidden>
-                {d.heatmapMonths.map((m) => <span key={m}>{m}</span>)}
-              </div>
-              <div className="ins-heatmap__grid" aria-hidden>
-                {d.heatmap.map((row, di) => (
-                  <div className="ins-heatmap__row" key={di}>
-                    <span className="ins-heatmap__day">{DAYS[di]}</span>
-                    {row.map((v, wi) => <span key={wi} className={`ins-cell ins-cell--l${v}`} />)}
+              {/* Moves analyzed + breakdown (from the analysis results). */}
+              <Card className="ins-card">
+                <div className="ins-metric__value">{vm.movesAnalyzed.toLocaleString()}</div>
+                <div className="iv-label ins-metric__label">Moves analyzed</div>
+                <div className="ins-divider" />
+                <p className="ins-break"><span className="ins-break__n">{vm.mistakesFound}</span> mistakes found</p>
+                <p className="ins-break"><span className="ins-break__n">{vm.brilliantMoves}</span> brilliant moves</p>
+              </Card>
+
+              {/* Games analyzed — the same count the Games library shows. */}
+              <Card className="ins-card ins-card--wide">
+                <div className="ins-metric__head">
+                  <div className="ins-metric__value">{vm.gamesAnalyzed}</div>
+                  {vm.analyzedThisMonth > 0 && (
+                    <span className="iv-metric__delta iv-metric__delta--up">
+                      <span aria-hidden>▲</span> {vm.analyzedThisMonth} this month
+                    </span>
+                  )}
+                </div>
+                <div className="iv-label ins-metric__label">Games analyzed</div>
+                <div className="ins-divider" />
+                <p className="ins-note">{vm.gamesAnalyzed} of {vm.gamesTotal} imported games analyzed.</p>
+                <div className="ins-split" role="img" aria-label={`Color split: White ${vm.whitePct}%, Black ${100 - vm.whitePct}%`}>
+                  <span className="ins-split__seg ins-split__seg--w" style={{ width: `${vm.whitePct}%` }}>♙ White</span>
+                  <span className="ins-split__seg ins-split__seg--b" style={{ width: `${100 - vm.whitePct}%` }}>♟ Black</span>
+                </div>
+              </Card>
+
+              {/* Strength breakdown — the Improve screen's skill profile. */}
+              <Card className="ins-card ins-strength">
+                <div className="ins-panel-head">
+                  <h2 className="iv-h3">Strength breakdown</h2>
+                  {vm.strengths[0] && <span className="iv-label">Top area · {vm.strengths[0].label}</span>}
+                </div>
+                {vm.strengths[0] && (
+                  <div className="ins-strength__primary">
+                    <ProgressBar value={vm.strengths[0].pct} max={100} ariaLabel={`${vm.strengths[0].label} strength ${vm.strengths[0].pct} of 100`} />
+                    <div className="ins-strength__primary-meta">
+                      <span className="ins-strength__pct-lg">{vm.strengths[0].pct}%</span>
+                      <span className="ins-strength__note">{vm.strengths[0].note}</span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="ins-legend" aria-hidden>
-              <span className="ins-legend__label">Less</span>
-              {[0, 1, 2, 3, 4].map((v) => <span key={v} className={`ins-cell ins-cell--l${v}`} />)}
-              <span className="ins-legend__label">More</span>
-            </div>
-          </Card>
-        </div>
-      </TabPanel>
+                )}
+                <ul className="ins-strength__list">
+                  {vm.strengths.slice(1).map((s) => {
+                    const Icon = AREA_ICON[s.key] ?? Target;
+                    return (
+                      <li className="ins-strength__row" key={s.key}>
+                        <span className="ins-strength__icon" aria-hidden><Icon size={16} /></span>
+                        <Chip>{s.pct}%</Chip>
+                        <span className="ins-strength__label">{s.label}</span>
+                        <span className="ins-strength__note">{s.note}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Card>
 
-      {/* ── Your Progress ── */}
-      <TabPanel active={tab === 'progress'}>
-        <div className="ins-grid ins-grid--progress">
-          {/* Strength / rating progression over time */}
-          <Card className="ins-card ins-chart">
-            <div className="ins-panel-head">
-              <h2 className="iv-h3">Strength progression</h2>
-              <span className="iv-label">Rating · {d.ratingNow} <span className="ins-up">▲ {d.ratingDelta}</span></span>
+              {/* Study streak — computed from actual activity days; the header,
+                  this title and the trailing heatmap cells agree by construction. */}
+              <Card className="ins-card ins-streak">
+                <div className="ins-panel-head">
+                  <h2 className="iv-h3">{vm.heatmap.current} day streak</h2>
+                  <span className="iv-label">Longest streak · {vm.heatmap.longest} days</span>
+                </div>
+                <div className="ins-heatmap" role="img" aria-label={`Study activity over recent weeks — current streak ${vm.heatmap.current} days, longest ${vm.heatmap.longest} days`}>
+                  <div className="ins-heatmap__months" aria-hidden>
+                    {vm.heatmap.monthSpans.map((m, i) => (
+                      <span key={`${m.label}-${i}`} style={{ flex: `${m.span} ${m.span} 0` }}>{m.span > 1 ? m.label : ''}</span>
+                    ))}
+                  </div>
+                  <div className="ins-heatmap__grid" aria-hidden>
+                    {vm.heatmap.rows.map((row, di) => (
+                      <div className="ins-heatmap__row" key={di}>
+                        <span className="ins-heatmap__day">{DAYS[di]}</span>
+                        {row.map((v, wi) => (
+                          <span key={wi} className={v == null ? 'ins-cell ins-cell--future' : `ins-cell ins-cell--l${v}`} />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="ins-legend" aria-hidden>
+                  <span className="ins-legend__label">Less</span>
+                  {[0, 1, 2, 3, 4].map((v) => <span key={v} className={`ins-cell ins-cell--l${v}`} />)}
+                  <span className="ins-legend__label">More</span>
+                </div>
+              </Card>
             </div>
-            <LineChart data={d.ratingSeries} height={220} ariaLabel={`Rating over ${d.ratingSeries.length} months, now ${d.ratingNow}`} />
-          </Card>
+          </TabPanel>
 
-          {/* Who you play — recent opponents */}
-          <Card className="ins-card">
-            <div className="ins-panel-head">
-              <h2 className="iv-h3">Recent opponents</h2>
-              <span className="iv-label">{d.opponents.length} players</span>
-            </div>
-            <ul className="ins-opps">
-              {d.opponents.map((o) => (
-                <li className="ins-opp" key={o.name}>
-                  <Avatar name={o.name} size={32} />
-                  <span className="ins-opp__meta">
-                    <span className="ins-opp__name">{o.name}</span>
-                    <span className="ins-opp__sub">{o.games} games · {o.rating}</span>
+          {/* ── Your Progress ── */}
+          <TabPanel active={tab === 'progress'}>
+            <div className="ins-grid ins-grid--progress">
+              {/* Progression over time (rating in the demo; avg accuracy for real data). */}
+              <Card className="ins-card ins-chart">
+                <div className="ins-panel-head">
+                  <h2 className="iv-h3">Strength progression</h2>
+                  <span className="iv-label">
+                    {vm.seriesLabel} · {vm.seriesNow}
+                    {vm.seriesDelta !== 0 && (
+                      <span className={vm.seriesDelta > 0 ? 'ins-up' : 'ins-down'}>
+                        {' '}{vm.seriesDelta > 0 ? '▲' : '▼'} {Math.abs(vm.seriesDelta)}
+                      </span>
+                    )}
                   </span>
-                  <span className={`ins-opp__record ins-opp__record--${o.last}`}>{o.record}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-      </TabPanel>
+                </div>
+                <LineChart data={vm.series} height={220} ariaLabel={`${vm.seriesLabel} over ${vm.series.length} months, now ${vm.seriesNow}`} />
+              </Card>
+
+              {/* Who you play — aggregated from the same games the library lists. */}
+              <Card className="ins-card">
+                <div className="ins-panel-head">
+                  <h2 className="iv-h3">Recent opponents</h2>
+                  <span className="iv-label">{vm.opponents.length} players</span>
+                </div>
+                <ul className="ins-opps">
+                  {vm.opponents.map((o) => (
+                    <li className="ins-opp" key={o.name}>
+                      <Avatar name={o.name} size={32} />
+                      <span className="ins-opp__meta">
+                        <span className="ins-opp__name">{o.name}</span>
+                        <span className="ins-opp__sub">{o.games} {o.games === 1 ? 'game' : 'games'} · last: {o.last}</span>
+                      </span>
+                      <span className={`ins-opp__record ins-opp__record--${o.last}`}>{o.record}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+          </TabPanel>
+        </>
+      )}
     </div>
   );
 }
