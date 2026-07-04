@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Activity,
   Library,
   ScanSearch,
   TrendingUp,
@@ -22,6 +23,7 @@ import {
  */
 const NAV_ICONS: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
+  insights: Activity,
   games: Library,
   analysis: ScanSearch,
   improve: TrendingUp,
