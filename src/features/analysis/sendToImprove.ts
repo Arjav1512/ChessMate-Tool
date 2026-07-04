@@ -1,43 +1,31 @@
 import { useIvToast } from '../../components/ui/iv';
+import { addToImproveQueue } from '../improve/queue';
 import type { AnalysisMoveVM } from './types';
 
-const STORAGE_KEY = 'cm.improveQueue';
-
-/** Tagged motif queued from Analysis → Improve (sample/derived plan, decision #5). */
-export interface ImproveQueueItem {
-  gameId: string;
-  ply: number;
-  motif: string;
-  san: string;
-  addedAt: string;
-}
-
-function readQueue(): ImproveQueueItem[] {
-  if (typeof window === 'undefined') return [];
-  try { return JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]'); } catch { return []; }
-}
-
 /**
- * Send-to-Improve (§8/§9, decision #5). For v1 this tags the move's motif into a
- * sample/derived plan queue (localStorage) and confirms via toast; when the real
- * learning engine exists, only this writer changes.
+ * Send-to-Improve (§8/§9, decision #5). Tags the move's motif into the study
+ * plan and confirms via toast.
+ *
+ * Routes through the shared `addToImproveQueue` writer so Analysis and Review
+ * Mistakes share one source of truth: it dedupes by game+ply and dispatches the
+ * `cm:improveQueue` event, so an open Improve screen updates live. (Previously
+ * this wrote localStorage directly — no dedupe, no event, so the plan didn't
+ * refresh, which read as "it does nothing".)
  */
 export function useSendToImprove(gameId: string) {
   const { toast } = useIvToast();
   return (move: AnalysisMoveVM | null) => {
-    if (!move) return;
-    const motif = move.motifs[0] ?? (move.quality ?? 'review');
-    const item: ImproveQueueItem = { gameId, ply: move.ply, motif, san: move.san, addedAt: new Date().toISOString() };
-    const label = motif.replace(/-/g, ' ');
-    try {
-      const q = readQueue();
-      q.push(item);
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(q));
-    } catch {
-      // Don't claim success when the write failed.
-      toast('Couldn’t save to your improvement plan — try again', 'error');
+    // Nothing actionable at the start position — never silently no-op.
+    if (!move) {
+      toast('Step to a move first, then send it to your plan', 'info');
       return;
     }
-    toast(`Added “${label}” to your improvement plan`, 'success');
+    const motif = move.motifs[0] ?? (move.quality ?? 'review');
+    const label = motif.replace(/-/g, ' ');
+    const added = addToImproveQueue({ gameId, ply: move.ply, motif, san: move.san });
+    toast(
+      added ? `Added “${label}” to your improvement plan` : `“${label}” is already in your plan`,
+      added ? 'success' : 'info',
+    );
   };
 }

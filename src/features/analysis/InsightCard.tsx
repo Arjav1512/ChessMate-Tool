@@ -71,7 +71,7 @@ export function InsightCard({ move, turningPoints, analyzing, cleanGame, onSendT
             : 'Use ‹ › or the turning-points jumps to reach the moments that decided the game.'}
         </p>
         <div className="iv-insight__actions">
-          <Button onClick={onSendToImprove}>Send to Improve</Button>
+          {/* No move to send at the start / on a clean game — only offer the coach. */}
           <Button variant="ghost" onClick={onAskCoach}>Ask coach →</Button>
         </div>
       </Card>
@@ -115,11 +115,12 @@ export function InsightCard({ move, turningPoints, analyzing, cleanGame, onSendT
       )}
 
       <div className="iv-insight__actions">
+        {/* "Send to Improve" only where there's a real mistake to learn from —
+            not on clean/positive moves (where it added meaningless plan items). */}
         {!isPositive && <Button onClick={onSendToImprove}>Send to Improve</Button>}
         {move.bestSan && move.bestSan !== move.san && (
           <Button variant="secondary" onClick={onRevealBest}>Reveal best move</Button>
         )}
-        {isPositive && <Button onClick={onSendToImprove}>Send to Improve</Button>}
         <Button variant="ghost" onClick={onAskCoach}>Ask coach →</Button>
       </div>
     </Card>

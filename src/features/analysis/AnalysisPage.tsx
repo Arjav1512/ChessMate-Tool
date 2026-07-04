@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Chess } from 'chess.js';
 import { Tabs, TabPanel, SegmentedControl, ErrorState } from '../../components/ui/iv';
+import type { Promotion } from './BoardContainer';
 import { useBreakpoint } from '../../hooks/useResponsive';
 import { useAnalysisStepper } from '../../stores/analysisStepperStore';
 import { emptyCounts } from '../../lib/analysis/moveQuality';
@@ -33,6 +35,24 @@ function material(fen: string, userColor: 'w' | 'b'): string {
   return diff > 0 ? `+${diff}` : diff < 0 ? `−${Math.abs(diff)}` : 'even';
 }
 
+/** A user-explored variation branched from the current board position. */
+interface Explore { baseFen: string; sans: string[] }
+
+/** Render a variation as numbered SAN from the branch position, e.g. "12… Qd2 13. Nf3". */
+function formatVariation(baseFen: string, sans: string[]): string {
+  const parts = baseFen.split(' ');
+  let n = Number(parts[5]) || 1;
+  let whiteToMove = parts[1] !== 'b';
+  let out = '';
+  for (let i = 0; i < sans.length; i++) {
+    if (whiteToMove) out += `${n}. ${sans[i]} `;
+    else out += `${i === 0 ? `${n}… ` : ''}${sans[i]} `;
+    if (!whiteToMove) n++;
+    whiteToMove = !whiteToMove;
+  }
+  return out.trim();
+}
+
 const TABS = [
   { value: 'analysis' as const, label: 'Analysis' },
   { value: 'coach' as const, label: 'Coach' },
@@ -58,13 +78,56 @@ export function AnalysisPage() {
   const h1Ref = useRef<HTMLHeadingElement>(null);
   // Reset on the ROUTE id so navigating between games resets even if the
   // (sample) game object is stable.
-  useEffect(() => { reset(game.userColor); h1Ref.current?.focus(); }, [id, game.userColor, reset]);
+  useEffect(() => { reset(game.userColor); setExplore(null); h1Ref.current?.focus(); }, [id, game.userColor, reset]);
 
   const currentMove = currentPly > 0 ? moves[currentPly - 1] : null;
   const currentFen = currentMove?.fenAfter ?? moves[0]?.fenBefore ?? START_FEN;
   const lastMove = currentMove && currentMove.from ? { from: currentMove.from, to: currentMove.to } : null;
   const atStart = currentPly === 0;
   const atEnd = currentPly === total;
+
+  // ── Lichess-style exploration: play your own moves from the shown position ──
+  const [explore, setExplore] = useState<Explore | null>(null);
+
+  // Replaying the variation gives us its end position, last move, and SAN line.
+  const exploreView = useMemo(() => {
+    if (!explore) return null;
+    const c = new Chess();
+    try { c.load(explore.baseFen); } catch { return null; }
+    let last: { from: string; to: string } | null = null;
+    for (const san of explore.sans) {
+      const mv = c.move(san);
+      if (mv) last = { from: mv.from, to: mv.to };
+    }
+    return { fen: c.fen(), last, line: formatVariation(explore.baseFen, explore.sans) };
+  }, [explore]);
+
+  const exploring = exploreView != null;
+  const displayFen = exploreView?.fen ?? currentFen;
+  const displayLastMove = exploreView?.last ?? lastMove;
+
+  // Any jump on the real game line leaves exploration and re-syncs to the game.
+  const seek = (ply: number) => { setExplore(null); setPly(ply); };
+
+  // A legal move on the board branches (or extends) a variation.
+  const onBoardMove = (from: string, to: string, promotion?: Promotion) => {
+    const fromFen = exploreView?.fen ?? currentFen;
+    const c = new Chess();
+    try { c.load(fromFen); } catch { return; }
+    let san: string | null = null;
+    try { san = c.move({ from, to, promotion })?.san ?? null; } catch { san = null; }
+    if (!san) return; // illegal — ignore
+    const played = san;
+    setExplore((prev) => prev
+      ? { baseFen: prev.baseFen, sans: [...prev.sans, played] }
+      : { baseFen: currentFen, sans: [played] });
+  };
+
+  const undoExplore = () => setExplore((prev) => {
+    if (!prev) return null;
+    const sans = prev.sans.slice(0, -1);
+    return sans.length ? { baseFen: prev.baseFen, sans } : null;
+  });
 
   const counts = useMemo(() => {
     const c = emptyCounts();
@@ -86,16 +149,19 @@ export function AnalysisPage() {
       // radios) — they'd otherwise also jump the board.
       if (el?.closest('[role="tablist"],[role="radiogroup"]')) return;
       switch (e.key) {
-        case 'ArrowLeft': e.preventDefault(); setPly(Math.max(0, currentPly - 1)); break;
-        case 'ArrowRight': e.preventDefault(); setPly(Math.min(total, currentPly + 1)); break;
-        case 'ArrowUp': e.preventDefault(); setPly(0); break;
-        case 'ArrowDown': e.preventDefault(); setPly(total); break;
+        // While exploring, ← retraces your own variation before the game line.
+        case 'ArrowLeft': e.preventDefault(); if (exploring) undoExplore(); else setPly(Math.max(0, currentPly - 1)); break;
+        case 'ArrowRight': e.preventDefault(); if (!exploring) setPly(Math.min(total, currentPly + 1)); break;
+        case 'ArrowUp': e.preventDefault(); seek(0); break;
+        case 'ArrowDown': e.preventDefault(); seek(total); break;
         case 'f': case 'F': e.preventDefault(); flip(); break;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [currentPly, total, setPly, flip]);
+    // seek/undoExplore are stable closures recreated each render; deps cover their inputs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPly, total, setPly, flip, exploring]);
 
   // A real game that can't be loaded (unknown id, deleted game, or RLS denied)
   // resolves to `failed`. Show a recovered error state instead of an empty board
@@ -137,7 +203,7 @@ export function AnalysisPage() {
             "Ask coach" is the single coach entry point (one voice, not two). */}
       </TabPanel>
       <TabPanel active={activeTab === 'coach'}>
-        <CoachTab game={game} move={currentMove} currentFen={currentFen} />
+        <CoachTab game={game} move={currentMove} currentFen={displayFen} />
       </TabPanel>
       <TabPanel active={activeTab === 'lines'}>
         <LinesTab move={currentMove} analyzing={analyzing} />
@@ -153,17 +219,37 @@ export function AnalysisPage() {
       <div className="iv-aw__board-col">
         <PlayerBar {...topPlayer} />
         <div className="iv-aw__stage">
-          <EvalBar evalCp={currentMove?.evalCp ?? null} mate={currentMove?.mate ?? null} indeterminate={analyzing && currentMove != null && currentMove.evalCp == null} />
-          <BoardContainer fen={currentFen} orientation={orientation} lastMove={lastMove} />
+          <EvalBar
+            evalCp={exploring ? null : (currentMove?.evalCp ?? null)}
+            mate={exploring ? null : (currentMove?.mate ?? null)}
+            indeterminate={!exploring && analyzing && currentMove != null && currentMove.evalCp == null}
+          />
+          <BoardContainer
+            fen={displayFen}
+            orientation={orientation}
+            lastMove={displayLastMove}
+            interactive
+            onMove={onBoardMove}
+          />
         </div>
         <PlayerBar {...bottomPlayer} />
         <BoardControls
-          atStart={atStart} atEnd={atEnd}
-          onStart={() => setPly(0)} onPrev={() => setPly(Math.max(0, currentPly - 1))}
-          onNext={() => setPly(Math.min(total, currentPly + 1))} onEnd={() => setPly(total)}
-          onFlip={flip} material={material(currentFen, game.userColor)} mobile={isMobile}
+          atStart={atStart && !exploring} atEnd={atEnd && !exploring}
+          onStart={() => seek(0)} onPrev={() => exploring ? undoExplore() : seek(Math.max(0, currentPly - 1))}
+          onNext={() => seek(Math.min(total, currentPly + 1))} onEnd={() => seek(total)}
+          onFlip={flip} material={material(displayFen, game.userColor)} mobile={isMobile}
         />
-        <EvalTimeline moves={moves} currentPly={currentPly} turningPoints={analysis.turningPoints} onSeek={setPly} />
+        {exploring && exploreView && (
+          <div className="iv-explore">
+            <span className="iv-explore__label" aria-hidden>⑂ Exploring</span>
+            <span className="iv-explore__line">{exploreView.line}</span>
+            <span className="iv-explore__actions">
+              <button type="button" className="iv-explore__btn" onClick={undoExplore}>⟲ Undo</button>
+              <button type="button" className="iv-explore__btn iv-explore__btn--primary" onClick={() => setExplore(null)}>Back to game</button>
+            </span>
+          </div>
+        )}
+        <EvalTimeline moves={moves} currentPly={currentPly} turningPoints={analysis.turningPoints} onSeek={seek} />
       </div>
 
       {/* Analysis column */}
@@ -179,7 +265,7 @@ export function AnalysisPage() {
           <MoveQualityCounts counts={counts} />
         </div>
         <div className="iv-aw__movelist">
-          <MoveList moves={moves} currentPly={currentPly} onSeek={setPly} />
+          <MoveList moves={moves} currentPly={currentPly} onSeek={seek} />
         </div>
       </div>
     </div>
