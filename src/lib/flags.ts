@@ -19,6 +19,7 @@ import { create } from 'zustand';
 export const FLAG_KEYS = [
   'ui.newShell',
   'ui.screen.dashboard',
+  'ui.screen.insights',
   'ui.screen.games',
   'ui.screen.analysis',
   'ui.screen.improve',
@@ -48,6 +49,7 @@ function emptyFlags(): FlagMap {
 const DEFAULT_ON: readonly FlagKey[] = [
   'ui.newShell',
   'ui.screen.dashboard',
+  'ui.screen.insights',
   'ui.screen.analysis',
   'ui.screen.improve',
   'ui.screen.games',

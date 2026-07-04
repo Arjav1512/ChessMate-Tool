@@ -33,6 +33,7 @@ export interface NavDestination {
 /** Primary nav — persistent left sidebar (desktop), per §3 order. */
 export const PRIMARY_NAV: NavDestination[] = [
   { key: 'dashboard', label: 'Dashboard', glyph: '◉', path: '/dashboard', flag: 'ui.screen.dashboard', phase: 4, purpose: 'Orientation + momentum. How am I doing / what next?', built: true },
+  { key: 'insights', label: 'Insights', glyph: '◔', path: '/insights', flag: 'ui.screen.insights', phase: 4, purpose: 'Personal performance insights: usage, strengths, streaks, progression.', built: true },
   { key: 'games', label: 'Games', glyph: '▦', path: '/games', flag: 'ui.screen.games', phase: 7, purpose: 'Manage & locate every imported game.', built: true },
   { key: 'analysis', label: 'Analysis', glyph: '◎', path: '/analysis', flag: 'ui.screen.analysis', phase: 5, purpose: 'Understand a single game move-by-move.', built: true },
   { key: 'improve', label: 'Improve', glyph: '▲', path: '/improve', flag: 'ui.screen.improve', phase: 6, purpose: 'Weaknesses → plan → milestones.', built: true },

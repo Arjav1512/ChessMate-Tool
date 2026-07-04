@@ -1,0 +1,110 @@
+/* =============================================================================
+   Insights — personal performance dashboard. Token-bound; scoped to .ins-*.
+   Structure modelled on the reference Insights screen (header + tabs + a card
+   grid: 3 stat cards over a strength-breakdown + activity-streak row). Built
+   only from existing Ivory primitives; this file is layout glue + the two
+   bespoke visualisations (color-split bar, activity heatmap) using tokens.
+   ========================================================================== */
+
+.ins {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-7) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Header */
+.ins-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+.ins-head__text { min-width: 0; }
+.ins-status { color: var(--text-mid); margin: 4px 0 0; font-size: 14px; }
+
+/* ── Card grid (row1: 1 + 1 + 2 · row2: 2 + 2) ── */
+.ins-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-5); margin-top: var(--space-2); }
+.ins-card--wide, .ins-strength, .ins-streak { grid-column: span 2; }
+.ins-card { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* Progress tab: chart (2fr) + opponents (1fr) */
+.ins-grid--progress { grid-template-columns: 2fr 1fr; }
+
+@media (max-width: 1023px) {
+  .ins-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ins-card--wide, .ins-strength, .ins-streak { grid-column: span 2; }
+  .ins-grid--progress { grid-template-columns: 1fr; }
+}
+@media (max-width: 639px) {
+  .ins-grid { grid-template-columns: 1fr; }
+  .ins-card--wide, .ins-strength, .ins-streak { grid-column: span 1; }
+  /* Drop the right-aligned supporting notes on phones so rows don't clip. */
+  .ins-strength__row .ins-strength__note { display: none; }
+}
+
+/* ── Metric cards ── */
+.ins-metric__value { font-size: 40px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; color: var(--text-hi); }
+.ins-metric__label { color: var(--text-low); }
+.ins-metric__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.ins-divider { height: 1px; background: var(--hairline); margin: var(--space-1) 0; }
+.ins-break { color: var(--text-mid); font-size: 14px; margin: 0; }
+.ins-break__n { color: var(--text-hi); font-weight: 600; font-family: var(--font-mono); margin-right: 4px; }
+.ins-note { color: var(--text-mid); font-size: 14px; margin: 0; }
+.ins-up { color: var(--success); }
+
+/* Accuracy gauge card — centred */
+.ins-gauge { align-items: center; text-align: center; }
+
+/* Color-split bar (White / Black share) */
+.ins-split { display: flex; height: 34px; border-radius: var(--r-md); overflow: hidden; margin-top: var(--space-1); }
+.ins-split__seg { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; }
+.ins-split__seg--w { background: var(--accent); color: var(--on-accent); }
+.ins-split__seg--b { background: var(--surface-3); color: var(--text-hi); }
+
+/* ── Panel head (strength / streak / progress) ── */
+.ins-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.ins-panel-head .iv-h3 { color: var(--text-hi); margin: 0; }
+
+/* ── Strength breakdown ── */
+.ins-strength__primary { display: flex; align-items: center; gap: var(--space-4); }
+.ins-strength__primary .iv-progress { flex: 1; }
+.ins-strength__primary-meta { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+.ins-strength__pct-lg { font-family: var(--font-mono); font-weight: 700; color: var(--text-hi); font-size: 15px; }
+.ins-strength__note { color: var(--text-low); font-size: 12px; }
+.ins-strength__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.ins-strength__row { display: flex; align-items: center; gap: var(--space-3); }
+/* Equal-width % chips so the area labels start on a shared left edge. */
+.ins-strength__row .iv-chip { min-width: 48px; justify-content: center; }
+.ins-strength__icon { color: var(--text-low); display: inline-flex; align-items: center; }
+.ins-strength__label { color: var(--text-body); font-size: 14px; font-weight: 500; }
+.ins-strength__row .ins-strength__note { margin-left: auto; text-align: right; }
+
+/* ── Activity streak heatmap ──
+   Cells flex to fill the card width (reference-style chunky grid, no dead
+   right region); month labels are flex quarters over the same span so they
+   line up with the weeks they cover. */
+.ins-heatmap { display: flex; flex-direction: column; gap: 6px; }
+.ins-heatmap__months { display: flex; padding-left: 40px; color: var(--text-low); font-size: 11px; }
+.ins-heatmap__months span { flex: 1 1 0; }
+.ins-heatmap__grid { display: flex; flex-direction: column; gap: 4px; }
+.ins-heatmap__row { display: flex; align-items: center; gap: 4px; }
+.ins-heatmap__day { width: 36px; flex-shrink: 0; color: var(--text-low); font-size: 11px; }
+.ins-cell { width: 15px; height: 15px; border-radius: 3px; flex-shrink: 0; }
+.ins-heatmap__row .ins-cell { flex: 1 1 0; min-width: 0; width: auto; aspect-ratio: 1; height: auto; }
+.ins-cell--l0 { background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--hairline); }
+.ins-cell--l1 { background: color-mix(in srgb, var(--accent) 32%, var(--surface-3)); }
+.ins-cell--l2 { background: color-mix(in srgb, var(--accent) 58%, var(--surface-2)); }
+.ins-cell--l3 { background: color-mix(in srgb, var(--accent) 82%, transparent); }
+.ins-cell--l4 { background: var(--accent); }
+.ins-legend { display: flex; align-items: center; gap: 6px; margin-top: var(--space-2); }
+.ins-legend .ins-cell { width: 13px; height: 13px; }
+.ins-legend__label { color: var(--text-low); font-size: 12px; }
+
+/* ── Recent opponents ── */
+.ins-opps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.ins-opp { display: flex; align-items: center; gap: var(--space-3); padding: 6px 0; }
+.ins-opp__meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ins-opp__name { color: var(--text-hi); font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ins-opp__sub { color: var(--text-low); font-size: 12px; }
+.ins-opp__record { font-family: var(--font-mono); font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.ins-opp__record--win { color: var(--success); }
+.ins-opp__record--loss { color: var(--error); }
+.ins-opp__record--draw { color: var(--text-mid); }

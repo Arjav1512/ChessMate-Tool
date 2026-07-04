@@ -20,6 +20,17 @@ export interface BoardContainerProps {
    */
   interactive?: boolean;
   onMove?: (from: string, to: string, promotion?: Promotion) => void;
+  /** Engine/annotation arrows drawn over the board (e.g. the best move). */
+  arrows?: Array<{ from: string; to: string; color?: string }>;
+}
+
+/** Centre of a square in the board's 0–8 grid space, honouring orientation. */
+function squareCenter(sq: string, orientation: Orientation): { x: number; y: number } {
+  const file = sq.charCodeAt(0) - 97; // a → 0
+  const rank = Number(sq[1]);          // 1 → 8
+  const col = orientation === 'w' ? file : 7 - file;
+  const row = orientation === 'w' ? 8 - rank : rank - 1;
+  return { x: col + 0.5, y: row + 0.5 };
 }
 
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
@@ -49,7 +60,7 @@ const PROMO_GLYPH: Record<Promotion, { w: string; b: string; label: string }> = 
  */
 export function BoardContainer({
   fen, orientation = 'w', lastMove, mini = false, className = '',
-  interactive = false, onMove,
+  interactive = false, onMove, arrows,
 }: BoardContainerProps) {
   const chess = useMemo(() => {
     const c = new Chess();
@@ -162,6 +173,32 @@ export function BoardContainer({
             </div>
           );
         }),
+      )}
+
+      {arrows && arrows.length > 0 && (
+        <svg className="iv-board__arrows" viewBox="0 0 8 8" preserveAspectRatio="none" aria-hidden>
+          {arrows.map((a, i) => {
+            const p = squareCenter(a.from, orientation);
+            const q = squareCenter(a.to, orientation);
+            const dx = q.x - p.x, dy = q.y - p.y;
+            const len = Math.hypot(dx, dy) || 1;
+            const ux = dx / len, uy = dy / len;
+            const head = 0.36, halfW = 0.24, width = 0.15;
+            const sx = p.x + ux * 0.30, sy = p.y + uy * 0.30;   // start just off the origin
+            const ex = q.x - ux * head, ey = q.y - uy * head;    // line meets the head base
+            const px = -uy, py = ux;                             // perpendicular
+            const color = a.color ?? 'var(--accent)';
+            return (
+              <g key={i} opacity="0.8">
+                <line x1={sx} y1={sy} x2={ex} y2={ey} stroke={color} strokeWidth={width} strokeLinecap="round" />
+                <polygon
+                  points={`${q.x},${q.y} ${ex + px * halfW},${ey + py * halfW} ${ex - px * halfW},${ey - py * halfW}`}
+                  fill={color}
+                />
+              </g>
+            );
+          })}
+        </svg>
       )}
 
       {promotion && (

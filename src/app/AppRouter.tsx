@@ -9,6 +9,7 @@ import { ALL_DESTINATIONS, PARAM_ROUTES } from './navigation';
 import { applyThemeAttributes, useThemeStore } from '../stores/themeStore';
 import { useFlag } from '../lib/flags';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
+import { InsightsPage } from '../features/insights/InsightsPage';
 import { AnalysisPage } from '../features/analysis/AnalysisPage';
 import { ImprovePage } from '../features/improve/ImprovePage';
 import { ImprovePlanView } from '../features/improve/ImprovePlanView';
@@ -20,6 +21,11 @@ import './shell.css';
 /** Show the real screen when its per-screen flag is on; placeholder otherwise. */
 function DashboardRoute() {
   return useFlag('ui.screen.dashboard') ? <DashboardPage /> : placeholderFor('dashboard');
+}
+
+/** Insights (personal performance dashboard) behind ui.screen.insights. */
+function InsightsRoute() {
+  return useFlag('ui.screen.insights') ? <InsightsPage /> : placeholderFor('insights');
 }
 
 /** Analysis workspace at /analysis/:id behind ui.screen.analysis. */
@@ -89,6 +95,7 @@ export function AppRouter() {
             <Route element={<AppShell />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardRoute />} />
+              <Route path="/insights" element={<InsightsRoute />} />
               <Route path="/games" element={<GamesRoute />} />
               <Route path="/games/import" element={<GameImportRoute />} />
               <Route path="/games/:id" element={<GameDetailRoute />} />
