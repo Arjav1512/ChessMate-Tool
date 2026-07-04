@@ -301,7 +301,7 @@ function DemoBoard() {
     ['·', '·', '·', '♘', '♙', '·', '·', '·'],  // rank 4  ← Nd4, Pe4
     ['·', '·', '♘', '·', '·', '·', '·', '·'],  // rank 3  ← Nc3
     ['♙', '♙', '♙', '·', '·', '♙', '♙', '♙'],  // rank 2
-    ['♖', '·', '♗', '♕', '♔', '·', '·', '♖'],  // rank 1
+    ['♖', '·', '·', '♕', '♔', '♗', '·', '♖'],  // rank 1  ← c1 bishop went to g5; light bishop still f1
   ];
 
   // Bg5 just played (last move) → threat on Nf6
