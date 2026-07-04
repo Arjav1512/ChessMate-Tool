@@ -37,6 +37,70 @@
 .iv-board__sq--dark .iv-board__coord { color: var(--board-light); }
 .iv-board--mini { max-width: 280px; }
 
+/* ----- Interactive analysis board (Lichess-style move-making) ----- */
+.iv-board--interactive .iv-board__sq { cursor: pointer; }
+.iv-board--interactive .iv-board__piece[draggable="true"] { cursor: grab; }
+.iv-board--interactive .iv-board__piece[draggable="true"]:active { cursor: grabbing; }
+/* Selected origin square. */
+.iv-board__sq--selected::before {
+  content: ''; position: absolute; inset: 0;
+  background: color-mix(in srgb, var(--accent) 45%, transparent); pointer-events: none;
+}
+/* Legal quiet-move destination — centred dot. */
+.iv-board__sq--target::after {
+  content: ''; position: absolute; inset: 0; margin: auto;
+  width: 30%; height: 30%; border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 55%, transparent); pointer-events: none; z-index: 2;
+}
+/* Legal capture — ring around the target piece. */
+.iv-board__sq--capture::after {
+  content: ''; position: absolute; inset: 8%; border-radius: 50%;
+  border: max(3px, 0.9cqw) solid color-mix(in srgb, var(--accent) 55%, transparent);
+  pointer-events: none; z-index: 0;
+}
+
+/* Promotion picker — a small column over the board. */
+.iv-board__promo {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(2px);
+}
+.iv-board__promo-btn {
+  width: 22%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--r-md);
+  cursor: pointer; padding: 0;
+}
+.iv-board__promo-btn:hover { background: var(--surface-3); border-color: var(--accent); }
+.iv-board__promo-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-board__promo-btn .iv-board__piece { font-size: 8cqw; }
+.iv-board__promo-cancel {
+  background: none; border: none; color: var(--text-low); cursor: pointer;
+  font-size: 16px; line-height: 1; padding: 4px 8px;
+}
+.iv-board__promo-cancel:hover { color: var(--text-hi); }
+.iv-board__promo-cancel:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ----- Exploration bar (variation branched from the current position) ----- */
+.iv-explore {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  padding: var(--space-3) var(--space-4);
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface-1));
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  border-radius: var(--r-md);
+}
+.iv-explore__label { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600; font-size: 12px; white-space: nowrap; }
+.iv-explore__line { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 13px; color: var(--text-body); overflow-x: auto; white-space: nowrap; }
+.iv-explore__actions { display: inline-flex; gap: 6px; margin-left: auto; }
+.iv-explore__btn {
+  display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm);
+  color: var(--text-body); font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.iv-explore__btn:hover { background: var(--surface-3); }
+.iv-explore__btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.iv-explore__btn--primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+
 /* ----- Eval bar ----- */
 .iv-evalbar { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 34px; flex-shrink: 0; }
 .iv-evalbar__num { font-family: var(--font-mono); font-size: 11px; color: var(--text-mid); min-height: 14px; }
