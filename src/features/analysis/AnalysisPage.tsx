@@ -19,6 +19,8 @@ import { LinesTab } from './LinesTab';
 import { CoachTab } from './CoachTab';
 import { useAnalysis } from './hooks';
 import { useSendToImprove } from './sendToImprove';
+import { useLiveEval } from './useLiveEval';
+import { EnginePanel } from './EnginePanel';
 import './analysis.css';
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -78,7 +80,7 @@ export function AnalysisPage() {
   const h1Ref = useRef<HTMLHeadingElement>(null);
   // Reset on the ROUTE id so navigating between games resets even if the
   // (sample) game object is stable.
-  useEffect(() => { reset(game.userColor); setExplore(null); h1Ref.current?.focus(); }, [id, game.userColor, reset]);
+  useEffect(() => { reset(game.userColor); setExplore(null); setBranchEvalCp(null); h1Ref.current?.focus(); }, [id, game.userColor, reset]);
 
   const currentMove = currentPly > 0 ? moves[currentPly - 1] : null;
   const currentFen = currentMove?.fenAfter ?? moves[0]?.fenBefore ?? START_FEN;
@@ -105,9 +107,18 @@ export function AnalysisPage() {
   const exploring = exploreView != null;
   const displayFen = exploreView?.fen ?? currentFen;
   const displayLastMove = exploreView?.last ?? lastMove;
+  const sideToMove: 'w' | 'b' = displayFen.split(' ')[1] === 'b' ? 'b' : 'w';
+
+  // ── Live Stockfish on the shown position (engine toggle, default on) ──
+  const [engineOn, setEngineOn] = useState(true);
+  const live = useLiveEval(displayFen, engineOn);
+  // Latest live eval, readable synchronously from event handlers (for branch trend).
+  const liveRef = useRef(live);
+  liveRef.current = live;
+  const [branchEvalCp, setBranchEvalCp] = useState<number | null>(null);
 
   // Any jump on the real game line leaves exploration and re-syncs to the game.
-  const seek = (ply: number) => { setExplore(null); setPly(ply); };
+  const seek = (ply: number) => { setExplore(null); setBranchEvalCp(null); setPly(ply); };
 
   // A legal move on the board branches (or extends) a variation.
   const onBoardMove = (from: string, to: string, promotion?: Promotion) => {
@@ -117,10 +128,13 @@ export function AnalysisPage() {
     let san: string | null = null;
     try { san = c.move({ from, to, promotion })?.san ?? null; } catch { san = null; }
     if (!san) return; // illegal — ignore
-    const played = san;
-    setExplore((prev) => prev
-      ? { baseFen: prev.baseFen, sans: [...prev.sans, played] }
-      : { baseFen: currentFen, sans: [played] });
+    if (explore) {
+      setExplore({ baseFen: explore.baseFen, sans: [...explore.sans, san] });
+    } else {
+      // Starting a fresh variation: remember the engine eval of the branch point.
+      setBranchEvalCp(liveRef.current.evalCp);
+      setExplore({ baseFen: currentFen, sans: [san] });
+    }
   };
 
   const undoExplore = () => setExplore((prev) => {
@@ -187,6 +201,18 @@ export function AnalysisPage() {
     ? { name: game.white, rating: game.whiteRating, color: 'w' as const, isUser: game.userColor === 'w' }
     : { name: game.black, rating: game.blackRating, color: 'b' as const, isUser: game.userColor === 'b' };
 
+  // Engine drives the eval bar + best-move arrow when it's on and available;
+  // otherwise fall back to the stored game analysis.
+  const engineActive = engineOn && !live.error;
+  const barEvalCp = engineActive ? live.evalCp : (exploring ? null : (currentMove?.evalCp ?? null));
+  const barMate = engineActive ? live.mate : (exploring ? null : (currentMove?.mate ?? null));
+  const barIndeterminate = engineActive
+    ? (live.loading && !live.ready && live.mate == null)
+    : (!exploring && analyzing && currentMove != null && currentMove.evalCp == null);
+  const arrows = engineActive && live.bestUci
+    ? [{ from: live.bestUci.slice(0, 2), to: live.bestUci.slice(2, 4) }]
+    : undefined;
+
   const tabContent = (
     <>
       <TabPanel active={activeTab === 'analysis'}>
@@ -219,17 +245,14 @@ export function AnalysisPage() {
       <div className="iv-aw__board-col">
         <PlayerBar {...topPlayer} />
         <div className="iv-aw__stage">
-          <EvalBar
-            evalCp={exploring ? null : (currentMove?.evalCp ?? null)}
-            mate={exploring ? null : (currentMove?.mate ?? null)}
-            indeterminate={!exploring && analyzing && currentMove != null && currentMove.evalCp == null}
-          />
+          <EvalBar evalCp={barEvalCp} mate={barMate} indeterminate={barIndeterminate} />
           <BoardContainer
             fen={displayFen}
             orientation={orientation}
             lastMove={displayLastMove}
             interactive
             onMove={onBoardMove}
+            arrows={arrows}
           />
         </div>
         <PlayerBar {...bottomPlayer} />
@@ -245,10 +268,18 @@ export function AnalysisPage() {
             <span className="iv-explore__line">{exploreView.line}</span>
             <span className="iv-explore__actions">
               <button type="button" className="iv-explore__btn" onClick={undoExplore}>⟲ Undo</button>
-              <button type="button" className="iv-explore__btn iv-explore__btn--primary" onClick={() => setExplore(null)}>Back to game</button>
+              <button type="button" className="iv-explore__btn iv-explore__btn--primary" onClick={() => { setExplore(null); setBranchEvalCp(null); }}>Back to game</button>
             </span>
           </div>
         )}
+        <EnginePanel
+          enabled={engineOn}
+          onToggle={() => setEngineOn((v) => !v)}
+          live={live}
+          sideToMove={sideToMove}
+          exploring={exploring}
+          branchEvalCp={branchEvalCp}
+        />
         <EvalTimeline moves={moves} currentPly={currentPly} turningPoints={analysis.turningPoints} onSeek={seek} />
       </div>
 
