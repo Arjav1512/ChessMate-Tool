@@ -2,6 +2,36 @@
 
 > Durable engineering/product decisions for the Ivory redesign, with rationale and trade-offs. Newest first. Pairs with `IMPLEMENTATION_ROADMAP.md` and Architecture §24.
 
+## D-014 · Coach rate limiter fails CLOSED; `?ff=` and localStorage tokens kept (security audit)
+- **Decision:** the `chess-mentor` limiter now returns *deny* on a DB error (was fail-open), adds a per-day budget beside the per-minute one, caps question length, and fences untrusted prompt input. The `?ff=` flag override stays enabled in prod, and the Supabase session token stays in `localStorage`.
+- **Why:** fail-open let a caller bypass the cost cap on any DB blip — a transient 429 is cheaper than an unbounded Gemini bill. `?ff=` only toggles client UI rendering (no data access — RLS governs that; no auth bypass), and it is the documented instant-rollback mechanism. This is a static SPA on static hosting, so there is no server to set httpOnly cookies; the strong CSP + zero XSS sinks already block the exfil path, so switching storage is regression risk for marginal gain.
+- **Trade-off:** a rare false 429 during a DB outage; `?ff=` and localStorage remain as reviewed, accepted residual items. (PR #49.)
+
+## D-013 · Insights derives every number from the app's shared data sources
+- **Decision:** the Insights screen computes usage/accuracy/streak/strengths/rating/opponents through one derivation layer fed by the same sources the other screens use (games list, analysis results, dashboard streak/rating, Improve skill profile) — not standalone sample constants.
+- **Why:** the first version invented figures that contradicted the app ("342 games" vs the library's 12; a "3-game" header vs a "5-day" card). A dashboard that disagrees with the rest of the product erodes trust in all of it. Regression tests now pin Insights to the other screens' numbers.
+- **Trade-off:** more wiring than static data, but it swaps to live data adapter-only and can never drift again. (PR #48.)
+
+## D-012 · Interactive analysis board with live engine feedback (Lichess-style)
+- **Decision:** the analysis board accepts click/drag moves to explore variations from any position, with legal-move hints, a promotion picker, and an "Exploring" line; a toggle runs Stockfish live on the shown position for an eval, a best-move arrow, and a one-line verdict. The verdict is rule-based off the eval (not the AI coach), and the engine is on by default.
+- **Why:** "test my own ideas and see instantly whether they work" is the core of a real analysis tool. Rule-based verdicts are instant and offline; the AI coach stays the deeper explanation. On-by-default matches Lichess.
+- **Trade-off:** the bundled single-thread `stockfish.js` is noisier than NNUE at low depth — direction (helps/hurts) is reliable, absolute numbers less so. (PRs #46/#47.)
+
+## D-011 · ProgressBar fill needs `display:block`; positive trends use the green delta, not a Badge
+- **Decision:** `.iv-progress__fill` (a `<span>`) is set `display:block`; positive trend chips use the existing `iv-metric__delta--up` (green) pattern, not `Badge impact="high"`.
+- **Why:** inline boxes ignore width/height, so every progress bar app-wide rendered as an empty track. `Badge` impact levels are *severity* colors — "high" reads as an error for a positive trend.
+- **Trade-off:** none.
+
+## D-010 · Pre-auth surfaces unified on Ivory via a shared `.ivory-scope`; theme toggle drives `data-theme`
+- **Decision:** the legacy→Ivory token remap lives in one `.ivory-scope` class (globals.css) applied to the landing + auth pages; the toggle drives the shared `themeStore` (`data-theme`) and mirrors to the legacy attribute.
+- **Why:** clicking into auth from the Ivory landing dropped users into the old dark/indigo UI, and the toggle set an attribute the Ivory tokens ignore. One scope + one source of truth fixes both.
+- **Trade-off:** none.
+
+## D-009 · Nav uses Lucide icons; the demo board uses a legal position
+- **Decision:** sidebar/bottom-bar/⌘K/user-menu icons come from a central Lucide map; the landing demo board renders a legal Najdorf tabiya.
+- **Why:** ad-hoc unicode glyphs read as unprofessional; the previous demo position had two dark-squared white bishops (illegal), which any chess player spots.
+- **Trade-off:** none.
+
 ## D-008 · Command menu is top-anchored, not literally centered (Phase 3.5)
 - **Decision:** keep the ⌘K palette anchored in the upper third (`padding-top:12vh`) rather than vertically centered.
 - **Why:** the spec's stated design influences (Linear, Raycast, Arc) all top-anchor their command palettes; top-anchoring keeps results stable as the list grows and matches user muscle memory. The spec text says "centered overlay dialog" but the cited products are top-anchored.

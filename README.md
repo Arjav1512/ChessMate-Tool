@@ -10,14 +10,30 @@ RLS, an off-main-thread PGN parser, an on-device Stockfish engine
 
 ---
 
+The app now ships as the **Ivory routed shell** (React Router + a token-driven
+design system) as the default authenticated experience; the legacy modal app is
+one rollback flag away (`?ff=-ui.newShell`).
+
 ## ✨ Core Features
 
-- ♟️ **Move-by-move analysis** with Stockfish evaluation and multi-PV lines
-- 📈 **Evaluation gauge + best-move arrows** kept in sync with the board
-- 🧠 **AI chess mentor** (Google Gemini via Supabase Edge Function)
-- 🗂️ **Bulk analysis** across the whole game library
-- 📊 **Statistics dashboard** — accuracy, W/L/D, mistakes/blunders, per-color split
+- ♟️ **Interactive analysis board** — click **or drag** pieces to play your own
+  legal moves and explore variations from any position (Lichess-style), with
+  legal-move hints, a promotion picker, an "Exploring" line (Undo /
+  Back-to-game), and full keyboard navigation
+- ⚡ **Live Stockfish feedback** — the engine evaluates the shown position (game
+  line *or* your explored moves), draws the **best-move arrow**, and gives a
+  one-line verdict on whether your idea works; toggle on/off
+- 📈 **Move-by-move analysis** with Stockfish evaluation, move classification,
+  an eval timeline, and turning-point jumps
+- 🧠 **AI chess mentor** (Google Gemini via a hardened Supabase Edge Function)
+- 📊 **Insights dashboard** — usage, accuracy gauge + percentile, strength
+  breakdown, an activity **streak heatmap**, rating progression, and recent
+  opponents; every number derives from the same sources the other screens use
+- 🎯 **Dashboard** (momentum + weekly focus) and **Improve** (study plan +
+  Review Mistakes) close the improvement loop
+- 🗂️ **Game library + PGN import** (paste or upload, off-thread parse, dedupe)
 - 🔐 **Auth** — email + password, Google / GitHub OAuth, password reset
+- 🌗 **Dark / light Ivory themes**, responsive desktop + mobile (bottom tab bar)
 - 🧪 **Tested** — unit tests (Vitest) and end-to-end tests (Playwright + axe-core)
 
 ---
