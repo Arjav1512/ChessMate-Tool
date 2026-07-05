@@ -6,6 +6,7 @@ import { useCommandMenuStore } from '../../stores/commandMenuStore';
 import { SearchInput } from '../ui/iv';
 import { UserMenu } from './UserMenu';
 import { NavIcon } from './navIcons';
+import { ThemeToggleButton } from './ThemeToggleButton';
 
 /**
  * Persistent left sidebar (System Design §6 Navigation Components, IA §3):
@@ -60,6 +61,8 @@ export function Sidebar({
       </nav>
 
       <div className="ivs-sidebar__spacer" />
+
+      <ThemeToggleButton className="ivs-sidebar__themetoggle" showLabel={!collapsed} />
 
       {showCollapseToggle && (
         <button

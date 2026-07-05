@@ -5,6 +5,7 @@ import { Sidebar } from '../components/nav/Sidebar';
 import { BottomTabBar } from '../components/nav/BottomTabBar';
 import { CommandMenu } from '../components/nav/CommandMenu';
 import { UserMenu } from '../components/nav/UserMenu';
+import { ThemeToggleButton } from '../components/nav/ThemeToggleButton';
 import { useBreakpoint } from '../hooks/useResponsive';
 import { useUiStore } from '../stores/uiStore';
 import { useCommandMenuStore } from '../stores/commandMenuStore';
@@ -77,6 +78,7 @@ export function AppShell() {
                 <span className="ivs-brand__name">ChessMate</span>
               </div>
               <button className="ivs-iconbtn" aria-label="Open command menu" onClick={() => openCmdk(true)}><Search size={18} aria-hidden /></button>
+              <ThemeToggleButton className="ivs-iconbtn" />
               <UserMenu userName={userName} userEmail={userEmail} onSignOut={signOut} variant="icon" />
             </header>
           )}
