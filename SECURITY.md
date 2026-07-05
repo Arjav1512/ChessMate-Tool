@@ -64,11 +64,13 @@ Out of scope:
 These are the assumptions we rely on. Breaking any of them likely
 constitutes a security bug:
 
-1. **RLS is the security boundary.** Every user-owned table (`profiles`,
+1. **RLS is the security boundary.** All nine user-owned tables (`profiles`,
    `games`, `moves`, `questions`, `game_analysis_results`,
-   `user_statistics`, `user_progress_snapshots`) has Row Level Security
-   enabled. Policies use `auth.uid() = user_id`. The frontend uses the
-   Supabase anon key only; no service-role key ships to the browser.
+   `user_statistics`, `user_progress_snapshots`, `api_logs`, `move_analysis`)
+   have Row Level Security enabled. Policies use `auth.uid() = user_id` (with
+   `WITH CHECK` on writes); `api_logs` is service-insert-only and users can read
+   only their own rows. The frontend uses the Supabase anon key only; no
+   service-role key ships to the browser.
 2. **No hardcoded secrets.** API keys live in `.env.local`
    (`VITE_SUPABASE_*`, optional `VITE_SENTRY_DSN`) or, for Gemini, in
    Supabase Edge Function secrets only. `.env*` files are gitignored.
@@ -80,15 +82,28 @@ constitutes a security bug:
 4. **OAuth callbacks are stripped after handling.** See `src/lib/oauth.ts`
    for why we don't validate `state` ourselves (Supabase's flow already
    does it).
-5. **The `chess-mentor` Edge Function rate-limits Gemini requests**
-   (currently 10 req/min). Bypassing this from the client should be
-   considered a vulnerability.
+5. **The `chess-mentor` Edge Function is the hardened server surface.** It
+   verifies the caller's JWT (`auth.getUser`, plus `verify_jwt = true`),
+   fails **closed** on any rate-limit DB error, enforces a per-user burst
+   **and** daily budget (10/min + 100/day), caps the question length before it
+   reaches Gemini, fences untrusted question/context in the prompt, uses a
+   fail-closed CORS allowlist, and returns a **generic** error to clients (the
+   detail stays in server logs / `api_logs`). Weakening any of these — or
+   bypassing the limits from the client — should be considered a vulnerability.
+   *(Hardened in PR #49; regression-tested in `src/lib/edgeFunctionSecurity.test.ts`.)*
 6. **PGN ingestion has a hard 5 MiB cap.** Both the file-upload and
    paste paths must call `checkPgnSize` from `src/lib/pgnLimits.ts`.
    Removing or weakening either check is a regression.
 7. **The PGN parser runs in a Web Worker** so a pathological input can't
    block the main thread; even so, the parser itself relies on chess.js
    and our own splitter for safety.
+8. **Response headers + dependencies stay hardened.** A strict
+   Content-Security-Policy (`script-src 'self'`, no `unsafe-inline`/`eval`,
+   `object-src 'none'`, `frame-ancestors 'none'`, scoped `connect-src`) plus
+   HSTS / `X-Frame-Options: DENY` / `nosniff` ship from both `public/_headers`
+   (Netlify) and `vercel.json` — keep the two in sync. `npm audit --omit=dev`
+   must stay at **0 vulnerabilities**; a new advisory in a runtime dependency
+   is a regression.
 
 ## Vulnerability classes we are especially interested in
 

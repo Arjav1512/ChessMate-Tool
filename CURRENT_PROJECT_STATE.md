@@ -5,11 +5,50 @@
 > Every claim here was verified against the code on the date below — not copied
 > from older docs.
 
-**Date:** 2026-06-26
-**Branch audited:** `feature/stabilization-pr1-landing` @ `eb8caf2` (the de-facto trunk)
+**Date:** 2026-07-05
+**Branch audited:** `main` @ merge of PR #47 (the trunk now carries the product)
 **Verification:** static source read + runtime walk of every route (headless
-Chromium, desktop + mobile) + `tsc` (passes) + git graph analysis.
+Chromium, desktop + mobile) + full E2E audit + security audit + `tsc`/unit/build
+(pass) + git graph analysis.
 **Scope:** documentation only. No code, branches, commits, or file moves.
+
+> **Note (2026-07-05):** the pre-cutover assessment below is preserved for history;
+> the state has moved on substantially. See **§0. Current state** immediately below
+> for what is true today.
+
+---
+
+## 0. Current state (2026-07-05)
+
+- **Trunk is healthy.** `main` now carries the whole product (PRs merged through
+  #47); the "abandoned main" blocker below is **resolved**. Two items are in
+  review: **Insights data-linkage** (PR #48) and **security hardening** (PR #49).
+- **Cutover is done.** The Ivory routed shell is the default authenticated
+  experience (`ui.newShell` ON); the legacy modal app is one rollback flag away.
+- **Screens shipped:** Dashboard, **Insights**, Games (library + import),
+  Analysis, Improve (+ Review Mistakes). Coach/Settings/Profile are still
+  branded placeholders.
+- **Analysis is now a real workspace:** an **interactive board** (click/drag to
+  play your own legal moves and explore variations, promotion picker, keyboard
+  nav) with **live Stockfish feedback** (eval, best-move arrow, one-line
+  verdict), Send-to-Improve wired to the shared study-plan queue.
+- **Data is honest & linked.** Dashboard, Improve and Insights derive from real
+  games / analysis results (or, in the DEV preview, from the *same* shared
+  sample sources), so the screens agree with each other; regression tests pin
+  this. The "fabricated dashboard data" blocker below is **resolved**.
+- **Security posture:** RLS on all 9 tables (`auth.uid()`-scoped), verified-JWT
+  fail-closed edge function with burst+daily budgets and a capped/fenced prompt,
+  strict CSP + HSTS, no secrets in the bundle, and `npm audit --omit=dev` at 0
+  vulnerabilities (after the `ws` patch). No cross-user-read / auth-bypass /
+  XSS / SQLi / secret-leak path was found in the audit.
+- **Production readiness:** the two former critical blockers are cleared. Before
+  a full v1 sign-off, the remaining gaps are a live-account pass against
+  production Supabase (write paths not exercised in the audit) and mobile e2e
+  test coverage.
+
+---
+
+## 1. Executive Summary *(pre-cutover snapshot, 2026-06-26 — see §0 above for today)*
 
 ---
 

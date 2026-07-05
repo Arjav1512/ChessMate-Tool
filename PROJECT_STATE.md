@@ -2,7 +2,7 @@
 
 > Living snapshot of the ChessMate redesign (Ivory direction). Source of truth for "where are we?" Updated at each phase boundary. Pairs with `IMPLEMENTATION_ROADMAP.md` (plan), `DESIGN_COMPLIANCE_AUDIT.md` (compliance), `DECISION_LOG.md` (why), `LOOP_LOG.md` (chronology).
 
-**Last updated:** 2026-06-23 (Improve Hub + Improve · Review Mistakes merged)
+**Last updated:** 2026-07-05 (Ivory cutover shipped as default; Games, Insights, interactive analysis board + live engine merged; Insights data-linkage + security hardening in review)
 
 ## Where we are
 
@@ -17,14 +17,21 @@
 | 5 | Analysis Workspace | ✅ **COMPLETE** — merged (PR #23) |
 | 6 | Improve Hub | ✅ **COMPLETE** — merged (PR #24, hotfix #25) |
 | 6.x | Improve · Review Mistakes (sub-view; tracked as the "Phase 7" workstream) | ✅ **COMPLETE** — merged (PR #26) |
-| 7 | Game Library + Import (roadmap Phase 7 — still unbuilt) | ⏳ Next — see `NEXT_PHASE_RECOMMENDATION.md` |
-| 8–11 | Coach → Hardening | ⏳ Not started |
+| 7 | Game Library + Import | ✅ **COMPLETE** — merged (PR #27) |
+| 8A | Product simplification (coaching-first, one hero per screen) | ✅ **COMPLETE** — merged |
+| 11 | **Cutover** — Ivory shell + 4 screens the default (`ui.newShell` ON) | ✅ **COMPLETE** — merged |
+| — | Real-data wiring (Dashboard/Analysis/Improve on real games) | ✅ **COMPLETE** — merged |
+| — | Interactive analysis board (click/drag, variations, promotion) | ✅ **COMPLETE** — merged (PR #46) |
+| — | Live Stockfish feedback (eval, best-move arrow, verdict) | ✅ **COMPLETE** — merged (PR #47) |
+| — | **Insights** screen (usage, strengths, streak, progression, opponents) | ✅ **COMPLETE** — merged (PR #47); data-linkage fix in review (PR #48) |
+| — | Security hardening (edge fn, deps, headers) | 🔎 In review (PR #49) |
+| 8–10 | Coach → Settings/Profile | ⏳ Not started (routes render a branded placeholder) |
 
 ## Migration model (strangler, Architecture §22)
 
-- New Ivory shell + components live behind feature flags; legacy production app is the default.
-- **`ui.newShell` = OFF by default.** Authenticated users get the legacy modal app unless the flag is on.
-- Per-screen flags (`ui.screen.*`) gate each future screen; until on, the route renders a placeholder.
+- Cutover shipped: the Ivory shell is now the **default** authenticated experience.
+- **`ui.newShell` = ON by default.** The legacy modal app is one rollback flag away (`?ff=-ui.newShell`).
+- Per-screen flags (`ui.screen.*`) are ON for shipped screens (dashboard, insights, games, analysis, improve); unbuilt screens (coach/settings/profile) stay off and render a branded placeholder.
 - Dev preview surfaces (removed at cutover): `?styleguide`, `?components`, `?shell`.
 - Cutover (Phase 11): flip flags to 100%, delete legacy `--cm-*` tokens + legacy components, promote `components/ui/iv` → `components/ui`.
 
