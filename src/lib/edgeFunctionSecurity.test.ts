@@ -59,6 +59,41 @@ describe('supabase config — edge function JWT verification', () => {
   });
 });
 
+describe('chess-mentor edge function — abuse & cost controls (audit F1/F2/F5)', () => {
+  it('rate limiter fails CLOSED on a DB error (no bypass of the cost cap)', () => {
+    // The old limiter returned true on error; blocking on error must be pinned.
+    expect(FN_SRC).toMatch(/return false;.*fail closed/is);
+    expect(FN_SRC).not.toMatch(/return true;\s*\/\/\s*fail open/);
+  });
+
+  it('enforces both a per-minute and a per-day budget', () => {
+    expect(FN_SRC).toMatch(/RATE_PER_MIN/);
+    expect(FN_SRC).toMatch(/RATE_PER_DAY/);
+    expect(FN_SRC).toMatch(/86_400_000/);
+  });
+
+  it('caps the question length before it reaches the model', () => {
+    expect(FN_SRC).toMatch(/MAX_QUESTION_CHARS/);
+    expect(FN_SRC).toMatch(/question\.length\s*>\s*MAX_QUESTION_CHARS/);
+  });
+});
+
+describe('chess-mentor edge function — prompt-injection hygiene (F6)', () => {
+  it('fences untrusted input and instructs the model to treat it as data', () => {
+    expect(FN_SRC).toMatch(/<question>/);
+    expect(FN_SRC).toMatch(/untrusted user input/i);
+  });
+});
+
+describe('chess-mentor edge function — error disclosure (F4)', () => {
+  it('returns a generic message to the client, not the raw error', () => {
+    // The detailed errorMessage is still logged server-side (asserted below),
+    // but the client Response body must not echo it.
+    expect(FN_SRC).not.toMatch(/JSON\.stringify\(\{\s*error:\s*errorMessage/);
+    expect(FN_SRC).toMatch(/Failed to generate a response\. Please try again\./);
+  });
+});
+
 describe('chess-mentor edge function — durable error capture (observability)', () => {
   it('logs the unauthenticated and rate-limited rejections to api_logs', () => {
     expect(FN_SRC).toMatch(/logRequest\([^)]*Unauthenticated/);
