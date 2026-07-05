@@ -91,6 +91,20 @@
 
 .ivs-sidebar__collapse { width: 100%; margin-bottom: var(--space-2); }
 
+/* ----- Theme toggle (sidebar row — light/dark, §5.10) ----- */
+.ivs-sidebar__themetoggle {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%;
+  padding: 9px 10px; margin-bottom: var(--space-2);
+  border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface-2);
+  color: var(--text-mid); font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+  cursor: pointer; text-align: left;
+  transition: background var(--dur-instant) var(--ease-standard), color var(--dur-instant) var(--ease-standard);
+}
+.ivs-sidebar__themetoggle:hover { background: var(--surface-3); color: var(--text-hi); }
+.ivs-sidebar__themetoggle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.ivs-sidebar--collapsed .ivs-sidebar__themetoggle { justify-content: center; }
+.ivs-themetoggle__label { min-width: 0; }
+
 /* ----- Skip link (WCAG 2.4.1) ----- */
 .ivs-skiplink {
   position: absolute; left: 8px; top: -48px; z-index: 300;
