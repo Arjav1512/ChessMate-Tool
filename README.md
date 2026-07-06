@@ -69,7 +69,7 @@ src/
     stats/           # StatsDashboard, ProgressBar
     ui/              # Button, Card, Input, Toast, Toggle, LoadingSpinner, MarkdownRenderer
   contexts/          # AuthContext, ToastContext
-  hooks/             # useAsync, useDebounce, useLocalStorage, usePerformance, useResponsive
+  hooks/             # useDebounce, useMediaQuery, usePerformance, useResponsive, useRevealAnimations, …
   lib/               # supabase, stockfish, gemini, pgn, pgnLimits, openings, oauth, userColor, sentry
   workers/           # pgnWorker (off-main-thread PGN batch parser)
   utils/             # validation, formatting, error handling, moveClassifier, cache, performance, compatibility
