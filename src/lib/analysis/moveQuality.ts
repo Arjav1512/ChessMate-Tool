@@ -70,9 +70,47 @@ export function emptyCounts(): MoveCounts {
   return { brilliant: 0, best: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0 };
 }
 
-/** Convert mean centipawn loss to an accuracy % (Lichess-style curve). */
-export function accuracyFromAvgCpLoss(avgCpLoss: number): number {
-  // 103.1668 * exp(-0.04354 * acpl) - 3.1669, clamped 0–100.
-  const acc = 103.1668 * Math.exp(-0.04354 * Math.max(0, avgCpLoss)) - 3.1669;
-  return Math.max(0, Math.min(100, Math.round(acc)));
+/**
+ * Win probability (0–100, from WHITE's perspective) for a White-POV centipawn
+ * eval — the logistic model Lichess uses (k = 0.00368208). Mate-ish evals
+ * saturate near 0/100. This is the conversion the accuracy curve actually needs:
+ * accuracy must be computed from the drop in *win %*, not from raw centipawns.
+ */
+export function winPercentFromCp(cp: number): number {
+  const c = Math.max(-2000, Math.min(2000, cp));
+  return 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * c)) - 1);
+}
+
+/** A played move, as needed to score its accuracy. */
+export interface AccuracyMove {
+  color: 'white' | 'black';
+  /** Engine eval AFTER the move, centipawns, White POV. */
+  evalCpAfter: number;
+  /** The mover's centipawn loss vs the engine best (>= 0). */
+  cpLoss: number;
+}
+
+/**
+ * Accuracy % for a single move: the Lichess curve applied to the drop in the
+ * MOVER's win percentage.
+ *   acc = 103.1668 * exp(-0.04354 * winPctLost) - 3.1669, clamped 0–100.
+ *
+ * The eval before the move is reconstructed exactly from `evalCpAfter` + the
+ * signed `cpLoss` (so a move that loses nothing scores ~100%). Both evals are
+ * converted to the mover's win% first — feeding raw centipawns into the curve
+ * (the previous bug) collapsed every real game to ~0%.
+ */
+export function moveAccuracyPercent({ color, evalCpAfter, cpLoss }: AccuracyMove): number {
+  const evalCpBefore = color === 'white' ? evalCpAfter + cpLoss : evalCpAfter - cpLoss;
+  const winBefore = color === 'white' ? winPercentFromCp(evalCpBefore) : 100 - winPercentFromCp(evalCpBefore);
+  const winAfter = color === 'white' ? winPercentFromCp(evalCpAfter) : 100 - winPercentFromCp(evalCpAfter);
+  const winPctLost = Math.max(0, winBefore - winAfter);
+  const acc = 103.1668 * Math.exp(-0.04354 * winPctLost) - 3.1669;
+  return Math.max(0, Math.min(100, acc));
+}
+
+/** Mean accuracy % (0–100) over a set of moves; null when the set is empty. */
+export function meanAccuracy(moves: AccuracyMove[]): number | null {
+  if (!moves.length) return null;
+  return moves.reduce((sum, m) => sum + moveAccuracyPercent(m), 0) / moves.length;
 }
