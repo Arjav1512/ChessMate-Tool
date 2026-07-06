@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth, ensureProfileExists } from '../../contexts/AuthContext';
+import { invalidateWeaknessProfile } from '../../hooks/useWeaknessProfile';
 import { detectUserColor } from '../../lib/userColor';
 import { translateDbError } from '../../lib/dbErrors';
 import { checkPgnSize } from '../../lib/pgnLimits';
@@ -88,7 +89,7 @@ export function useImportGames(): UseImportGames {
     const toInsert = items.filter((i) => i.status === 'new');
     const duplicates = items.filter((i) => i.status === 'duplicate').length;
     const invalid = items.filter((i) => i.status === 'invalid').length;
-    const result: ImportResult = { imported: 0, duplicates, skipped: invalid, errors: [] };
+    const result: ImportResult = { imported: 0, duplicates, skipped: invalid, errors: [], gameIds: [] };
     if (!user || toInsert.length === 0) return result;
 
     setBusy(true);
@@ -103,15 +104,18 @@ export function useImportGames(): UseImportGames {
         setProgress({ phase: 'insert', done: i, total: toInsert.length });
         const white = item.white === 'Unknown' ? undefined : item.white;
         const black = item.black === 'Unknown' ? undefined : item.black;
-        const { error } = await supabase.from('games').insert({
+        const { data: inserted, error } = await supabase.from('games').insert({
           user_id: user.id, pgn: item.pgnText,
           white_player: item.white, black_player: item.black, result: item.result,
           date: item.date, event: item.event,
           user_color: detectUserColor(white, black, displayName, user.email),
-        });
+        }).select('id').single();
         if (error) { result.errors.push({ index: item.index, reason: translateDbError(error).message }); result.skipped++; }
-        else result.imported++;
+        else { result.imported++; if (inserted?.id) result.gameIds.push(inserted.id); }
       }
+      // New games change the profile-derived surfaces (Dashboard/Improve/Insights
+      // game counts) — drop the session cache so they refresh without a reload.
+      if (result.imported > 0) invalidateWeaknessProfile(user.id);
       return result;
     } finally {
       setBusy(false); setProgress(null);

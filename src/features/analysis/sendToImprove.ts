@@ -22,9 +22,16 @@ export function useSendToImprove(gameId: string) {
     }
     const motif = move.motifs[0] ?? (move.quality ?? 'review');
     const label = motif.replace(/-/g, ' ');
-    const added = addToImproveQueue({ gameId, ply: move.ply, motif, san: move.san });
+    const added = addToImproveQueue({
+      gameId, ply: move.ply, motif, san: move.san,
+      // Real position context, so Review Mistakes shows THIS position, not a placeholder.
+      fen: move.fenBefore, quality: move.quality ?? undefined,
+      cpLoss: move.cpLoss ?? undefined, bestSan: move.bestSan, phase: move.phase,
+    });
     toast(
-      added ? `Added “${label}” to your improvement plan` : `“${label}” is already in your plan`,
+      added
+        ? `Added “${label}” to your plan — find it under Improve → Review mistakes`
+        : `“${label}” is already in your plan (Improve → Review mistakes)`,
       added ? 'success' : 'info',
     );
   };

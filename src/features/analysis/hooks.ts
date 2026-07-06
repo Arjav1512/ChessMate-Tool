@@ -8,7 +8,9 @@ import {
   buildMoveAnalysisRows, derivePhase, persistMoveAnalysis,
   type MoveAnalysisRow, type PlyAnalysis,
 } from '../../lib/moveAnalysis';
-import { accuracyFromAvgCpLoss, mapLegacyClassification } from '../../lib/analysis/moveQuality';
+import { meanAccuracy, mapLegacyClassification, type AccuracyMove } from '../../lib/analysis/moveQuality';
+import { invalidateWeaknessProfile } from '../../hooks/useWeaknessProfile';
+import { invalidateMistakeReview } from '../../hooks/useMistakeReview';
 import { getSampleGame, getSampleMoves, getSampleTurningPoints, computeAccuracies } from './sampleAnalysis';
 import type { Game } from '../../lib/supabase';
 import type { AnalysisMoveVM, AnalysisVM, GameVM } from './types';
@@ -107,20 +109,63 @@ function applyRows(base: AnalysisMoveVM[], rows: MoveAnalysisRow[]): AnalysisMov
   });
 }
 
+/** Row → the move shape the accuracy curve needs (eval_cp is White-POV, after the move). */
+const rowToAccuracyMove = (r: MoveAnalysisRow): AccuracyMove => ({ color: r.color, evalCpAfter: r.eval_cp, cpLoss: r.cp_loss });
+
 function accuraciesFromRows(rows: MoveAnalysisRow[], userColor: 'w' | 'b') {
   const uc = userColor === 'w' ? 'white' : 'black';
-  const avg = (arr: MoveAnalysisRow[]) => (arr.length ? arr.reduce((s, r) => s + r.cp_loss, 0) / arr.length : 0);
-  const u = rows.filter((r) => r.color === uc);
-  const o = rows.filter((r) => r.color !== uc);
+  const acc = (arr: MoveAnalysisRow[]) => {
+    const m = meanAccuracy(arr.map(rowToAccuracyMove));
+    return m === null ? null : Math.round(m);
+  };
   return {
-    user: u.length ? Math.round(accuracyFromAvgCpLoss(avg(u))) : null,
-    opponent: o.length ? Math.round(accuracyFromAvgCpLoss(avg(o))) : null,
+    user: acc(rows.filter((r) => r.color === uc)),
+    opponent: acc(rows.filter((r) => r.color !== uc)),
   };
 }
 
 /** Top-3 plies by centipawn loss → VM plies (1-based), for the turning-points UI. */
 function turningPointsFromRows(rows: MoveAnalysisRow[]): number[] {
   return [...rows].sort((a, b) => b.cp_loss - a.cp_loss).slice(0, 3).map((r) => r.ply + 1).sort((a, b) => a - b);
+}
+
+/** Upsert the per-game summary derived from per-ply rows (idempotent on game_id). */
+async function persistGameSummary(gameId: string, userId: string, rows: MoveAnalysisRow[]): Promise<void> {
+  const counts: Record<string, number> = { best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0 };
+  let totalCpLoss = 0;
+  for (const r of rows) { counts[r.classification] = (counts[r.classification] ?? 0) + 1; totalCpLoss += r.cp_loss; }
+  const totalMoves = rows.length;
+  const avgCp = totalMoves ? totalCpLoss / totalMoves : 0;
+  // Game accuracy = mean per-move accuracy (win%-loss curve) over all moves —
+  // NOT the curve applied to mean centipawn loss (which read ~0% for real games).
+  const gameAccuracy = meanAccuracy(rows.map(rowToAccuracyMove)) ?? 0;
+  await supabase.from('game_analysis_results').upsert({
+    game_id: gameId, user_id: userId,
+    accuracy: Math.round(gameAccuracy * 100) / 100,
+    total_moves: totalMoves,
+    mistakes: counts.mistake, inaccuracies: counts.inaccuracy, blunders: counts.blunder,
+    good_moves: counts.good, best_moves: counts.best + counts.excellent,
+    average_centipawn_loss: Math.round(avgCp * 100) / 100,
+  }, { onConflict: 'game_id' });
+}
+
+/**
+ * Self-heal summaries persisted before the accuracy fix: if the stored game
+ * accuracy disagrees with the one re-derived from the per-ply rows, rewrite the
+ * summary and drop the session profile cache so Improve/Dashboard pick it up.
+ * Non-fatal; runs in the background on the read path.
+ */
+async function healGameSummary(game: Game, rows: MoveAnalysisRow[]): Promise<void> {
+  if (rows.length === 0) return;
+  try {
+    const expected = Math.round((meanAccuracy(rows.map(rowToAccuracyMove)) ?? 0) * 100) / 100;
+    const { data } = await supabase
+      .from('game_analysis_results').select('accuracy').eq('game_id', game.id).maybeSingle();
+    const stored = data?.accuracy;
+    if (typeof stored === 'number' && Math.abs(stored - expected) < 1) return;
+    await persistGameSummary(game.id, game.user_id, rows);
+    invalidateWeaknessProfile(game.user_id);
+  } catch { /* non-fatal: the workspace already shows the re-derived accuracy */ }
 }
 
 /** Run the existing Stockfish pipeline over a game and persist via existing writers. */
@@ -157,21 +202,12 @@ async function runAndPersist(
 
   const rows = buildMoveAnalysisRows(game.id, game.user_id, plies);
   await persistMoveAnalysis(rows); // upsert move_analysis (existing writer)
-
-  // Per-game summary — mirror the existing game_analysis_results upsert.
-  const counts: Record<string, number> = { best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0 };
-  let totalCpLoss = 0;
-  for (const r of rows) { counts[r.classification] = (counts[r.classification] ?? 0) + 1; totalCpLoss += r.cp_loss; }
-  const totalMoves = rows.length;
-  const avgCp = totalMoves ? totalCpLoss / totalMoves : 0;
-  await supabase.from('game_analysis_results').upsert({
-    game_id: game.id, user_id: game.user_id,
-    accuracy: Math.round(accuracyFromAvgCpLoss(avgCp) * 100) / 100,
-    total_moves: totalMoves,
-    mistakes: counts.mistake, inaccuracies: counts.inaccuracy, blunders: counts.blunder,
-    good_moves: counts.good, best_moves: counts.best + counts.excellent,
-    average_centipawn_loss: Math.round(avgCp * 100) / 100,
-  }, { onConflict: 'game_id' });
+  await persistGameSummary(game.id, game.user_id, rows);
+  // A new analysis changes the weakness profile and the mistake feed — drop the
+  // session caches so Improve/Dashboard/Review Mistakes reflect this game
+  // without a full reload.
+  invalidateWeaknessProfile(game.user_id);
+  invalidateMistakeReview(game.user_id);
 
   return rows;
 }
@@ -240,6 +276,9 @@ export function useAnalysis(gameId: string, opts: { instant?: boolean } = {}): {
           const produced = await runAndPersist(g as Game, alive, (n) => { if (alive.current) setState((s) => ({ ...s, analyzedPlies: n })); });
           if (!alive.current || !produced) return;
           rows = produced;
+        } else {
+          // Already analyzed → repair a summary written by the old accuracy formula.
+          void healGameSummary(g as Game, rows);
         }
 
         const moves = applyRows(base, rows);

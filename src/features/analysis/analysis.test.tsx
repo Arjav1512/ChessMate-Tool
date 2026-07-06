@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import {
-  mapLegacyClassification, classifyMoveQuality, accuracyFromAvgCpLoss, emptyCounts, MQ_ORDER,
+  mapLegacyClassification, classifyMoveQuality, winPercentFromCp, moveAccuracyPercent, meanAccuracy, emptyCounts, MQ_ORDER,
 } from '../../lib/analysis/moveQuality';
 import { useAnalysisStepper } from '../../stores/analysisStepperStore';
 import { InsightCard } from './InsightCard';
@@ -44,11 +44,52 @@ describe('move-quality taxonomy', () => {
     expect(classifyMoveQuality({ cpLoss: 400, isTopMove: false })).toBe('blunder');
   });
 
-  it('accuracy is clamped 0–100 and excludes "excellent"', () => {
-    expect(accuracyFromAvgCpLoss(0)).toBe(100);
-    expect(accuracyFromAvgCpLoss(9999)).toBe(0);
+  it('order excludes "excellent"', () => {
     expect(MQ_ORDER).toEqual(['brilliant', 'best', 'good', 'inaccuracy', 'mistake', 'blunder']);
     expect(Object.keys(emptyCounts())).not.toContain('excellent');
+  });
+});
+
+// ─── 1b. Accuracy (win%-based, not raw centipawns — the BUG-1 fix) ───────────
+describe('accuracy (win%-based)', () => {
+  it('winPercentFromCp is 50% at 0, monotonic, and saturates', () => {
+    expect(winPercentFromCp(0)).toBeCloseTo(50, 5);
+    expect(winPercentFromCp(100)).toBeGreaterThan(50);
+    expect(winPercentFromCp(-100)).toBeLessThan(50);
+    expect(winPercentFromCp(3000)).toBeGreaterThan(95);
+    expect(winPercentFromCp(-3000)).toBeLessThan(5);
+  });
+
+  it('a move that loses nothing scores ~100%', () => {
+    expect(moveAccuracyPercent({ color: 'white', evalCpAfter: 30, cpLoss: 0 })).toBeGreaterThan(99);
+    expect(moveAccuracyPercent({ color: 'black', evalCpAfter: -30, cpLoss: 0 })).toBeGreaterThan(99);
+  });
+
+  it('a clear blunder scores low; a small slip scores high', () => {
+    // White hangs ~3 pawns from an equal position: big win% drop → low accuracy.
+    const blunder = moveAccuracyPercent({ color: 'white', evalCpAfter: -300, cpLoss: 300 });
+    expect(blunder).toBeLessThan(40);
+    // White concedes ~20cp from equal: small win% drop → high accuracy.
+    const slip = moveAccuracyPercent({ color: 'white', evalCpAfter: -20, cpLoss: 20 });
+    expect(slip).toBeGreaterThan(90);
+  });
+
+  it('black is scored from black’s perspective (symmetry)', () => {
+    const whiteBlunder = moveAccuracyPercent({ color: 'white', evalCpAfter: -300, cpLoss: 300 });
+    const blackBlunder = moveAccuracyPercent({ color: 'black', evalCpAfter: 300, cpLoss: 300 });
+    expect(blackBlunder).toBeCloseTo(whiteBlunder, 1);
+  });
+
+  it('REGRESSION (BUG-1): a clean game reads ~85-100%, not ~0%', () => {
+    // 10 quiet White moves each conceding ~15cp around equality.
+    const moves = Array.from({ length: 10 }, () => ({ color: 'white' as const, evalCpAfter: -15, cpLoss: 15 }));
+    const acc = meanAccuracy(moves)!;
+    expect(acc).toBeGreaterThan(85);
+    expect(acc).toBeLessThanOrEqual(100);
+  });
+
+  it('meanAccuracy is null for an empty set', () => {
+    expect(meanAccuracy([])).toBeNull();
   });
 });
 
@@ -120,7 +161,7 @@ describe('Send-to-Improve', () => {
     const q = JSON.parse(window.localStorage.getItem('cm.improveQueue') ?? '[]');
     expect(q).toHaveLength(1);
     expect(q[0]).toMatchObject({ gameId: 'g1', ply: 5, motif: 'hanging-piece', san: 'Qxh7' });
-    expect(screen.getByText(/Added .* to your improvement plan/)).toBeInTheDocument();
+    expect(screen.getByText(/Added .* to your plan — find it under Improve/)).toBeInTheDocument();
   });
 });
 

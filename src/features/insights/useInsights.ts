@@ -6,7 +6,7 @@ import { sampleImprovementScore, sampleRatingHistory } from '../dashboard/sample
 import { sampleSkills } from '../improve/sampleImprove';
 import { getSampleMoves, computeAccuracies } from '../analysis/sampleAnalysis';
 import {
-  buildHeatmap, computeStreaks, dayKey, deriveColorSplit, deriveOpponents,
+  buildStreakDays, computeStreaks, dayKey, deriveColorSplit, deriveOpponents,
   type InsightsVM, type StrengthArea,
 } from './deriveInsights';
 import type { Game } from '../../lib/supabase';
@@ -80,7 +80,7 @@ export function deriveSampleInsights(today: Date): InsightsVM {
 
   // Activity: the library's game days, plus a study session on each of the last
   // `streakDays` days (the Dashboard's 5-day streak) ending today — so the
-  // header, the streak card and the heatmap trailing days all agree.
+  // header, the streak card and its trailing day strip all agree.
   const counts = new Map<string, number>();
   for (const g of games) {
     const k = (g.date ?? '').slice(0, 10);
@@ -91,8 +91,8 @@ export function deriveSampleInsights(today: Date): InsightsVM {
     const k = dayKey(d);
     counts.set(k, (counts.get(k) ?? 0) + 1);
   }
-  const streaks = computeStreaks(new Set(counts.keys()), today);
-  const heat = buildHeatmap(counts, today);
+  const activeDays = new Set(counts.keys());
+  const streaks = computeStreaks(activeDays, today);
 
   // Strengths: the Improve screen's skill profile, strongest first; the note is
   // derived from the you-vs-peers gap in that same data.
@@ -126,7 +126,7 @@ export function deriveSampleInsights(today: Date): InsightsVM {
     analyzedThisMonth,
     whitePct: deriveColorSplit(games),
     strengths,
-    heatmap: { ...heat, ...streaks },
+    streak: { days: buildStreakDays(activeDays, today), ...streaks },
     seriesLabel: 'Rating',
     series,
     seriesNow,
@@ -152,14 +152,14 @@ function deriveRealInsights(
   const accs = results.map((r) => r.accuracy).filter((a): a is number => a != null);
   const accuracy = accs.length ? Math.round(accs.reduce((a, b) => a + b, 0) / accs.length) : 0;
 
-  // Activity days = days a game was added; streak/heatmap derive from them.
+  // Activity days = days a game was added; the streak strip derives from them.
   const counts = new Map<string, number>();
   for (const g of games) {
     const k = (g.date ?? g.created_at ?? '').slice(0, 10);
     if (k) counts.set(k, (counts.get(k) ?? 0) + 1);
   }
-  const streaks = computeStreaks(new Set(counts.keys()), today);
-  const heat = buildHeatmap(counts, today);
+  const activeDays = new Set(counts.keys());
+  const streaks = computeStreaks(activeDays, today);
 
   // Strength per phase = clean-move rate over the user's real analyzed plies.
   const strengths: StrengthArea[] = Object.entries(PHASE_LABEL).map(([phase, label]) => {
@@ -199,7 +199,7 @@ function deriveRealInsights(
     analyzedThisMonth,
     whitePct: deriveColorSplit(games),
     strengths,
-    heatmap: { ...heat, ...streaks },
+    streak: { days: buildStreakDays(activeDays, today), ...streaks },
     seriesLabel: 'Avg accuracy',
     series,
     seriesNow,

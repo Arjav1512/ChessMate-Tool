@@ -71,7 +71,11 @@ export function ImportPage() {
             {result.imported > 0 ? `${result.imported} game${result.imported === 1 ? '' : 's'} imported` : 'Nothing new to import'}
           </h2>
           <p className="iv-games__sub iv-body-sm">
-            {[result.duplicates ? `${result.duplicates} already in your library` : '', result.skipped ? `${result.skipped} skipped` : ''].filter(Boolean).join(' · ') || 'Queued for analysis.'}
+            {[
+              result.imported > 0 ? 'Next: analyze it — ChessMate finds your mistakes, accuracy, and what to practice.' : '',
+              result.duplicates ? `${result.duplicates} already in your library` : '',
+              result.skipped ? `${result.skipped} skipped` : '',
+            ].filter(Boolean).join(' · ')}
           </p>
           {result.errors.length > 0 && (
             <ul className="iv-gimport__preview" aria-label="Skipped games">
@@ -80,10 +84,22 @@ export function ImportPage() {
               ))}
             </ul>
           )}
-          {/* exactly one primary next step — never a dead end */}
-          {result.imported > 0
-            ? <Button onClick={() => navigate('/games')}>Review imported games →</Button>
-            : <Button onClick={() => { setResult(null); setText(''); }}>Import different games</Button>}
+          {/* exactly one primary next step — never a dead end. Analysis runs
+              automatically when the game opens, so send the user straight there. */}
+          {result.imported > 0 && result.gameIds[0] ? (
+            <span style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+              <Button onClick={() => navigate(`/analysis/${encodeURIComponent(result.gameIds[0])}`)}>
+                {result.imported === 1 ? 'Analyze this game →' : 'Analyze your first game →'}
+              </Button>
+              {result.imported > 1 && (
+                <Button variant="ghost" onClick={() => navigate('/games')}>View all imported games</Button>
+              )}
+            </span>
+          ) : result.imported > 0 ? (
+            <Button onClick={() => navigate('/games')}>Review imported games →</Button>
+          ) : (
+            <Button onClick={() => { setResult(null); setText(''); }}>Import different games</Button>
+          )}
         </div>
       ) : items ? (
         /* ── Preview ── */

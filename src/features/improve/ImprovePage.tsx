@@ -13,7 +13,7 @@ type ImproveView = 'plan' | 'mistakes';
  * top-level nav; both views live under `/improve` (flag `ui.screen.improve`).
  */
 export function ImprovePage() {
-  const { data } = useImproveData();
+  const { data, isLoading, error } = useImproveData();
   const { feed } = useReviewMistakes();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,7 +26,13 @@ export function ImprovePage() {
     <div className="iv-improve iv-page-enter">
       <div className="iv-imp-header">
         <h1 ref={h1Ref} tabIndex={-1} className="iv-imp-header__title iv-h1" style={{ outline: 'none' }}>Your improvement plan</h1>
-        <p className="iv-imp-header__prov iv-body-sm">Built from {data.analyzedGames} analyzed games · refreshes as you play.</p>
+        <p className="iv-imp-header__prov iv-body-sm">
+          {isLoading
+            ? 'Loading your plan…'
+            : error
+              ? 'Your plan couldn’t load.'
+              : `Built from ${data.analyzedGames} analyzed ${data.analyzedGames === 1 ? 'game' : 'games'} · refreshes as you play.`}
+        </p>
         <div className="iv-imp-viewswitch">
           <SegmentedControl
             ariaLabel="Improve view"

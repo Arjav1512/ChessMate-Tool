@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildHeatmap, computeStreaks, dayKey, deriveColorSplit, deriveOpponents } from './deriveInsights';
+import { buildStreakDays, computeStreaks, dayKey, deriveColorSplit, deriveOpponents } from './deriveInsights';
 import { deriveSampleInsights } from './useInsights';
 import { sampleGames, sampleAnalyzedIds } from '../games/sampleGames';
 import { sampleImprovementScore, sampleRatingHistory } from '../dashboard/sampleDashboard';
@@ -33,29 +33,22 @@ describe('computeStreaks', () => {
   });
 });
 
-describe('buildHeatmap', () => {
-  const today = new Date('2026-07-05T12:00:00'); // a Sunday
+describe('buildStreakDays', () => {
+  const today = new Date('2026-07-05T12:00:00');
 
-  it('never marks days after today (they are null)', () => {
-    const { rows } = buildHeatmap(new Map([[dayKey(today), 2]]), today, 4);
-    // today is Sunday → Mon..Sat of the current (last) week are in the future.
-    for (let d = 1; d < 7; d++) expect(rows[d][3]).toBeNull();
-    expect(rows[0][3]).not.toBeNull(); // today itself is rendered
+  it('returns the trailing N days, oldest first, ending today', () => {
+    const days = buildStreakDays(new Set(), today, 14);
+    expect(days).toHaveLength(14);
+    expect(days[0].key).toBe(day(today, -13));
+    expect(days[13].key).toBe(dayKey(today));
+    expect(days[13].isToday).toBe(true);
+    expect(days.filter((d) => d.isToday)).toHaveLength(1);
   });
 
-  it('7 rows × weeks columns; month spans cover every week', () => {
-    const { rows, monthSpans } = buildHeatmap(new Map(), today, 16);
-    expect(rows).toHaveLength(7);
-    for (const r of rows) expect(r).toHaveLength(16);
-    expect(monthSpans.reduce((n, m) => n + m.span, 0)).toBe(16);
-  });
-
-  it('intensity scales with per-day count and is 0 for inactive days', () => {
-    const counts = new Map([[day(today, 0), 1], [day(today, -7), 3]]);
-    const { rows } = buildHeatmap(counts, today, 4);
-    expect(rows[0][3]).toBe(2);      // 1 activity → level 2
-    expect(rows[0][2]).toBe(4);      // 3 activities → capped at 4
-    expect(rows[6][2]).toBe(0);      // inactive Saturday
+  it('marks exactly the active days', () => {
+    const active = new Set([day(today, 0), day(today, -2)]);
+    const days = buildStreakDays(active, today, 7);
+    expect(days.map((d) => d.active)).toEqual([false, false, false, false, true, false, true]);
   });
 });
 
@@ -90,7 +83,7 @@ describe('sample Insights agree with the rest of the app (regression)', () => {
   });
 
   it('current streak = the Dashboard streak, and the header says so', () => {
-    expect(vm.heatmap.current).toBe(sampleImprovementScore.streakDays);
+    expect(vm.streak.current).toBe(sampleImprovementScore.streakDays);
     expect(vm.status).toContain(`${sampleImprovementScore.streakDays}-day study streak`);
   });
 

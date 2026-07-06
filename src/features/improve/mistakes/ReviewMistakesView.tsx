@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, EmptyState, ErrorState, SegmentedControl, Skeleton, useIvToast } from '../../../components/ui/iv';
 import type { MoveQuality } from '../../../components/ui/iv';
 import { BoardContainer } from '../../analysis/BoardContainer';
@@ -35,7 +35,16 @@ export function ReviewMistakesView() {
   const navigate = useNavigate();
   const { toast } = useIvToast();
   const { feed, isLoading, error } = useReviewMistakes();
-  const [filter, setFilter] = useState<MistakeFilterVM>({ phase: 'all', motif: 'all' });
+  // Plan items deep-link here pre-filtered (?phase=endgame / ?motif=hanging-piece)
+  // so "start a session" lands directly on the mistakes it targets.
+  const [params] = useSearchParams();
+  const [filter, setFilter] = useState<MistakeFilterVM>(() => {
+    const phase = params.get('phase');
+    return {
+      phase: phase === 'opening' || phase === 'middlegame' || phase === 'endgame' ? phase : 'all',
+      motif: params.get('motif') ?? 'all',
+    };
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const motifs = useMemo(() => motifOptions(feed), [feed]);
@@ -69,7 +78,10 @@ export function ReviewMistakesView() {
 
   const openInAnalysis = (m: ReviewMistakeVM) => navigate(`/analysis/${encodeURIComponent(m.gameId)}?ply=${m.ply}`);
   const addToPlan = (m: ReviewMistakeVM) => {
-    const added = addToImproveQueue({ gameId: m.gameId, ply: m.ply, motif: m.motifs[0]?.key ?? 'review', san: m.playedSan ?? '' });
+    const added = addToImproveQueue({
+      gameId: m.gameId, ply: m.ply, motif: m.motifs[0]?.key ?? 'review', san: m.playedSan ?? '',
+      fen: m.fen, quality: m.quality, cpLoss: m.cpLoss, bestSan: m.bestSan, phase: m.phase,
+    });
     toast(added ? 'Added to your study plan' : 'Already in your study plan', 'info');
   };
 

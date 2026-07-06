@@ -11,7 +11,6 @@
 import { Chess } from 'chess.js';
 import { parsePGN } from '../../lib/pgn';
 import { SAMPLE_PGN } from '../../lib/sampleData';
-import { accuracyFromAvgCpLoss } from '../../lib/analysis/moveQuality';
 import type { MoveQuality } from '../../lib/analysis/moveQuality';
 import type { AnalysisMoveVM, GameVM, Phase } from './types';
 
@@ -115,12 +114,10 @@ export function getSampleTurningPoints(): number[] {
 }
 
 /**
- * Accuracy per side. The real path uses `accuracyFromAvgCpLoss` over per-move
- * centipawn loss; the synthetic sample cp-losses aren't calibrated to that
- * curve, so for v1 we return believable sample accuracies (decision #3). When
- * real per-move analysis lands, swap this for the commented derivation.
+ * Accuracy per side for the DEMO/sample game only. The real path derives accuracy
+ * from per-move win%-loss (`meanAccuracy`); the synthetic sample cp-losses aren't
+ * calibrated to that curve, so the sample returns believable fixed accuracies.
  */
 export function computeAccuracies(): { user: number; opponent: number } {
-  void accuracyFromAvgCpLoss; // real-path helper retained for the data swap
   return { user: 84, opponent: 79 };
 }

@@ -20,7 +20,16 @@ export function readImproveQueue(): QueuedImport[] {
     if (!Array.isArray(raw)) return [];
     return raw
       .filter((x) => x && typeof x.motif === 'string' && typeof x.gameId === 'string')
-      .map((x) => ({ gameId: x.gameId, ply: Number(x.ply) || 0, motif: x.motif, san: String(x.san ?? '') }));
+      .map((x) => {
+        const item: QueuedImport = { gameId: x.gameId, ply: Number(x.ply) || 0, motif: x.motif, san: String(x.san ?? '') };
+        // Position context (newer items) — validated so a hand-edited store can't crash readers.
+        if (typeof x.fen === 'string' && x.fen) item.fen = x.fen;
+        if (typeof x.quality === 'string') item.quality = x.quality;
+        if (Number.isFinite(x.cpLoss)) item.cpLoss = Number(x.cpLoss);
+        if (typeof x.bestSan === 'string') item.bestSan = x.bestSan;
+        if (x.phase === 'opening' || x.phase === 'middlegame' || x.phase === 'endgame') item.phase = x.phase;
+        return item;
+      });
   } catch {
     return [];
   }
