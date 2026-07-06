@@ -63,4 +63,6 @@ export interface ImportResult {
   duplicates: number;
   skipped: number;           // invalid + failed
   errors: { index: number; reason: string }[];
+  /** ids of the games just inserted (first = "analyze now" target). */
+  gameIds: string[];
 }

@@ -15,6 +15,10 @@
 .iv-aw__stage .iv-board { flex: 1; min-width: 0; }
 .iv-aw__panel { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 
+/* First-run analysis progress — tells the user what the engine is doing. */
+.iv-aw__analyzing { display: flex; flex-direction: column; gap: 8px; padding: var(--space-3) var(--space-4); border: 1px solid var(--hairline); border-radius: var(--r-md); background: var(--surface-2); }
+.iv-aw__analyzing-label { font-size: 13px; color: var(--text-mid); }
+
 /* ----- Board ----- */
 .iv-board {
   container-type: inline-size;

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Chess } from 'chess.js';
-import { Tabs, TabPanel, SegmentedControl, ErrorState } from '../../components/ui/iv';
+import { Tabs, TabPanel, SegmentedControl, ErrorState, ProgressBar } from '../../components/ui/iv';
 import type { Promotion } from './BoardContainer';
 import { useBreakpoint } from '../../hooks/useResponsive';
 import { useAnalysisStepper } from '../../stores/analysisStepperStore';
@@ -81,6 +81,19 @@ export function AnalysisPage() {
   // Reset on the ROUTE id so navigating between games resets even if the
   // (sample) game object is stable.
   useEffect(() => { reset(game.userColor); setExplore(null); setBranchEvalCp(null); h1Ref.current?.focus(); }, [id, game.userColor, reset]);
+
+  // Deep links (?ply=N) from Review Mistakes land on the flagged move, not the
+  // start position. Applied once per game, after the move list has loaded (and
+  // after the reset above, which is declared first so it runs first).
+  const [searchParams] = useSearchParams();
+  const plyParam = Number(searchParams.get('ply') ?? NaN);
+  const appliedDeepLink = useRef<string | null>(null);
+  useEffect(() => {
+    if (!Number.isFinite(plyParam) || plyParam < 1 || total === 0) return;
+    if (appliedDeepLink.current === id) return;
+    appliedDeepLink.current = id;
+    setPly(Math.min(total, Math.floor(plyParam)));
+  }, [id, plyParam, total, setPly]);
 
   const currentMove = currentPly > 0 ? moves[currentPly - 1] : null;
   const currentFen = currentMove?.fenAfter ?? moves[0]?.fenBefore ?? START_FEN;
@@ -285,6 +298,20 @@ export function AnalysisPage() {
 
       {/* Analysis column */}
       <div className="iv-aw__panel">
+        {/* First-time analysis runs in the browser and takes a moment — say so,
+            with real progress, instead of leaving skeletons unexplained. */}
+        {analyzing && analysis.totalPlies > 0 && analysis.analyzedPlies > 0 && (
+          <div className="iv-aw__analyzing" role="status">
+            <span className="iv-aw__analyzing-label">
+              Analyzing your game — move {analysis.analyzedPlies} of {analysis.totalPlies}. Insights appear as soon as it finishes.
+            </span>
+            <ProgressBar
+              value={analysis.analyzedPlies}
+              max={analysis.totalPlies}
+              ariaLabel={`Analyzing move ${analysis.analyzedPlies} of ${analysis.totalPlies}`}
+            />
+          </div>
+        )}
         {isMobile
           ? <SegmentedControl ariaLabel="Analysis views" value={activeTab} onChange={setTab} options={TABS} />
           : <Tabs ariaLabel="Analysis views" value={activeTab} onChange={setTab} tabs={TABS} />}
