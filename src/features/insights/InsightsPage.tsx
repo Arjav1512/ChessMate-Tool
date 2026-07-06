@@ -13,8 +13,6 @@ const AREA_ICON: Record<string, LucideIcon> = {
   timemgmt: Timer, endgame: Crown, positional: Layers, conversion: TrendingUp,
 };
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
 type InsightsTab = 'play' | 'progress';
 const TABS = [
   { value: 'play' as const, label: 'Your Play' },
@@ -151,34 +149,26 @@ export function InsightsPage() {
               </Card>
 
               {/* Study streak — computed from actual activity days; the header,
-                  this title and the trailing heatmap cells agree by construction. */}
+                  this title and the trailing day strip agree by construction.
+                  One marker per day (last 14), nothing more. */}
               <Card className="ins-card ins-streak">
                 <div className="ins-panel-head">
-                  <h2 className="iv-h3">{vm.heatmap.current} day streak</h2>
-                  <span className="iv-label">Longest streak · {vm.heatmap.longest} days</span>
+                  <h2 className="iv-h3">{vm.streak.current} day streak</h2>
+                  <span className="iv-label">Longest · {vm.streak.longest} days</span>
                 </div>
-                <div className="ins-heatmap" role="img" aria-label={`Study activity over recent weeks — current streak ${vm.heatmap.current} days, longest ${vm.heatmap.longest} days`}>
-                  <div className="ins-heatmap__months" aria-hidden>
-                    {vm.heatmap.monthSpans.map((m, i) => (
-                      <span key={`${m.label}-${i}`} style={{ flex: `${m.span} ${m.span} 0` }}>{m.span > 1 ? m.label : ''}</span>
-                    ))}
-                  </div>
-                  <div className="ins-heatmap__grid" aria-hidden>
-                    {vm.heatmap.rows.map((row, di) => (
-                      <div className="ins-heatmap__row" key={di}>
-                        <span className="ins-heatmap__day">{DAYS[di]}</span>
-                        {row.map((v, wi) => (
-                          <span key={wi} className={v == null ? 'ins-cell ins-cell--future' : `ins-cell ins-cell--l${v}`} />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
+                <div
+                  className="ins-streak__days"
+                  role="img"
+                  aria-label={`Last 14 days — ${vm.streak.days.filter((d) => d.active).length} active days, current streak ${vm.streak.current}, longest ${vm.streak.longest}`}
+                >
+                  {vm.streak.days.map((d) => (
+                    <span
+                      key={d.key}
+                      className={`ins-day${d.active ? ' ins-day--active' : ''}${d.isToday ? ' ins-day--today' : ''}`}
+                    />
+                  ))}
                 </div>
-                <div className="ins-legend" aria-hidden>
-                  <span className="ins-legend__label">Less</span>
-                  {[0, 1, 2, 3, 4].map((v) => <span key={v} className={`ins-cell ins-cell--l${v}`} />)}
-                  <span className="ins-legend__label">More</span>
-                </div>
+                <p className="ins-note">Last 14 days — a day counts when you add or analyze a game.</p>
               </Card>
             </div>
           </TabPanel>

@@ -78,28 +78,19 @@
 .ins-strength__label { color: var(--text-body); font-size: 14px; font-weight: 500; }
 .ins-strength__row .ins-strength__note { margin-left: auto; text-align: right; }
 
-/* ── Activity streak heatmap ──
-   Cells flex to fill the card width (reference-style chunky grid, no dead
-   right region); month labels are flex quarters over the same span so they
-   line up with the weeks they cover. */
-.ins-heatmap { display: flex; flex-direction: column; gap: 6px; }
-.ins-heatmap__months { display: flex; padding-left: 40px; color: var(--text-low); font-size: 11px; }
-.ins-heatmap__months span { flex: 1 1 0; }
-.ins-heatmap__grid { display: flex; flex-direction: column; gap: 4px; }
-.ins-heatmap__row { display: flex; align-items: center; gap: 4px; }
-.ins-heatmap__day { width: 36px; flex-shrink: 0; color: var(--text-low); font-size: 11px; }
-.ins-cell { width: 15px; height: 15px; border-radius: 3px; flex-shrink: 0; }
-.ins-heatmap__row .ins-cell { flex: 1 1 0; min-width: 0; width: auto; aspect-ratio: 1; height: auto; }
-.ins-cell--l0 { background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--hairline); }
-/* Days after today — occupy the slot but never imply future activity. */
-.ins-cell--future { visibility: hidden; }
-.ins-cell--l1 { background: color-mix(in srgb, var(--accent) 32%, var(--surface-3)); }
-.ins-cell--l2 { background: color-mix(in srgb, var(--accent) 58%, var(--surface-2)); }
-.ins-cell--l3 { background: color-mix(in srgb, var(--accent) 82%, transparent); }
-.ins-cell--l4 { background: var(--accent); }
-.ins-legend { display: flex; align-items: center; gap: 6px; margin-top: var(--space-2); }
-.ins-legend .ins-cell { width: 13px; height: 13px; }
-.ins-legend__label { color: var(--text-low); font-size: 12px; }
+/* ── Study streak — one dot per day (last 14), today ringed. ── */
+.ins-streak__days { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
+.ins-day {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 28px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+.ins-day--active { background: var(--accent); box-shadow: none; }
+.ins-day--today { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ── Recent opponents ── */
 .ins-opps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }

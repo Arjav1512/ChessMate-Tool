@@ -21,11 +21,15 @@ export interface OpponentRow {
   last: 'win' | 'loss' | 'draw';
 }
 
-export interface HeatmapVM {
-  /** 7 rows (Sun..Sat) × N week columns. null = outside range / in the future. */
-  rows: (number | null)[][];
-  /** Month labels per contiguous week span (for aligned rendering). */
-  monthSpans: { label: string; span: number }[];
+export interface StreakDay {
+  key: string;      // local YYYY-MM-DD
+  active: boolean;  // any study activity that day
+  isToday: boolean;
+}
+
+export interface StreakVM {
+  /** The trailing days (oldest first, today last). */
+  days: StreakDay[];
   current: number;
   longest: number;
 }
@@ -42,7 +46,7 @@ export interface InsightsVM {
   analyzedThisMonth: number;
   whitePct: number;            // % of games as White
   strengths: StrengthArea[];   // sorted strongest first
-  heatmap: HeatmapVM;
+  streak: StreakVM;
   seriesLabel: string;         // 'Rating' (sample) / 'Avg accuracy' (real)
   series: { label: string; value: number }[];
   seriesNow: number;
@@ -120,38 +124,18 @@ export function computeStreaks(activeDays: Set<string>, today: Date): { current:
   return { current, longest: Math.max(longest, current) };
 }
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 /**
- * Build the activity heatmap grid: 7 weekday rows × `weeks` columns, the last
- * column being the current (possibly partial) week. Days after `today` are
- * null so the grid never implies future activity. Intensity 0–4 from the
- * per-day activity count. Month labels span the week columns they cover.
+ * The trailing `days` of study activity as a single flat strip (oldest first,
+ * today last) — deliberately simple: one marker per day, active or not.
+ * Replaced the weeks×7 heatmap grid, which read as visual clutter.
  */
-export function buildHeatmap(counts: Map<string, number>, today: Date, weeks = 16): Pick<HeatmapVM, 'rows' | 'monthSpans'> {
-  // Sunday that starts the current week, then back (weeks-1) more weeks.
-  const start = new Date(today);
-  start.setDate(start.getDate() - start.getDay() - (weeks - 1) * 7);
-
-  const rows: (number | null)[][] = Array.from({ length: 7 }, () => []);
-  const weekMonths: string[] = [];
-  for (let w = 0; w < weeks; w++) {
-    const weekStart = new Date(start);
-    weekStart.setDate(start.getDate() + w * 7);
-    weekMonths.push(MONTH_NAMES[weekStart.getMonth()]);
-    for (let d = 0; d < 7; d++) {
-      const cell = new Date(weekStart);
-      cell.setDate(weekStart.getDate() + d);
-      if (cell.getTime() > today.getTime()) { rows[d].push(null); continue; }
-      const n = counts.get(dayKey(cell)) ?? 0;
-      rows[d].push(n === 0 ? 0 : Math.min(4, n + 1));
-    }
+export function buildStreakDays(activeDays: Set<string>, today: Date, days = 14): StreakDay[] {
+  const out: StreakDay[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const k = dayKey(d);
+    out.push({ key: k, active: activeDays.has(k), isToday: i === 0 });
   }
-  const monthSpans: { label: string; span: number }[] = [];
-  for (const m of weekMonths) {
-    const lastSpan = monthSpans[monthSpans.length - 1];
-    if (lastSpan && lastSpan.label === m) lastSpan.span += 1;
-    else monthSpans.push({ label: m, span: 1 });
-  }
-  return { rows, monthSpans };
+  return out;
 }
