@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button, EmptyState, Skeleton } from '../../components/ui/iv';
+import { Button, EmptyState, ErrorState, Skeleton } from '../../components/ui/iv';
 import { useDashboardEmptyState } from './hooks';
 // Phase 8A simplification: the page composes 3 regions — a momentum line, the
 // Weekly Focus hero, and a "your plan" link-strip. RatingTrendCard (→ Progress,
@@ -52,6 +52,12 @@ export function DashboardPage() {
 
       {empty.isLoading ? (
         <Skeleton height={420} />
+      ) : empty.isError ? (
+        // A backend failure must read as an error, not as "you have no games".
+        <ErrorState
+          message="We couldn’t load your dashboard. Check your connection and try again."
+          onRetry={empty.refetch}
+        />
       ) : empty.data === false ? (
         // New user, 0 games — onboarding focus replaces the grid (§7 empty state).
         <EmptyState

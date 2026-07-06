@@ -15,6 +15,13 @@ export interface QueuedImport {
   ply: number;
   motif: string;
   san: string;
+  /** Real position/context captured when the move was flagged (items stored
+   *  before this existed may lack them; readers must fall back gracefully). */
+  fen?: string;
+  quality?: string;
+  cpLoss?: number;
+  bestSan?: string | null;
+  phase?: 'opening' | 'middlegame' | 'endgame';
 }
 
 export interface ComposeOptions {

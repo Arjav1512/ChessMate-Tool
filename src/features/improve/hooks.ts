@@ -1,12 +1,12 @@
-import { useMemo } from 'react';
-import { composePlan } from '../../lib/improve/composePlan';
+import { useEffect, useMemo, useState } from 'react';
+import { composePlan, type QueuedImport } from '../../lib/improve/composePlan';
 import type { ImproveData } from '../../lib/improve/types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWeaknessProfile } from '../../hooks/useWeaknessProfile';
 import {
   SAMPLE_ANALYZED_GAMES, sampleFocusMeta, sampleMilestones, sampleRawWeaknesses, sampleSkills,
 } from './sampleImprove';
-import { readImproveQueue } from './queue';
+import { readImproveQueue, QUEUE_EVENT, IMPROVE_QUEUE_KEY } from './queue';
 import { profileToImproveData, weekOfYear } from './realData';
 
 /**
@@ -30,12 +30,12 @@ const EMPTY_DATA: ImproveData = {
 };
 
 /** The rich sample plan — DEV preview only (keeps screenshots + a11y populated). */
-function sampleImproveData(): ImproveData {
+function sampleImproveData(queue: QueuedImport[]): ImproveData {
   const composed = composePlan(sampleRawWeaknesses, {
     week: sampleFocusMeta.week,
     sessionsDone: sampleFocusMeta.sessionsDone,
     phaseDeltaPct: sampleFocusMeta.phaseDeltaPct,
-    queue: readImproveQueue(),
+    queue,
   });
   if (!composed) return { ...EMPTY_DATA, analyzedGames: SAMPLE_ANALYZED_GAMES };
   return {
@@ -49,19 +49,37 @@ function sampleImproveData(): ImproveData {
   };
 }
 
-export function useImproveData(): { data: ImproveData; isLoading: boolean } {
+/**
+ * The Send-to-Improve queue, kept live: re-reads when Analysis / Review Mistakes
+ * add an item in this tab (QUEUE_EVENT) or another tab writes it (storage).
+ * Without this, "Send to Improve" looked like it did nothing until a reload.
+ */
+function useImproveQueue(): QueuedImport[] {
+  const [queue, setQueue] = useState<QueuedImport[]>(() => readImproveQueue());
+  useEffect(() => {
+    const refresh = () => setQueue(readImproveQueue());
+    const onStorage = (e: StorageEvent) => { if (e.key === IMPROVE_QUEUE_KEY) refresh(); };
+    window.addEventListener(QUEUE_EVENT, refresh);
+    window.addEventListener('storage', onStorage);
+    return () => { window.removeEventListener(QUEUE_EVENT, refresh); window.removeEventListener('storage', onStorage); };
+  }, []);
+  return queue;
+}
+
+export function useImproveData(): { data: ImproveData; isLoading: boolean; error: string | null } {
   const { user } = useAuth();
   const useReal = !!user;
-  const { profile, loading } = useWeaknessProfile(useReal);
+  const { profile, loading, error } = useWeaknessProfile(useReal);
+  const queue = useImproveQueue();
 
   const data = useMemo<ImproveData>(() => {
     if (useReal) {
-      if (!profile) return EMPTY_DATA; // loading or no data → onboarding shape
-      return profileToImproveData(profile, { week: weekOfYear(), queue: readImproveQueue() });
+      if (!profile) return EMPTY_DATA; // loading/error/no data — callers branch on isLoading/error first
+      return profileToImproveData(profile, { week: weekOfYear(), queue });
     }
     // Unauthenticated DEV preview → sample; production-unauth → empty (unreachable).
-    return import.meta.env.DEV ? sampleImproveData() : EMPTY_DATA;
-  }, [useReal, profile]);
+    return import.meta.env.DEV ? sampleImproveData(queue) : EMPTY_DATA;
+  }, [useReal, profile, queue]);
 
-  return { data, isLoading: useReal ? loading : false };
+  return { data, isLoading: useReal ? loading : false, error: useReal ? error : null };
 }

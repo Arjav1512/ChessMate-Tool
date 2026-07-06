@@ -49,20 +49,25 @@ function detectedToVM(mistakes: MistakeInput[]): ReviewMistakeVM[] {
   }));
 }
 
+const QUEUE_QUALITIES = new Set(['brilliant', 'best', 'good', 'inaccuracy', 'mistake', 'blunder']);
+// Fallback position for items stored before the queue captured real context.
+const LEGACY_QUEUE_FEN = 'r4rk1/ppp2ppp/2n5/2bqp3/8/2NP1N2/PPP2PPP/R2Q1RK1 w - - 0 12';
+
 function queueToVM(queue: QueuedImport[]): ReviewMistakeVM[] {
-  // Queued items are user-flagged → pinned high. Position context is sample for v1.
+  // Queued items are user-flagged → pinned high. The position/context is the one
+  // captured when the move was flagged (legacy items fall back to a placeholder).
   return queue.map((q, i) => ({
     id: `${q.gameId}:${q.ply}`,
     gameId: q.gameId,
     ply: q.ply,
     moveNumber: Math.max(1, Math.ceil(q.ply / 2)),
-    fen: 'r4rk1/ppp2ppp/2n5/2bqp3/8/2NP1N2/PPP2PPP/R2Q1RK1 w - - 0 12',
+    fen: q.fen ?? LEGACY_QUEUE_FEN,
     playedSan: q.san || null,
-    bestSan: null,
-    quality: 'blunder' as const,
-    phase: 'middlegame' as Phase,
+    bestSan: q.bestSan ?? null,
+    quality: (QUEUE_QUALITIES.has(q.quality ?? '') ? q.quality : 'blunder') as ReviewMistakeVM['quality'],
+    phase: (q.phase ?? 'middlegame') as Phase,
     motifs: [{ key: q.motif, label: prettifyMotif(q.motif) }],
-    cpLoss: 300,
+    cpLoss: q.cpLoss ?? 300,
     lesson: 'You flagged this from your analysis — review the better continuation.',
     priority: 100000 - i, // pin flagged items above detected, preserving queue order
     source: 'send-to-improve' as const,
