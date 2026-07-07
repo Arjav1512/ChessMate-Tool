@@ -38,9 +38,11 @@ export function useInsights(): { vm: InsightsVM | null; status: InsightsStatus }
           supabase.from('games')
             .select('id, user_color, white_player, black_player, result, date, created_at')
             .eq('user_id', user.id).order('created_at', { ascending: false }).limit(500),
+          // NB: this table's timestamp is `analyzed_at` (there is no created_at —
+          // selecting one made PostgREST error and the whole page render "failed").
           supabase.from('game_analysis_results')
-            .select('game_id, accuracy, total_moves, mistakes, inaccuracies, blunders, created_at')
-            .eq('user_id', user.id).order('created_at', { ascending: true }).limit(500),
+            .select('game_id, accuracy, total_moves, mistakes, inaccuracies, blunders, analyzed_at')
+            .eq('user_id', user.id).order('analyzed_at', { ascending: true }).limit(500),
           supabase.from('move_analysis')
             .select('classification, phase')
             .eq('user_id', user.id).limit(20000),
@@ -137,7 +139,7 @@ export function deriveSampleInsights(today: Date): InsightsVM {
 
 /* ── Real path: derive from the user's own tables ────────────────────────── */
 
-interface ResultRow { game_id: string; accuracy: number | null; total_moves: number | null; mistakes: number | null; inaccuracies: number | null; blunders: number | null; created_at: string | null }
+interface ResultRow { game_id: string; accuracy: number | null; total_moves: number | null; mistakes: number | null; inaccuracies: number | null; blunders: number | null; analyzed_at: string | null }
 
 const PHASE_LABEL: Record<string, string> = { opening: 'Opening', middlegame: 'Middlegame', endgame: 'Endgame' };
 const CLEAN = new Set(['brilliant', 'best', 'excellent', 'good']);
@@ -171,8 +173,8 @@ function deriveRealInsights(
   // Progression = average accuracy per month (real, honest series).
   const byMonth = new Map<string, number[]>();
   for (const r of results) {
-    if (r.accuracy == null || !r.created_at) continue;
-    const d = new Date(r.created_at);
+    if (r.accuracy == null || !r.analyzed_at) continue;
+    const d = new Date(r.analyzed_at);
     const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     byMonth.set(k, [...(byMonth.get(k) ?? []), r.accuracy]);
   }
@@ -185,7 +187,7 @@ function deriveRealInsights(
   const seriesDelta = series.length > 1 ? seriesNow - series[0].value : 0;
 
   const thisMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-  const analyzedThisMonth = results.filter((r) => (r.created_at ?? '').startsWith(thisMonth)).length;
+  const analyzedThisMonth = results.filter((r) => (r.analyzed_at ?? '').startsWith(thisMonth)).length;
 
   return {
     status: `${gamesAnalyzed} of ${games.length} games analyzed · ${streaks.current}-day study streak`,
