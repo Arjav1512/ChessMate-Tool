@@ -1,6 +1,7 @@
 import type { CoachContext } from '../context/types';
 import { KNOWLEDGE_BASE, type KnowledgeDoc } from '../knowledge';
 import type { CoachTask } from '../prompts/templates';
+import type { KnowledgeRetriever } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Structured retrieval (Coach Foundation, Deliverable 6) — Phase-1 RAG.
@@ -58,6 +59,27 @@ export function retrieveKnowledge(
   for (const motif of query.motifs ?? []) take(motif);
 
   return picked;
+}
+
+/**
+ * The Phase-1 KnowledgeRetriever: deterministic tag matching over an injected
+ * corpus. Kept as a thin class over the pure functions above so the strategy
+ * stays unit-testable while the pipeline depends only on the interface.
+ */
+export class StructuredRetriever implements KnowledgeRetriever {
+  readonly id = 'structured';
+
+  private readonly docs: KnowledgeDoc[];
+  private readonly limit: number;
+
+  constructor(docs: KnowledgeDoc[] = KNOWLEDGE_BASE, limit: number = DEFAULT_LIMIT) {
+    this.docs = docs;
+    this.limit = limit;
+  }
+
+  async retrieve(context: CoachContext, task: CoachTask): Promise<KnowledgeDoc[]> {
+    return retrieveKnowledge(queryFromContext(context, task), this.docs, this.limit);
+  }
 }
 
 /** Derive the retrieval query from an assembled coach context + task. */

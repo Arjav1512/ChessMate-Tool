@@ -1,28 +1,41 @@
 import { supabase } from '../../lib/supabase';
 import { resolveCoachConfig, type CoachConfig } from '../config';
-import { SessionConversationMemory } from '../memory/sessionMemory';
+import { ChessContextBuilder } from '../context/contextBuilder';
+import { SessionMemoryProvider } from '../memory/sessionMemory';
+import { TemplatePromptBuilder } from '../prompts/promptBuilder';
 import { createProvider } from '../providers/factory';
+import { StructuredRetriever } from '../retrieval/retriever';
+import { CoachOrchestrator } from './coachOrchestrator';
 import { CoachService } from './coachService';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Composition root — the ONLY place the coach touches app singletons
-// (import.meta.env, the supabase client). Everything below this file is
-// dependency-injected and testable without keys or network.
+// Composition root — the ONE place where the pipeline is assembled and the
+// ONLY coach file that touches app singletons (import.meta.env, the supabase
+// client). Swapping any stage (provider, retriever, memory, evaluation) is an
+// edit here, not in the pipeline.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function createCoachService(config: CoachConfig = resolveCoachConfig()): CoachService {
   const provider = createProvider(config, {
-    gemini: {
-      // The edge function requires the caller's verified JWT for per-user
-      // rate limiting; a missing session surfaces as 'auth-required'.
+    backend: {
+      // The backend requires the caller's verified JWT for per-user rate
+      // limiting; a missing session surfaces as 'auth-required'.
       getAccessToken: async () =>
         (await supabase.auth.getSession()).data.session?.access_token ?? null,
     },
   });
-  return new CoachService({
+
+  const orchestrator = new CoachOrchestrator({
+    contextBuilder: new ChessContextBuilder(),
+    retriever: new StructuredRetriever(),
+    promptBuilder: new TemplatePromptBuilder(),
     provider,
-    memory: { conversation: new SessionConversationMemory() },
+    memory: new SessionMemoryProvider(),
+    // evaluation: intentionally not wired — every evaluation the coach sees
+    // today is precomputed and arrives with the request context.
   });
+
+  return new CoachService(orchestrator);
 }
 
 let defaultService: CoachService | null = null;

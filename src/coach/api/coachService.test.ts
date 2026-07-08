@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ChessContextBuilder } from '../context/contextBuilder';
+import type { CoachContext } from '../context/types';
 import { CoachUnavailableError } from '../errors';
-import { SessionConversationMemory } from '../memory/sessionMemory';
+import { PrecomputedEvaluationProvider } from '../evaluation/precomputedEvaluation';
+import type { KnowledgeDoc } from '../knowledge';
+import { SessionMemoryProvider } from '../memory/sessionMemory';
+import { TemplatePromptBuilder } from '../prompts/promptBuilder';
+import type { CoachTask } from '../prompts/templates';
 import { createProvider } from '../providers/factory';
 import {
   streamFromGenerate,
@@ -9,6 +15,9 @@ import {
   type ProviderRequest,
   type ProviderResponse,
 } from '../providers/types';
+import { StructuredRetriever } from '../retrieval/retriever';
+import type { KnowledgeRetriever } from '../retrieval/types';
+import { CoachOrchestrator, type CoachOrchestratorDeps } from './coachOrchestrator';
 import { CoachService } from './coachService';
 
 // The whole pipeline runs against this mock — no API keys, no network.
@@ -49,12 +58,24 @@ class MockProvider implements CoachProvider {
   }
 }
 
+/** Default composition with per-test overrides — mirrors defaultCoachService. */
+function makeService(overrides: Partial<CoachOrchestratorDeps> & { provider: CoachProvider }) {
+  return new CoachService(
+    new CoachOrchestrator({
+      contextBuilder: new ChessContextBuilder(),
+      retriever: new StructuredRetriever(),
+      promptBuilder: new TemplatePromptBuilder(),
+      ...overrides,
+    }),
+  );
+}
+
 const SICILIAN_PGN = '1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 1-0';
 
 describe('CoachService.ask — pipeline', () => {
   it('assembles context, retrieved knowledge, and the question into one provider prompt', async () => {
     const provider = new MockProvider();
-    const service = new CoachService({ provider });
+    const service = makeService({ provider });
 
     const answer = await service.ask({
       task: 'mistake',
@@ -84,7 +105,7 @@ describe('CoachService.ask — pipeline', () => {
 
   it('respects the provider prompt budget', async () => {
     const provider = new MockProvider({ maxPromptChars: 700 });
-    const service = new CoachService({ provider });
+    const service = makeService({ provider });
     await service.ask({
       question: 'Thoughts?',
       context: { game: { pgn: SICILIAN_PGN }, moveHistory: Array(200).fill('Nf3') },
@@ -93,12 +114,12 @@ describe('CoachService.ask — pipeline', () => {
     expect(provider.prompts[0]).toContain('Thoughts?');
   });
 
-  it('records the exchange in conversation memory', async () => {
-    const conversation = new SessionConversationMemory();
-    const service = new CoachService({ provider: new MockProvider(), memory: { conversation } });
+  it('records the exchange in the memory provider', async () => {
+    const memory = new SessionMemoryProvider();
+    const service = makeService({ provider: new MockProvider(), memory });
     await service.ask({ question: 'Is Nf3 good?' });
 
-    const turns = conversation.recent();
+    const turns = memory.conversation.recent();
     expect(turns).toHaveLength(1);
     expect(turns[0]).toMatchObject({
       question: 'Is Nf3 good?',
@@ -108,16 +129,60 @@ describe('CoachService.ask — pipeline', () => {
   });
 });
 
-describe('CoachService.ask — graceful errors (Deliverable 10)', () => {
+describe('CoachOrchestrator — swappable stages (future-proofing seams)', () => {
+  it('uses any KnowledgeRetriever implementation (a future VectorRetriever plugs in here)', async () => {
+    const fakeVectorDoc: KnowledgeDoc = {
+      id: 'vector/hit',
+      category: 'tactics',
+      title: 'Vector Hit',
+      tags: [],
+      content: 'Semantically retrieved note.',
+    };
+    const retrieve = vi.fn<(context: CoachContext, task: CoachTask) => Promise<KnowledgeDoc[]>>(
+      async () => [fakeVectorDoc],
+    );
+    const retriever: KnowledgeRetriever = { id: 'fake-vector', retrieve };
+
+    const provider = new MockProvider();
+    const service = makeService({ provider, retriever });
+    await service.ask({ question: 'Plan?' });
+
+    expect(retriever.retrieve).toHaveBeenCalledOnce();
+    expect(provider.prompts[0]).toContain('Semantically retrieved note.');
+  });
+
+  it('fills a missing evaluation via the EvaluationProvider, and only then', async () => {
+    const fen = '8/8/8/8/8/8/8/K6k w - - 0 1';
+    const evaluation = new PrecomputedEvaluationProvider(
+      new Map([[fen, { evaluation: '+2.10', isMate: false, bestMove: 'Kb2' }]]),
+    );
+    const provider = new MockProvider();
+    const service = makeService({ provider, evaluation });
+
+    // Gap: context has a FEN but no evaluation → provider fills it.
+    await service.ask({ question: 'Assess.', context: { fen } });
+    expect(provider.prompts[0]).toContain('Engine evaluation: +2.10');
+
+    // No gap: an evaluation supplied with the request is never overwritten.
+    await service.ask({
+      question: 'Assess.',
+      context: { fen, move: { evaluation: { evaluation: '-0.50', isMate: false } } },
+    });
+    expect(provider.prompts[1]).toContain('Engine evaluation: -0.50');
+    expect(provider.prompts[1]).not.toContain('+2.10');
+  });
+});
+
+describe('CoachService.ask — graceful errors (façade guarantee)', () => {
   it('rejects an empty question without calling the provider', async () => {
     const provider = new MockProvider();
-    const service = new CoachService({ provider });
+    const service = makeService({ provider });
     await expect(service.ask({ question: '   ' })).rejects.toMatchObject({ reason: 'no-context' });
     expect(provider.prompts).toHaveLength(0);
   });
 
   it('passes provider CoachUnavailableErrors through with their reason', async () => {
-    const service = new CoachService({
+    const service = makeService({
       provider: new MockProvider({ fail: new CoachUnavailableError('rate-limited') }),
     });
     await expect(service.ask({ question: 'q' })).rejects.toMatchObject({
@@ -127,7 +192,7 @@ describe('CoachService.ask — graceful errors (Deliverable 10)', () => {
   });
 
   it('normalizes unexpected provider errors to a safe unknown', async () => {
-    const service = new CoachService({
+    const service = makeService({
       provider: new MockProvider({ fail: new Error('ECONNRESET at vendor-sdk.js:42') }),
     });
     const err: CoachUnavailableError = await service.ask({ question: 'q' }).then(
@@ -144,9 +209,9 @@ describe('CoachService.ask — graceful errors (Deliverable 10)', () => {
   it('a configured-but-unimplemented provider fails gracefully', async () => {
     const provider = createProvider(
       { provider: 'claude', supabaseUrl: 'https://x.supabase.co' },
-      { gemini: { getAccessToken: async () => null } },
+      { backend: { getAccessToken: async () => null } },
     );
-    const service = new CoachService({ provider });
+    const service = makeService({ provider });
     await expect(service.ask({ question: 'q' })).rejects.toMatchObject({ reason: 'not-configured' });
     expect(await provider.health()).toEqual({ ok: false, reason: 'not-configured' });
     const spy = vi.fn();
@@ -156,11 +221,12 @@ describe('CoachService.ask — graceful errors (Deliverable 10)', () => {
 });
 
 describe('provider factory', () => {
-  it('selects the Gemini provider for the default config', () => {
+  it('selects the backend-fronted provider for the default config', () => {
     const provider = createProvider(
       { provider: 'gemini', supabaseUrl: 'https://x.supabase.co' },
-      { gemini: { getAccessToken: async () => 'jwt' } },
+      { backend: { getAccessToken: async () => 'jwt' } },
     );
     expect(provider.id).toBe('gemini');
+    expect(provider.maxPromptChars).toBe(4000);
   });
 });

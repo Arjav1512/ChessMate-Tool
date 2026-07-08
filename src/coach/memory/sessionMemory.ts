@@ -1,4 +1,4 @@
-import type { ConversationMemory, ConversationTurn } from './types';
+import type { ConversationMemory, ConversationTurn, MemoryProvider } from './types';
 
 /** Turns kept per session — enough for follow-up questions, small enough to
  *  never threaten the prompt budget if a future phase includes them. */
@@ -22,5 +22,19 @@ export class SessionConversationMemory implements ConversationMemory {
 
   clear(): void {
     this.turns = [];
+  }
+}
+
+/**
+ * The Phase-1 MemoryProvider: everything lives in this browser session.
+ * Persistent backends (Supabase, Redis, localStorage) implement the same
+ * interface later and swap in at the composition root.
+ */
+export class SessionMemoryProvider implements MemoryProvider {
+  readonly id = 'session';
+  readonly conversation: ConversationMemory;
+
+  constructor(conversation: ConversationMemory = new SessionConversationMemory()) {
+    this.conversation = conversation;
   }
 }

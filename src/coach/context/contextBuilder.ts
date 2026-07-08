@@ -17,6 +17,22 @@ const MAX_RECENT_GAMES = 5;
 const MAX_QUEUE_ITEMS = 5;
 
 /**
+ * Pipeline-stage abstraction over context assembly. Async because future
+ * builders may gather parts server-side (recent games, weakness profile);
+ * the Phase-1 builder is pure and derives only what the caller supplied.
+ */
+export interface ContextBuilder {
+  build(input: CoachContext): Promise<CoachContext>;
+}
+
+/** The default builder: pure normalization + derivation, no I/O. */
+export class ChessContextBuilder implements ContextBuilder {
+  async build(input: CoachContext): Promise<CoachContext> {
+    return buildCoachContext(input);
+  }
+}
+
+/**
  * Normalize a caller-supplied context: derive what is derivable (opening from
  * PGN) and drop empty containers, so rendering and retrieval see one shape.
  */

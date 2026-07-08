@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { CoachUnavailableError } from '../errors';
+import { ChessMentorTransport } from './chessMentorTransport';
 import { GeminiProvider } from './geminiProvider';
 
 const BASE_URL = 'https://test.supabase.co';
 
+// The provider is exercised together with its transport adapter — the pair is
+// the public behavior ("send one prompt to the deployed backend").
 function makeProvider(overrides?: {
   token?: string | null;
   response?: Response;
@@ -12,11 +15,13 @@ function makeProvider(overrides?: {
   const fetchFn =
     overrides?.fetchImpl ??
     vi.fn(async () => overrides?.response ?? jsonResponse({ answer: 'Play Nf3.' }));
-  const provider = new GeminiProvider({
-    baseUrl: BASE_URL,
-    getAccessToken: async () => (overrides && 'token' in overrides ? overrides.token! : 'jwt-123'),
-    fetchFn: fetchFn as typeof fetch,
-  });
+  const provider = new GeminiProvider(
+    new ChessMentorTransport({
+      baseUrl: BASE_URL,
+      getAccessToken: async () => (overrides && 'token' in overrides ? overrides.token! : 'jwt-123'),
+      fetchFn: fetchFn as typeof fetch,
+    }),
+  );
   return { provider, fetchFn: fetchFn as ReturnType<typeof vi.fn> };
 }
 
@@ -59,7 +64,9 @@ describe('GeminiProvider.generate', () => {
   });
 
   it('fails with not-configured when no base URL is configured', async () => {
-    const provider = new GeminiProvider({ baseUrl: null, getAccessToken: async () => 'jwt' });
+    const provider = new GeminiProvider(
+      new ChessMentorTransport({ baseUrl: null, getAccessToken: async () => 'jwt' }),
+    );
     expect(await reasonOf(provider.generate({ prompt: 'q' }))).toBe('not-configured');
   });
 
@@ -123,7 +130,9 @@ describe('GeminiProvider capabilities & health', () => {
     const { provider: noSession } = makeProvider({ token: null });
     expect(await noSession.health()).toEqual({ ok: false, reason: 'auth-required' });
 
-    const unconfigured = new GeminiProvider({ baseUrl: null, getAccessToken: async () => null });
+    const unconfigured = new GeminiProvider(
+      new ChessMentorTransport({ baseUrl: null, getAccessToken: async () => null }),
+    );
     expect(await unconfigured.health()).toEqual({ ok: false, reason: 'not-configured' });
   });
 

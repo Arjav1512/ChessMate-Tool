@@ -55,11 +55,18 @@ export interface RecentLessons {
   add(record: LessonRecord): Promise<void>;
 }
 
-/** Everything the coach can remember, injected as one optional bundle. */
-export interface CoachMemory {
-  conversation?: ConversationMemory;
-  user?: UserMemory;
-  game?: GameMemory;
-  weaknesses?: WeaknessMemory;
-  lessons?: RecentLessons;
+/**
+ * Storage-backend abstraction over the memory facets (Refinement goal 4).
+ * The pipeline depends on this interface only; where the facets live —
+ * session (today), Supabase, Redis, localStorage (future) — is an
+ * implementation detail chosen at composition time. Facets a backend cannot
+ * serve are simply absent, and the orchestrator degrades gracefully.
+ */
+export interface MemoryProvider {
+  readonly id: string;
+  readonly conversation: ConversationMemory;
+  readonly user?: UserMemory;
+  readonly game?: GameMemory;
+  readonly weaknesses?: WeaknessMemory;
+  readonly lessons?: RecentLessons;
 }

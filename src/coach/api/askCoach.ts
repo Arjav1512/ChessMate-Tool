@@ -3,8 +3,8 @@ import { getCoachService } from './defaultCoachService';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Frontend entry point — same call shape the UI used before the provider
-// abstraction existed (lib/gemini.ts), so CoachTab/GameViewer keep working
-// unchanged. The frontend never knows (or names) the model behind it.
+// abstraction existed, so CoachTab/GameViewer keep working unchanged. The
+// frontend never knows (or names) the model behind it.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface MentorGameInfo {
