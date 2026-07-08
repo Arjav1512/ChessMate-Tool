@@ -12,7 +12,7 @@ Sentry alerts, pg_cron) — those are the only parts not wired automatically.
 |---|---|---|
 | **Front-end errors** | Sentry SDK (`src/lib/sentry.ts`) + **global handlers** (`src/lib/monitoring.ts`) | Uncaught errors, unhandled promise rejections, `ErrorBoundary` crashes — routed through `logError`. Tagged with **release** (`chessmate@<version>+<commit>`) and **environment**. |
 | **Edge-function errors** | `api_logs` table (durable) | Every `chess-mentor` failure path logs a row: unauthenticated, rate-limited, missing key, and the catch-all — now attributed to the **caller + question** (see `logRequest`). |
-| **Deployment health** | `scripts/smoke-test.mjs` via `.github/workflows/deploy-verify.yml` | Live-site 200, app shell, and security headers — on every `main` deploy, hourly canary, and manual dispatch. |
+| **Deployment health** | `scripts/smoke-test.mjs` via `.github/workflows/deploy-verify.yml` | Live-site 200, app shell, security headers, SPA deep-link fallback, and **release identity** — the deployed bundle's embedded `chessmate@<version>+<commit>` tag. On push to `main` the smoke test polls up to ~10 min until production serves **that exact commit** and fails otherwise, so a stale/never-published deploy can no longer hide behind a green canary (2026-07-08 audit C1/H1). Hourly canary + manual dispatch print the currently served release. |
 | **Hosting** | Netlify dashboard | Build/deploy status, bandwidth, function invocations. |
 
 > The production build strips `console.*` (`vite drop_console`). The Sentry path
@@ -34,7 +34,8 @@ Sentry alerts, pg_cron) — those are the only parts not wired automatically.
 
 ## Incident response (quick)
 
-1. **Site down / headers missing** → Deploy Verify is red. Check Netlify deploy log; roll back to the previous deploy (`RELEASE_PROTOCOL.md` → Rollback).
+1. **Site down / headers missing** → Deploy Verify is red. Check Netlify deploy log; roll back to the previous deploy (`docs/archive/ChessMate-Autonomous-OS/RELEASE_PROTOCOL.md` → Rollback).
+1a. **"STALE DEPLOY" in Deploy Verify** → Netlify did not publish the pushed commit. Check Netlify → Deploys for a failed/stuck/paused build; the smoke output names both the serving commit and the expected one. To check by hand: `curl -s <site>/assets/index-*.js | grep -o 'chessmate@[^"]*'`.
 2. **Coach failing** → spike of `success=false` in `api_logs`. Check `error_message`: `GEMINI_API_KEY not configured` (secret missing), `Rate limit exceeded` (abuse/load), or a Gemini/network error. Verify Supabase secrets `GEMINI_API_KEY` and `ALLOWED_ORIGINS`.
 3. **Front-end spike** → Sentry: group by release to find the regressing build; roll back that release.
 
@@ -74,5 +75,5 @@ but is **not scheduled**, so `api_logs` grows unbounded (slowing the rate-limit 
 
 ---
 
-_Updated by the Monitoring & Observability loop. See `ChessMate-Autonomous-OS/RELEASE_PROTOCOL.md`
-for release/rollback and `PRODUCTION_SCORECARD.md` for the Monitoring score._
+_See `docs/archive/ChessMate-Autonomous-OS/RELEASE_PROTOCOL.md` for release/rollback
+and `docs/archive/ChessMate-Autonomous-OS/PRODUCTION_SCORECARD.md` for the Monitoring score._

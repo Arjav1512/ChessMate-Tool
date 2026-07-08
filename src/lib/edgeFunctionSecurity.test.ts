@@ -61,8 +61,9 @@ describe('supabase config — edge function JWT verification', () => {
 
 describe('chess-mentor edge function — abuse & cost controls (audit F1/F2/F5)', () => {
   it('rate limiter fails CLOSED on a DB error (no bypass of the cost cap)', () => {
-    // The old limiter returned true on error; blocking on error must be pinned.
-    expect(FN_SRC).toMatch(/return false;.*fail closed/is);
+    // Both DB failure paths (reservation insert, window count) must deny.
+    expect(FN_SRC).toMatch(/failing closed/);
+    expect(FN_SRC).toMatch(/allowed:\s*false/);
     expect(FN_SRC).not.toMatch(/return true;\s*\/\/\s*fail open/);
   });
 
@@ -75,6 +76,31 @@ describe('chess-mentor edge function — abuse & cost controls (audit F1/F2/F5)'
   it('caps the question length before it reaches the model', () => {
     expect(FN_SRC).toMatch(/MAX_QUESTION_CHARS/);
     expect(FN_SRC).toMatch(/question\.length\s*>\s*MAX_QUESTION_CHARS/);
+  });
+});
+
+describe('chess-mentor edge function — rate limiter concurrency (TOCTOU, audit H3)', () => {
+  it('reserves the request row BEFORE counting the window', () => {
+    // The reservation insert must precede the exact-count select inside
+    // reserveRateSlot — counting first reintroduces the check/use race that
+    // let N concurrent requests all pass the cap.
+    const fnBody = FN_SRC.slice(FN_SRC.indexOf('async function reserveRateSlot'));
+    const insertIdx = fnBody.indexOf('.insert(');
+    const countIdx = fnBody.indexOf('count: "exact"');
+    expect(insertIdx).toBeGreaterThan(-1);
+    expect(countIdx).toBeGreaterThan(insertIdx);
+  });
+
+  it('the handler consumes the reservation (no standalone pre-count remains)', () => {
+    expect(FN_SRC).toMatch(/reserveRateSlot\(userId\)/);
+    expect(FN_SRC).not.toMatch(/checkRateLimit/);
+  });
+
+  it('window counts include the reservation (deny when count EXCEEDS max)', () => {
+    // With the request's own row counted, the correct comparison is `> max`
+    // (self-inclusive); `< max` on a pre-insert count is the old racy form.
+    expect(FN_SRC).toMatch(/>\s*RATE_PER_MIN/);
+    expect(FN_SRC).toMatch(/>\s*RATE_PER_DAY/);
   });
 });
 
@@ -101,12 +127,12 @@ describe('chess-mentor edge function — durable error capture (observability)',
   });
 
   it('logs the misconfiguration (missing GEMINI key) path', () => {
-    expect(FN_SRC).toMatch(/logRequest\(userId,\s*question,\s*false,\s*"GEMINI_API_KEY not configured"\)/);
+    expect(FN_SRC).toMatch(/logRequest\(userId,\s*question,\s*false,\s*"GEMINI_API_KEY not configured",\s*logId\)/);
   });
 
   it('attributes the catch-all error log to the caller (not null)', () => {
     // The previous code logged logRequest(null, "", ...) and lost the user.
-    expect(FN_SRC).toMatch(/await logRequest\(userId,\s*question,\s*false,\s*errorMessage\)/);
-    expect(FN_SRC).not.toMatch(/await logRequest\(null,\s*"",\s*false,\s*errorMessage\)/);
+    expect(FN_SRC).toMatch(/await logRequest\(userId,\s*question,\s*false,\s*errorMessage,\s*logId\)/);
+    expect(FN_SRC).not.toMatch(/await logRequest\(null,\s*"",\s*false,\s*errorMessage/);
   });
 });

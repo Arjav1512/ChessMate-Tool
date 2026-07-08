@@ -1,49 +1,75 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../services/queryClient';
-import { IvToastProvider } from '../components/ui/iv';
+import { IvToastProvider, Spinner } from '../components/ui/iv';
 import { AppShell } from './AppShell';
 import { PlaceholderPage } from './PlaceholderPage';
 import { ALL_DESTINATIONS, PARAM_ROUTES } from './navigation';
 import { applyThemeAttributes, useThemeStore } from '../stores/themeStore';
+import { useAuth } from '../contexts/AuthContext';
 import { useFlag } from '../lib/flags';
-import { DashboardPage } from '../features/dashboard/DashboardPage';
-import { InsightsPage } from '../features/insights/InsightsPage';
-import { AnalysisPage } from '../features/analysis/AnalysisPage';
-import { ImprovePage } from '../features/improve/ImprovePage';
-import { ImprovePlanView } from '../features/improve/ImprovePlanView';
-import { ReviewMistakesView } from '../features/improve/mistakes/ReviewMistakesView';
-import { LibraryPage } from '../features/games/LibraryPage';
-import { ImportPage } from '../features/games/ImportPage';
 import './shell.css';
+
+// Route-level code splitting (audit M4): each screen is its own chunk, fetched
+// on first navigation. The shell (sidebar/topbar) stays mounted while a screen
+// loads — the Suspense boundary lives INSIDE each route, not around <Routes> —
+// so navigation never blanks the chrome.
+const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const InsightsPage = lazy(() => import('../features/insights/InsightsPage').then((m) => ({ default: m.InsightsPage })));
+const AnalysisPage = lazy(() => import('../features/analysis/AnalysisPage').then((m) => ({ default: m.AnalysisPage })));
+const ImprovePage = lazy(() => import('../features/improve/ImprovePage').then((m) => ({ default: m.ImprovePage })));
+const ImprovePlanView = lazy(() => import('../features/improve/ImprovePlanView').then((m) => ({ default: m.ImprovePlanView })));
+const ReviewMistakesView = lazy(() => import('../features/improve/mistakes/ReviewMistakesView').then((m) => ({ default: m.ReviewMistakesView })));
+const LibraryPage = lazy(() => import('../features/games/LibraryPage').then((m) => ({ default: m.LibraryPage })));
+const ImportPage = lazy(() => import('../features/games/ImportPage').then((m) => ({ default: m.ImportPage })));
+
+/** Centered spinner shown while a screen chunk downloads (usually one hop). */
+function RouteFallback() {
+  return (
+    <div role="status" aria-label="Loading page" style={{ display: 'flex', justifyContent: 'center', padding: 'var(--space-12) 0' }}>
+      <Spinner />
+    </div>
+  );
+}
+
+/** Mount a lazy screen behind its own Suspense boundary. */
+function screen(el: React.ReactNode) {
+  return <Suspense fallback={<RouteFallback />}>{el}</Suspense>;
+}
 
 /** Show the real screen when its per-screen flag is on; placeholder otherwise. */
 function DashboardRoute() {
-  return useFlag('ui.screen.dashboard') ? <DashboardPage /> : placeholderFor('dashboard');
+  return useFlag('ui.screen.dashboard') ? screen(<DashboardPage />) : placeholderFor('dashboard');
 }
 
 /** Insights (personal performance dashboard) behind ui.screen.insights. */
 function InsightsRoute() {
-  return useFlag('ui.screen.insights') ? <InsightsPage /> : placeholderFor('insights');
+  return useFlag('ui.screen.insights') ? screen(<InsightsPage />) : placeholderFor('insights');
 }
 
 /** Analysis workspace at /analysis/:id behind ui.screen.analysis. */
 function AnalysisRoute() {
-  return useFlag('ui.screen.analysis') ? <AnalysisPage /> : placeholderFor('analysis-detail');
+  return useFlag('ui.screen.analysis') ? screen(<AnalysisPage />) : placeholderFor('analysis-detail');
 }
 
-/** /analysis index → open the sample workspace when flagged, else placeholder. */
+/** /analysis index. An authenticated user picks a real game from the library —
+ *  never a demo presented as their own data (audit M1). The sample workspace
+ *  stays reachable at /analysis/sample (explicitly labeled as a demo there)
+ *  and remains the default only for the unauthenticated dev preview. */
 function AnalysisIndexRoute() {
-  return useFlag('ui.screen.analysis') ? <Navigate to="/analysis/sample" replace /> : placeholderFor('analysis');
+  const { user } = useAuth();
+  const enabled = useFlag('ui.screen.analysis');
+  if (!enabled) return placeholderFor('analysis');
+  return <Navigate to={user ? '/games' : '/analysis/sample'} replace />;
 }
 
 /** Game Library + Import behind ui.screen.games. */
 function GamesRoute() {
-  return useFlag('ui.screen.games') ? <LibraryPage /> : placeholderFor('games');
+  return useFlag('ui.screen.games') ? screen(<LibraryPage />) : placeholderFor('games');
 }
 function GameImportRoute() {
-  return useFlag('ui.screen.games') ? <ImportPage /> : placeholderFor('import');
+  return useFlag('ui.screen.games') ? screen(<ImportPage />) : placeholderFor('import');
 }
 /** Game detail = Analysis (§3) — open the game in the workspace. */
 function GameDetailRoute() {
@@ -54,7 +80,7 @@ function GameDetailRoute() {
 
 /** Improve Hub at /improve behind ui.screen.improve. */
 function ImproveRoute() {
-  return useFlag('ui.screen.improve') ? <ImprovePage /> : placeholderFor('improve');
+  return useFlag('ui.screen.improve') ? screen(<ImprovePage />) : placeholderFor('improve');
 }
 
 /** Placeholder element for a destination defined in navigation config. */
@@ -102,8 +128,8 @@ export function AppRouter() {
               <Route path="/analysis" element={<AnalysisIndexRoute />} />
               <Route path="/analysis/:id" element={<AnalysisRoute />} />
               <Route path="/improve" element={<ImproveRoute />}>
-                <Route index element={<ImprovePlanView />} />
-                <Route path="mistakes" element={<ReviewMistakesView />} />
+                <Route index element={screen(<ImprovePlanView />)} />
+                <Route path="mistakes" element={screen(<ReviewMistakesView />)} />
               </Route>
               {/* Phase 0 (W1 — navigation stabilization): unfinished screens are
                   intentionally NOT registered as routes. Coach, Settings, Profile,

@@ -1,16 +1,11 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { supabaseConfigured } from './lib/supabase';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { AuthForm } from './components/auth/AuthForm';
 import { PasswordResetComplete } from './components/auth/PasswordResetComplete';
-import { LandingPage } from './components/marketing/LandingPage';
 import { GameList } from './components/game/GameList';
-import { GameViewer } from './components/game/GameViewer';
-import { ProgressBar } from './components/stats/ProgressBar';
-import { AnalyzeGamesPage } from './components/analysis/AnalyzeGamesPage';
-import { StatsDashboard } from './components/stats/StatsDashboard';
 import { ThemeToggle } from './components/layout/ThemeToggle';
 import { CompatibilityWarning } from './components/layout/CompatibilityWarning';
 import { ProfileModal } from './components/layout/ProfileModal';
@@ -18,13 +13,32 @@ import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
 import { useResponsive } from './hooks/useResponsive';
-import { Styleguide } from './styles/Styleguide';
-import { Gallery } from './components/ui/iv/Gallery';
 import { useFlag } from './lib/flags';
 import { AppRouter } from './app/AppRouter';
 import { LogOut, TrendingUp, Upload, Brain, BarChart3, User, Menu, X as XIcon } from 'lucide-react';
 // Note: i18n infrastructure removed — no components use useTranslation
 import type { Game } from './lib/supabase';
+
+// Code splitting (audit M4). The marketing landing (and its gsap dependency)
+// loads only for signed-out visitors; the legacy viewer/analyze/stats surfaces
+// load only when opened; the DEV-only styleguide/gallery never reach the
+// production entry chunk at all.
+const LandingPage = lazy(() => import('./components/marketing/LandingPage').then((m) => ({ default: m.LandingPage })));
+const GameViewer = lazy(() => import('./components/game/GameViewer').then((m) => ({ default: m.GameViewer })));
+const AnalyzeGamesPage = lazy(() => import('./components/analysis/AnalyzeGamesPage').then((m) => ({ default: m.AnalyzeGamesPage })));
+const StatsDashboard = lazy(() => import('./components/stats/StatsDashboard').then((m) => ({ default: m.StatsDashboard })));
+const ProgressBar = lazy(() => import('./components/stats/ProgressBar').then((m) => ({ default: m.ProgressBar })));
+const Styleguide = lazy(() => import('./styles/Styleguide').then((m) => ({ default: m.Styleguide })));
+const Gallery = lazy(() => import('./components/ui/iv/Gallery').then((m) => ({ default: m.Gallery })));
+
+/** Full-screen centered spinner used while a lazy chunk downloads. */
+function ChunkFallback() {
+  return (
+    <div style={{ minHeight: '40vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <LoadingSpinner size="lg" />
+    </div>
+  );
+}
 
 type ModalType = 'import' | 'progress' | 'analyze' | 'stats' | null;
 
@@ -137,7 +151,11 @@ function MainApp() {
 
   if (!user) {
     return preAuthView === 'landing'
-      ? <LandingPage onGetStarted={goToAuth} onSignIn={goToAuth} />
+      ? (
+        <Suspense fallback={<ChunkFallback />}>
+          <LandingPage onGetStarted={goToAuth} onSignIn={goToAuth} />
+        </Suspense>
+      )
       : <AuthForm onBackToLanding={goToLanding} />;
   }
 
@@ -315,7 +333,9 @@ function MainApp() {
           <div style={{ flex: 1, overflow: 'auto' }}>
             {selectedGame ? (
               <ErrorBoundary key={selectedGame.id}>
-                <GameViewer game={selectedGame} />
+                <Suspense fallback={<ChunkFallback />}>
+                  <GameViewer game={selectedGame} />
+                </Suspense>
               </ErrorBoundary>
             ) : (
               <WelcomeScreen
@@ -357,18 +377,26 @@ function MainApp() {
             flexDirection: 'column',
           }}
         >
-          <AnalyzeGamesPage onClose={() => setOpenModal(null)} />
+          <Suspense fallback={<ChunkFallback />}>
+            <AnalyzeGamesPage onClose={() => setOpenModal(null)} />
+          </Suspense>
         </Modal>
       )}
 
       {/* Stats modal */}
-      {openModal === 'stats' && <StatsDashboard onClose={() => setOpenModal(null)} />}
+      {openModal === 'stats' && (
+        <Suspense fallback={<ChunkFallback />}>
+          <StatsDashboard onClose={() => setOpenModal(null)} />
+        </Suspense>
+      )}
 
       {/* Progress modal */}
       {openModal === 'progress' && (
         <Modal title="Your Progress" onClose={() => setOpenModal(null)} containerStyle={{ maxWidth: '700px' }}>
           <div style={{ padding: '20px' }}>
-            <ProgressBar />
+            <Suspense fallback={<ChunkFallback />}>
+              <ProgressBar />
+            </Suspense>
           </div>
         </Modal>
       )}
@@ -661,11 +689,11 @@ function App() {
   // Phase 1 verification surface (Ivory tokens). `?styleguide` renders the
   // token styleguide without touching the live app flow. Removed at cutover.
   if (import.meta.env.DEV && hasQueryFlag('styleguide')) {
-    return <Styleguide />;
+    return <Suspense fallback={<ChunkFallback />}><Styleguide /></Suspense>;
   }
   // Phase 2 verification surface — Ivory component gallery.
   if (import.meta.env.DEV && hasQueryFlag('components')) {
-    return <Gallery />;
+    return <Suspense fallback={<ChunkFallback />}><Gallery /></Suspense>;
   }
 
   if (!supabaseConfigured) {

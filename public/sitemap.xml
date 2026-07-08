@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sitemap for the publicly indexable surface. ChessMate is a single-page app
+  whose in-app routes (/dashboard, /games, /analysis, …) are authenticated and
+  intentionally not indexed; only the marketing landing page and its on-page
+  section anchors are public, so this lists the canonical landing URL.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://chess-mateapp.netlify.app/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

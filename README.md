@@ -194,3 +194,14 @@ once via the UI, then re-use).
 - `SECURITY.md` — how to report a security issue
 - `DESIGN.md` — design tokens & UI patterns
 - `PRODUCT.md` — product vision & roadmap
+
+---
+
+## ⚖️ License
+
+ChessMate's source code is [MIT-licensed](LICENSE). The deployed application
+also distributes third-party components under their own terms — notably the
+**Stockfish engine (`public/stockfish.js`, GPL-3.0)**, which ships as a
+separate, unmodified Web Worker file, and **GSAP** (proprietary no-charge
+license). See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for the full
+inventory and obligations before changing how either is packaged.

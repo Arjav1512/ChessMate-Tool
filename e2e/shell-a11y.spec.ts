@@ -13,8 +13,10 @@ import AxeBuilder from '@axe-core/playwright';
 test.describe('Accessibility — Ivory app shell', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/?shell');
-    // Shell render signal: the primary nav "Dashboard" link.
-    await expect(page.getByRole('link', { name: /Dashboard/ })).toBeVisible({ timeout: 15_000 });
+    // Shell render signal: the primary navigation. It renders as the sidebar on
+    // desktop and the bottom tab bar on mobile, but both carry
+    // aria-label="Primary", so this is viewport-agnostic.
+    await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible({ timeout: 15_000 });
   });
 
   test('no structural axe violations on the shell', async ({ page }) => {
@@ -25,18 +27,28 @@ test.describe('Accessibility — Ivory app shell', () => {
     expect(nonContrast).toEqual([]);
   });
 
-  test('sidebar chrome has no color-contrast violations', async ({ page }) => {
-    const results = await new AxeBuilder({ page })
-      .include('.ivs-sidebar')
-      .exclude('.ivs-sidebar__search') // placeholder text is --text-faint by spec (§6)
-      .withTags(['wcag2aa', 'wcag21aa'])
-      .analyze();
+  test('primary nav chrome has no color-contrast violations', async ({ page }) => {
+    // Desktop renders the sidebar; mobile renders the bottom tab bar. Scan
+    // whichever chrome this viewport actually shows.
+    const isMobile = (page.viewportSize()?.width ?? 1280) < 768;
+    const builder = new AxeBuilder({ page }).withTags(['wcag2aa', 'wcag21aa']);
+    const scoped = isMobile
+      ? builder.include('.ivs-bottombar')
+      : builder.include('.ivs-sidebar').exclude('.ivs-sidebar__search'); // placeholder text is --text-faint by spec (§6)
+    const results = await scoped.analyze();
     const contrast = results.violations.filter((v) => v.id === 'color-contrast');
     expect(contrast).toEqual([]);
   });
 
-  test('command menu opens on Ctrl/⌘+K, traps focus, closes on Escape, and is contrast-clean', async ({ page }) => {
-    await page.keyboard.press('Control+k');
+  test('command menu opens, traps focus, closes on Escape, and is contrast-clean', async ({ page }) => {
+    // Open via the interaction each viewport supports: ⌘/Ctrl+K on desktop,
+    // the top-bar "Open command menu" button on mobile (no hardware keyboard).
+    const isMobile = (page.viewportSize()?.width ?? 1280) < 768;
+    if (isMobile) {
+      await page.getByRole('button', { name: 'Open command menu' }).click();
+    } else {
+      await page.keyboard.press('Control+k');
+    }
     const dialog = page.getByRole('dialog', { name: 'Command menu' });
     await expect(dialog).toBeVisible();
     await expect(page.getByRole('combobox')).toBeFocused();

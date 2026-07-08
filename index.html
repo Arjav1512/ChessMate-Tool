@@ -30,13 +30,18 @@
       property="og:description"
       content="Import your games, analyze with Stockfish, ask an AI coach why, and track your improvement."
     />
-    <meta property="og:image" content="/apple-touch-icon.png" />
+    <!-- Absolute URLs — OG/Twitter scrapers do not resolve relative paths, so a
+         relative og:image renders no social preview. -->
+    <meta property="og:site_name" content="ChessMate" />
+    <meta property="og:url" content="https://chess-mateapp.netlify.app/" />
+    <meta property="og:image" content="https://chess-mateapp.netlify.app/apple-touch-icon.png" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="ChessMate — AI Chess Analysis &amp; Coaching" />
     <meta
       name="twitter:description"
       content="Import your games, analyze with Stockfish, ask an AI coach why, and track your improvement."
     />
+    <meta name="twitter:image" content="https://chess-mateapp.netlify.app/apple-touch-icon.png" />
   </head>
   <body>
     <div id="root"></div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Chess } from 'chess.js';
 import { Tabs, TabPanel, SegmentedControl, ErrorState, ProgressBar } from '../../components/ui/iv';
 import type { Promotion } from './BoardContainer';
@@ -253,6 +253,18 @@ export function AnalysisPage() {
   return (
     <div className={`iv-aw ${isMobile ? 'iv-aw--mobile' : ''} iv-page-enter`}>
       <h1 ref={h1Ref} tabIndex={-1} className="iv-sr-only">Game analysis — {game.white} vs {game.black}</h1>
+
+      {/* Demo disambiguation (audit M1): the sample workspace must never be
+          mistakable for the user's own data. Explicit, not dismissible. */}
+      {id === 'sample' && (
+        <div className="iv-aw__demo" role="note" aria-label="Demo game notice">
+          <span className="iv-aw__demo-badge">Demo</span>
+          <span>
+            This is a sample game with example analysis — not one of your games.{' '}
+            <Link to="/games/import" className="iv-aw__demo-link">Import your games</Link> to analyze your own play.
+          </span>
+        </div>
+      )}
 
       {/* Board column */}
       <div className="iv-aw__board-col">

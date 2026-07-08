@@ -1,0 +1,32 @@
+# Netlify build + routing configuration.
+#
+# Committed so the deploy is reproducible and auditable from the repository —
+# the 2026-07-08 production audit found the build settings living only in the
+# Netlify UI (and production silently serving a stale build). Settings here
+# take precedence over the UI, so this file is the source of truth.
+#
+# Security/caching headers intentionally do NOT live here: they ship from
+# public/_headers (copied into dist/ by Vite), which also covers manual
+# `netlify deploy --dir=dist` uploads. Keep public/_headers in sync with
+# vercel.json.
+#
+# Environment variables that must stay in the Netlify UI (secrets/deploy-time):
+#   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_SENTRY_DSN
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # Pin the major; Netlify resolves the latest patch. Vite 7 requires
+  # Node >= 20.19 — CI (.github/workflows/ci.yml) uses the same major.
+  NODE_VERSION = "20"
+
+# SPA fallback: serve the app shell for every client route so deep links and
+# refreshes work (/dashboard returned a hard 404 before this rule — audit
+# finding, 2026-07-08). Assets and files that exist on disk are served as-is;
+# this rule only catches paths with no matching file.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -92,50 +92,109 @@ async function getVerifiedUserId(token: string): Promise<string | null> {
   }
 }
 
-/**
- * Count how many times `userId` hit this endpoint in the last `windowMs` ms.
- * Returns true if the request is allowed, false if the limit is exceeded.
- *
- * Fails CLOSED (returns false) when the DB query errors (security audit F1). A
- * fail-open limiter let a caller bypass the cap and run up Gemini cost whenever
- * the count query errored; blocking on error keeps the cost ceiling intact.
- * The cost of a false deny during a DB blip is a transient 429, not a breach.
- */
-async function checkRateLimit(
-  userId: string,
-  max: number,
-  windowMs: number,
-): Promise<boolean> {
-  const windowStart = new Date(Date.now() - windowMs).toISOString();
-  const { count, error } = await supabase
-    .from("api_logs")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .gte("created_at", windowStart);
+// ---------------------------------------------------------------------------
+// Rate limiting — reserve-then-count (TOCTOU fix, audit H3).
+//
+// The old limiter counted the window FIRST and inserted the request's api_logs
+// row only after Gemini responded. Between those two steps, N concurrent
+// requests could all observe count < max and all be allowed — a classic
+// time-of-check/time-of-use race that let a parallel caller exceed the cost
+// cap. The fix inverts the order: every request INSERTS its own api_logs row
+// (a reservation) before any window is counted, and the counts include that
+// reservation. Once `max` rows exist in a window, every later-counting request
+// necessarily sees count > max — the cap cannot be over-allowed, only
+// (transiently, under a burst) over-denied, which fails closed.
+// ---------------------------------------------------------------------------
 
-  if (error) {
-    console.error("Rate-limit DB query failed (failing closed):", error.message);
-    return false; // fail closed — never let a DB error unlock the cost cap
-  }
-
-  return (count ?? 0) < max;
+interface RateSlot {
+  allowed: boolean;
+  scope?: "per-minute" | "daily";
+  /** The reserved api_logs row for THIS request; finalized via logRequest. */
+  logId: string | null;
 }
 
+async function reserveRateSlot(userId: string): Promise<RateSlot> {
+  // 1. Reservation FIRST — this row is the request's durable log entry and is
+  //    visible to every concurrent request's count below.
+  const { data, error } = await supabase
+    .from("api_logs")
+    .insert({
+      user_id: userId,
+      endpoint: "chess-mentor",
+      question: "",
+      success: false,
+      error_message: "pending",
+      created_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (error || !data?.id) {
+    // Fail closed — a caller must never gain budget because the DB errored.
+    console.error("Rate-limit reservation failed (failing closed):", error?.message);
+    return { allowed: false, scope: "per-minute", logId: null };
+  }
+  const logId = data.id as string;
+
+  // 2. Count the windows INCLUDING our own reservation. `null` = DB error.
+  const countInWindow = async (windowMs: number): Promise<number | null> => {
+    const windowStart = new Date(Date.now() - windowMs).toISOString();
+    const { count, error: countError } = await supabase
+      .from("api_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("created_at", windowStart);
+    if (countError) {
+      console.error("Rate-limit DB query failed (failing closed):", countError.message);
+      return null;
+    }
+    return count ?? 0;
+  };
+
+  // Burst (per-minute) + sustained (per-day, 86_400_000 ms) budgets. A DB
+  // error (null count) fails closed: blocking on error keeps the cost ceiling
+  // intact; the cost of a false deny during a DB blip is a transient 429.
+  const minuteCount = await countInWindow(60_000);
+  if (minuteCount === null || minuteCount > RATE_PER_MIN) {
+    return { allowed: false, scope: "per-minute", logId };
+  }
+  const dayCount = await countInWindow(86_400_000);
+  if (dayCount === null || dayCount > RATE_PER_DAY) {
+    return { allowed: false, scope: "daily", logId };
+  }
+  return { allowed: true, logId };
+}
+
+/**
+ * Finalize (or create) the request's api_logs row. When `logId` is present the
+ * reserved row from reserveRateSlot is UPDATED in place, so every request
+ * produces exactly one durable log row; without a reservation (e.g. the
+ * unauthenticated rejection) a fresh row is inserted.
+ */
 async function logRequest(
   userId: string | null,
   question: string,
   success: boolean,
   error?: string,
+  logId: string | null = null,
 ) {
   try {
-    await supabase.from("api_logs").insert({
-      user_id: userId,
-      endpoint: "chess-mentor",
-      question: question.substring(0, 500),
-      success,
-      error_message: error,
-      created_at: new Date().toISOString(),
-    });
+    if (logId) {
+      await supabase.from("api_logs").update({
+        question: question.substring(0, 500),
+        success,
+        error_message: error ?? null,
+      }).eq("id", logId);
+    } else {
+      await supabase.from("api_logs").insert({
+        user_id: userId,
+        endpoint: "chess-mentor",
+        question: question.substring(0, 500),
+        success,
+        error_message: error,
+        created_at: new Date().toISOString(),
+      });
+    }
   } catch (err) {
     console.error("Failed to log request:", err);
   }
@@ -149,9 +208,11 @@ Deno.serve(async (req: Request) => {
   }
 
   // Hoisted so the catch block can attribute the durable error log to the
-  // caller and question instead of losing them to block scope.
+  // caller, question, and reserved log row instead of losing them to block
+  // scope.
   let userId: string | null = null;
   let question = "";
+  let logId: string | null = null;
 
   try {
     // Extract user ID from the JWT for DB-backed rate limiting
@@ -175,12 +236,11 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Burst (per-minute) + sustained (per-day) budgets per user (F1/F5).
-    const withinMinute = await checkRateLimit(userId, RATE_PER_MIN, 60_000);
-    const withinDay = withinMinute && await checkRateLimit(userId, RATE_PER_DAY, 86_400_000);
-    if (!withinMinute || !withinDay) {
-      const scope = withinMinute ? "daily" : "per-minute";
-      await logRequest(userId, "", false, `Rate limit exceeded (${scope})`);
+    // Reserve this request's slot, then check both budgets (F1/F5 + H3).
+    const slot = await reserveRateSlot(userId);
+    logId = slot.logId;
+    if (!slot.allowed) {
+      await logRequest(userId, "", false, `Rate limit exceeded (${slot.scope})`, logId);
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
         {
@@ -188,7 +248,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             ...corsHeaders,
             "Content-Type": "application/json",
-            "Retry-After": withinMinute ? "3600" : "60",
+            "Retry-After": slot.scope === "daily" ? "3600" : "60",
           },
         },
       );
@@ -199,7 +259,7 @@ Deno.serve(async (req: Request) => {
     const context = body?.context;
 
     if (!question) {
-      await logRequest(userId, "", false, "Question missing");
+      await logRequest(userId, "", false, "Question missing", logId);
       return new Response(
         JSON.stringify({ error: "Question is required" }),
         {
@@ -213,7 +273,7 @@ Deno.serve(async (req: Request) => {
     // Gemini untrimmed (only the log copy was truncated), so a caller could send
     // a megabyte-scale prompt to burn tokens. Reject oversize input up front.
     if (question.length > MAX_QUESTION_CHARS) {
-      await logRequest(userId, question, false, "Question too long");
+      await logRequest(userId, question, false, "Question too long", logId);
       return new Response(
         JSON.stringify({ error: `Question is too long (max ${MAX_QUESTION_CHARS} characters).` }),
         {
@@ -224,7 +284,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!GEMINI_API_KEY) {
-      await logRequest(userId, question, false, "GEMINI_API_KEY not configured");
+      await logRequest(userId, question, false, "GEMINI_API_KEY not configured", logId);
       return new Response(
         JSON.stringify({ error: "GEMINI_API_KEY not configured" }),
         {
@@ -291,7 +351,7 @@ ${question}
     const response = await result.response;
     const answer = response.text();
 
-    await logRequest(userId, question, true);
+    await logRequest(userId, question, true, undefined, logId);
 
     console.log({
       timestamp: new Date().toISOString(),
@@ -313,7 +373,7 @@ ${question}
 
     console.error("Error:", error);
 
-    await logRequest(userId, question, false, errorMessage);
+    await logRequest(userId, question, false, errorMessage, logId);
 
     console.error({
       timestamp: new Date().toISOString(),
