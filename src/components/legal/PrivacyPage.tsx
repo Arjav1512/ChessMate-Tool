@@ -97,7 +97,7 @@ export function PrivacyPage({ onClose, view = 'privacy' }: PrivacyPageProps) {
         {/* Body */}
         <div style={{ overflowY: 'auto', padding: '24px' }}>
           <p style={{ ...pStyle, color: 'var(--cm-text-muted)', marginBottom: '20px' }}>
-            Last updated: May 2026
+            Last updated: July 2026
           </p>
 
           {view === 'privacy' ? (
@@ -137,40 +137,70 @@ export function PrivacyPage({ onClose, view = 'privacy' }: PrivacyPageProps) {
               <div style={sectionStyle}>
                 <h2 style={h2Style}>4. Third-Party Services</h2>
                 <ul style={ulStyle}>
-                  <li><strong>Supabase</strong> — authentication and database hosting.</li>
+                  <li><strong>Supabase</strong> — authentication and database hosting (EU/US regions).</li>
                   <li><strong>Google Gemini</strong> — AI coaching responses (your question and board position are sent; no account data).</li>
-                  <li><strong>Sentry</strong> — error tracking (crash reports only).</li>
-                  <li><strong>Vercel</strong> — static hosting and CDN.</li>
+                  <li><strong>Sentry</strong> — error tracking (crash reports only; text and media are masked in session replays).</li>
+                  <li><strong>Netlify</strong> — static hosting and CDN.</li>
                 </ul>
               </div>
 
               <div style={sectionStyle}>
-                <h2 style={h2Style}>5. Data Retention and Deletion</h2>
+                <h2 style={h2Style}>5. Your Rights (GDPR &amp; CCPA)</h2>
                 <p style={pStyle}>
-                  You can delete any game at any time from the interface.
-                  To delete your account and all associated data, email us at{' '}
+                  Wherever you live, you can exercise the following rights over your data:
+                </p>
+                <ul style={ulStyle}>
+                  <li><strong>Access &amp; portability</strong> — request a copy of your account data and games (exportable as PGN).</li>
+                  <li><strong>Rectification</strong> — correct your display name or email from the profile screen.</li>
+                  <li><strong>Erasure</strong> — delete individual games in-app, or your entire account (see §6).</li>
+                  <li><strong>Restriction &amp; objection</strong> — ask us to stop processing your data.</li>
+                  <li><strong>Withdraw consent</strong> — stop using the AI coach at any time; nothing is sent to Gemini unless you ask a question.</li>
+                </ul>
+                <p style={pStyle}>
+                  We rely on your consent and on the performance of our service to you as the
+                  legal bases for processing. We do not sell personal data.
+                </p>
+              </div>
+
+              <div style={sectionStyle}>
+                <h2 style={h2Style}>6. Data Retention and Deletion</h2>
+                <p style={pStyle}>
+                  You can delete any game at any time from the interface. Signing out clears
+                  all locally cached data from your device. To delete your account and all
+                  associated data, email us at{' '}
                   <a
                     href="mailto:arjav.jain1512@gmail.com"
                     style={{ color: 'var(--cm-accent)' }}
                   >
                     arjav.jain1512@gmail.com
                   </a>
-                  . We will process the request within 30 days.
+                  . We will process the request within 30 days. Diagnostic API logs are
+                  retained for at most 90 days and then automatically purged.
                 </p>
               </div>
 
               <div style={sectionStyle}>
-                <h2 style={h2Style}>6. Cookies</h2>
+                <h2 style={h2Style}>7. Cookies &amp; Local Storage</h2>
                 <p style={pStyle}>
-                  We use only essential cookies for session management (set by Supabase Auth).
-                  No advertising or tracking cookies are used.
+                  We use only essential cookies and local storage for session management
+                  (set by Supabase Auth) and for your device preferences (theme, feature
+                  toggles). No advertising or third-party tracking cookies are used.
                 </p>
               </div>
 
               <div style={sectionStyle}>
-                <h2 style={h2Style}>7. Contact</h2>
+                <h2 style={h2Style}>8. Children's Privacy</h2>
                 <p style={pStyle}>
-                  Questions about this policy? Reach us at{' '}
+                  ChessMate is not directed at children under 13, and we do not knowingly
+                  collect their data. If you believe a child has created an account, contact
+                  us and we will remove it.
+                </p>
+              </div>
+
+              <div style={sectionStyle}>
+                <h2 style={h2Style}>9. Contact</h2>
+                <p style={pStyle}>
+                  Questions about this policy, or to exercise any right above? Reach us at{' '}
                   <a
                     href="mailto:arjav.jain1512@gmail.com"
                     style={{ color: 'var(--cm-accent)' }}

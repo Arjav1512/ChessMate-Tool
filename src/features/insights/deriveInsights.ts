@@ -5,6 +5,7 @@
  * screens render — so Insights can never disagree with the rest of the app.
  */
 import type { Game } from '../../lib/supabase';
+import { addDays, diffLocalDays, localDayKey, parseLocalDay } from '../../lib/dates';
 
 export interface StrengthArea {
   key: string;
@@ -54,12 +55,9 @@ export interface InsightsVM {
   opponents: OpponentRow[];
 }
 
-/** Local YYYY-MM-DD key (heatmap/streak work in local days, like the user does). */
-export function dayKey(d: Date): string {
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${m}-${day}`;
-}
+/** Local YYYY-MM-DD key (heatmap/streak work in local days, like the user does).
+ *  Re-exported from the shared timezone-safe date utility (lib/dates). */
+export const dayKey = localDayKey;
 
 /** Game result from the user's point of view (null when color/result unknown). */
 export function resultForUser(g: Game): 'win' | 'loss' | 'draw' | null {
@@ -107,17 +105,19 @@ export function deriveColorSplit(games: Game[]): number {
 export function computeStreaks(activeDays: Set<string>, today: Date): { current: number; longest: number } {
   // Current: walk back from today while days are active.
   let current = 0;
-  const cursor = new Date(today);
+  let cursor = new Date(today);
   while (activeDays.has(dayKey(cursor))) {
     current += 1;
-    cursor.setDate(cursor.getDate() - 1);
+    cursor = addDays(cursor, -1);
   }
-  // Longest: sort keys and scan for consecutive runs.
+  // Longest: sort keys and scan for consecutive runs. Consecutiveness is a
+  // calendar-day difference of 1 (diffLocalDays), not a fixed 86_400_000 ms gap
+  // — the latter miscounts across a DST transition, where a local day is 23h/25h.
   const keys = [...activeDays].sort();
   let longest = 0, run = 0, prev: Date | null = null;
   for (const k of keys) {
-    const d = new Date(`${k}T00:00:00`);
-    run = prev && d.getTime() - prev.getTime() === 86_400_000 ? run + 1 : 1;
+    const d = parseLocalDay(k);
+    run = prev && diffLocalDays(prev, d) === 1 ? run + 1 : 1;
     longest = Math.max(longest, run);
     prev = d;
   }
@@ -132,9 +132,7 @@ export function computeStreaks(activeDays: Set<string>, today: Date): { current:
 export function buildStreakDays(activeDays: Set<string>, today: Date, days = 14): StreakDay[] {
   const out: StreakDay[] = [];
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const k = dayKey(d);
+    const k = dayKey(addDays(today, -i));
     out.push({ key: k, active: activeDays.has(k), isToday: i === 0 });
   }
   return out;

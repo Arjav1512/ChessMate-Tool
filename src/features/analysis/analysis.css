@@ -10,6 +10,27 @@
   display: grid; grid-template-columns: minmax(0, 700px) minmax(0, 1fr);
   gap: var(--space-6); align-items: start;
 }
+/* Demo-game notice (audit M1) — spans both columns, first thing on the page.
+   Token-bound so it passes the axe color-contrast gate in both themes. */
+.iv-aw__demo {
+  grid-column: 1 / -1;
+  display: flex; align-items: baseline; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-elev);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--warning);
+  border-radius: 10px;
+  color: var(--text-body);
+  font-size: 13px; line-height: 1.55;
+}
+.iv-aw__demo-badge {
+  flex-shrink: 0;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--warning);
+}
+.iv-aw__demo-link { color: var(--text-hi); text-decoration: underline; text-underline-offset: 2px; }
+.iv-aw__demo-link:hover { color: var(--warning); }
+
 .iv-aw__board-col { display: flex; flex-direction: column; gap: var(--space-3); position: sticky; top: var(--space-4); }
 .iv-aw__stage { display: flex; gap: var(--space-3); align-items: stretch; }
 .iv-aw__stage .iv-board { flex: 1; min-width: 0; }

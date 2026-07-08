@@ -10,12 +10,16 @@ import './style.css';
 import './index.css';
 import { initSentry } from './lib/sentry';
 import { installGlobalErrorHandlers } from './lib/monitoring';
+import { installSignOutCleanup } from './lib/clearUserState';
 import { useThemeStore, applyThemeAttributes } from './stores/themeStore';
 
 // Initialize error monitoring before rendering so the ErrorBoundary and the
 // global handlers capture errors via Sentry from the very first render.
 initSentry();
 installGlobalErrorHandlers();
+// Purge query cache / user localStorage / SW api-response cache on sign-out
+// (any sign-out: button, token expiry, another tab) — audit M2.
+installSignOutCleanup();
 
 // Reflect the persisted theme onto <html> before first paint so the Ivory
 // token cascade (landing, auth, and the authenticated shell) opens in the

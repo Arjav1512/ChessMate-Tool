@@ -33,6 +33,15 @@ const sample = <T,>(value: T) => () => Promise.resolve(value);
 const opts = { staleTime: Infinity } as const;
 const reload = () => { if (typeof window !== 'undefined') window.location.reload(); };
 
+// Sample data is a DEV-only preview affordance (the `?shell` screenshots and the
+// a11y suite need a populated dashboard without a real session). In production it
+// must NEVER render — the file's contract. Authenticated users already bypass the
+// sample path; this guard closes the latent trap where an *unauthenticated* caller
+// that somehow reaches these hooks (e.g. a future routing change) would otherwise
+// get fabricated numbers instead of an honest empty state (audit L1).
+const SAMPLE_ALLOWED = import.meta.env.DEV;
+const emptyResult = <T,>(data: T) => ({ data, isLoading: false, isError: false, refetch: reload });
+
 /** Real dashboard regions (or null) for an authed user; null for DEV preview. */
 function useDashboardReal() {
   const { user } = useAuth();
@@ -47,21 +56,21 @@ export function useDashboardEmptyState() {
   const { useReal, loading, error, real } = useDashboardReal();
   const sampleQ = useQuery({ queryKey: ['dashboard', 'hasGames'], queryFn: sample(sampleHasGames), ...opts });
   if (useReal) return { data: real ? real.hasData : false, isLoading: loading, isError: !!error, refetch: reload };
-  return sampleQ;
+  return SAMPLE_ALLOWED ? sampleQ : emptyResult(false);
 }
 
 export function useWeeklyFocus() {
   const { useReal, loading, error, real } = useDashboardReal();
   const sampleQ = useQuery<WeeklyFocusVM>({ queryKey: ['weeklyFocus'], queryFn: sample(sampleWeeklyFocus), ...opts });
   if (useReal) return { data: real?.focus ?? undefined, isLoading: loading, isError: !!error, refetch: reload };
-  return sampleQ;
+  return SAMPLE_ALLOWED ? sampleQ : emptyResult<WeeklyFocusVM | undefined>(undefined);
 }
 
 export function useTopWeaknesses() {
   const { useReal, loading, error, real } = useDashboardReal();
   const sampleQ = useQuery<WeaknessCompactVM[]>({ queryKey: ['topWeaknesses'], queryFn: sample(sampleWeaknesses), ...opts });
   if (useReal) return { data: real?.weaknesses ?? [], isLoading: loading, isError: !!error, refetch: reload };
-  return sampleQ;
+  return SAMPLE_ALLOWED ? sampleQ : emptyResult<WeaknessCompactVM[]>([]);
 }
 
 /** Improvement score (streak/delta/verdict) has no real source yet — show
@@ -70,7 +79,7 @@ export function useImprovementScore() {
   const { user } = useAuth();
   const sampleQ = useQuery<ImprovementScoreVM>({ queryKey: ['improvementScore'], queryFn: sample(sampleImprovementScore), ...opts });
   if (user) return { data: undefined, isLoading: false, isError: false, refetch: reload };
-  return sampleQ;
+  return SAMPLE_ALLOWED ? sampleQ : emptyResult<ImprovementScoreVM | undefined>(undefined);
 }
 
 /** Roadmap/milestones have no real source yet — empty for real users. */
@@ -78,18 +87,22 @@ export function useRoadmap() {
   const { user } = useAuth();
   const sampleQ = useQuery<MilestoneNodeVM[]>({ queryKey: ['roadmap'], queryFn: sample(sampleRoadmap), ...opts });
   if (user) return { data: [] as MilestoneNodeVM[], isLoading: false, isError: false, refetch: reload };
-  return sampleQ;
+  return SAMPLE_ALLOWED ? sampleQ : emptyResult<MilestoneNodeVM[]>([]);
 }
 
-// ── Unrendered cards (not part of the live dashboard surface) — sample only. ──
+// ── Unrendered cards (not part of the live dashboard surface) — DEV sample only,
+//    empty in production so no fabricated data can ever surface (audit L1). ──
 export function useRatingHistory(range: RatingRange) {
-  return useQuery<RatingHistoryVM>({ queryKey: ['ratingHistory', range], queryFn: sample(sampleRatingHistory(range)), ...opts });
+  const sampleQ = useQuery<RatingHistoryVM>({ queryKey: ['ratingHistory', range], queryFn: sample(sampleRatingHistory(range)), ...opts });
+  return SAMPLE_ALLOWED ? sampleQ : emptyResult<RatingHistoryVM | undefined>(undefined);
 }
 
 export function useRecentGames() {
-  return useQuery<GameRowVM[]>({ queryKey: ['recentGames', 5], queryFn: sample(sampleRecentGames), ...opts });
+  const sampleQ = useQuery<GameRowVM[]>({ queryKey: ['recentGames', 5], queryFn: sample(sampleRecentGames), ...opts });
+  return SAMPLE_ALLOWED ? sampleQ : emptyResult<GameRowVM[]>([]);
 }
 
 export function useCoachSummary() {
-  return useQuery<CoachSummaryVM>({ queryKey: ['coachSummary'], queryFn: sample(sampleCoachSummary), ...opts });
+  const sampleQ = useQuery<CoachSummaryVM>({ queryKey: ['coachSummary'], queryFn: sample(sampleCoachSummary), ...opts });
+  return SAMPLE_ALLOWED ? sampleQ : emptyResult<CoachSummaryVM | undefined>(undefined);
 }

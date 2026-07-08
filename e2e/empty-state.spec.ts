@@ -47,9 +47,19 @@ test.describe('Landing page (unauthenticated)', () => {
 
   test('exposes section anchors for features / how it works / FAQ', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('link', { name: /Features/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /How it works/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /FAQ/i })).toBeVisible();
+    // The scroll-target sections exist at every viewport; the top-nav quick
+    // links to them are desktop-only by design (hidden below 768px — see
+    // LandingPage `{!isMobile && …}`). Assert the anchors on both, and the
+    // nav links only where they render.
+    for (const id of ['#features', '#how-it-works', '#faq']) {
+      await expect(page.locator(id)).toBeAttached();
+    }
+    const isMobile = (page.viewportSize()?.width ?? 1280) < 768;
+    if (!isMobile) {
+      await expect(page.getByRole('link', { name: /Features/i })).toBeVisible();
+      await expect(page.getByRole('link', { name: /How it works/i })).toBeVisible();
+      await expect(page.getByRole('link', { name: /FAQ/i })).toBeVisible();
+    }
   });
 
   test('hides OAuth buttons when no provider env flags are set', async ({ page }) => {

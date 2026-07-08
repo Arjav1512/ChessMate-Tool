@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 import { handleOAuthCallback, isOAuthCallback, clearOAuthCallback, getOAuthError } from '../lib/oauth';
+import { getCaptchaToken } from '../lib/captcha';
 import type { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -164,12 +165,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    // captchaToken is undefined unless CAPTCHA is configured (see lib/captcha);
+    // Supabase ignores an undefined token, so this is a no-op until enabled.
+    const captchaToken = await getCaptchaToken();
+    const { error } = await supabase.auth.signInWithPassword({
+      email, password, options: captchaToken ? { captchaToken } : undefined,
+    });
     if (error) throw error;
   };
 
   const signUp = async (email: string, password: string, displayName: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const captchaToken = await getCaptchaToken();
+    const { data, error } = await supabase.auth.signUp({
+      email, password, options: captchaToken ? { captchaToken } : undefined,
+    });
     if (error) throw error;
 
     if (data.user) {
@@ -241,8 +250,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const sendPasswordResetEmail = async (email: string) => {
+    const captchaToken = await getCaptchaToken();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/?recovery=1`,
+      ...(captchaToken ? { captchaToken } : {}),
     });
     if (error) throw error;
   };

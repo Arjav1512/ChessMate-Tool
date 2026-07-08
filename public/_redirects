@@ -1,0 +1,4 @@
+# SPA fallback (mirrors netlify.toml [[redirects]]). Lives in public/ so it
+# ships inside dist/ and applies even to manual `netlify deploy --dir=dist`
+# uploads that never read netlify.toml. Files that exist are served as-is.
+/*  /index.html  200

@@ -32,8 +32,18 @@ test.describe('Accessibility — Analysis Workspace', () => {
   });
 
   test('Analysis is the default tab; Coach is not auto-selected (§14.7)', async ({ page }) => {
-    await expect(page.getByRole('tab', { name: 'Analysis' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('tab', { name: 'Coach' })).toHaveAttribute('aria-selected', 'false');
+    // The view switcher renders as a tablist on desktop and as a segmented
+    // radiogroup on mobile (AnalysisPage: <Tabs> vs <SegmentedControl>). Assert
+    // whichever control this viewport actually renders — same guarantee either
+    // way: Analysis is pre-selected, Coach is not.
+    const isMobile = (page.viewportSize()?.width ?? 1280) < 768;
+    if (isMobile) {
+      await expect(page.getByRole('radio', { name: 'Analysis' })).toHaveAttribute('aria-checked', 'true');
+      await expect(page.getByRole('radio', { name: 'Coach' })).toHaveAttribute('aria-checked', 'false');
+    } else {
+      await expect(page.getByRole('tab', { name: 'Analysis' })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.getByRole('tab', { name: 'Coach' })).toHaveAttribute('aria-selected', 'false');
+    }
   });
 
   test('charts are labelled and route focus lands on the H1', async ({ page }) => {
