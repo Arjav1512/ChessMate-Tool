@@ -2,6 +2,11 @@
 
 > Durable engineering/product decisions for the Ivory redesign, with rationale and trade-offs. Newest first. Pairs with `IMPLEMENTATION_ROADMAP.md` and Architecture §24.
 
+## D-015 · Production-audit remediation — repo-only fixes; hosting reconciled to Netlify (PR #55)
+- **Decision:** a repository-only pass on the production-readiness audit, preserving all behavior. Key calls: (1) the `chess-mentor` rate limiter switches to **reserve-then-count** (insert the `api_logs` row, then count including it) to remove a TOCTOU race, still fail-closed; (2) **route-level code splitting** via `React.lazy`/`Suspense` (entry chunk 670→434 kB); (3) upgrade the toolchain to **Vite 7 / Vitest 4** (+ plugin-react 5, vite-plugin-pwa 1.3, explicit `terser`), taking `npm audit` from 27 → **0**; (4) commit **`netlify.toml`** (build + SPA redirect) and add a **release-identity** check to the smoke test; (5) demo analysis is explicitly labeled and authed `/analysis` routes to the real library; (6) **sign-out clears all client state** (query cache, user localStorage, SW `supabase-cache`); (7) **DEV-gate** all dashboard sample data; (8) add `LICENSE` + `THIRD_PARTY_LICENSES.md`, GDPR/privacy, timezone-safe dates (DST fix), SEO, and a disabled CAPTCHA seam; (9) move historical process/audit docs to `docs/archive/`.
+- **Why:** the audit found production serving a stale build behind a green canary, a TOCTOU gap in the cost limiter, a 196 kB-gzip entry chunk, 27 dev-dep vulns, and an MIT/GPL license mismatch — all fixable in-repo without touching dashboards or deploys. Hosting is reconciled to **Netlify** (the real live target), superseding D-001's "stays Vercel."
+- **Trade-off:** the toolchain jump is a large dependency delta (validated: 305 unit + 260 e2e across 5 engines, typecheck/lint/build clean). Manual follow-ups remain (deploy the merge, redeploy the edge function + set `ALLOWED_ORIGINS`, set `VITE_SENTRY_DSN`) — these require dashboard/secret access and are out of repo scope.
+
 ## D-014 · Coach rate limiter fails CLOSED; `?ff=` and localStorage tokens kept (security audit)
 - **Decision:** the `chess-mentor` limiter now returns *deny* on a DB error (was fail-open), adds a per-day budget beside the per-minute one, caps question length, and fences untrusted prompt input. The `?ff=` flag override stays enabled in prod, and the Supabase session token stays in `localStorage`.
 - **Why:** fail-open let a caller bypass the cost cap on any DB blip — a transient 429 is cheaper than an unbounded Gemini bill. `?ff=` only toggles client UI rendering (no data access — RLS governs that; no auth bypass), and it is the documented instant-rollback mechanism. This is a static SPA on static hosting, so there is no server to set httpOnly cookies; the strong CSP + zero XSS sinks already block the exfil path, so switching storage is regression risk for marginal gain.
@@ -68,7 +73,7 @@
 - **Trade-off:** temporary dual component sets; resolved at Phase 11.
 
 ## D-001 · Approved Phase-0 decisions (carried from roadmap "Locked decisions")
-- Strangler migration behind flags; analysis stays **client-side** for v1 (server pipeline deferred); differentiator screens build on **typed sample/derived data**; hosting stays **Vercel** (documented deviation from Architecture §21 Netlify).
+- Strangler migration behind flags; analysis stays **client-side** for v1 (server pipeline deferred); differentiator screens build on **typed sample/derived data**; ~~hosting stays **Vercel**~~ → **superseded by D-015: hosting is Netlify** (Architecture §21).
 
 ## D-010 · Dashboard reads as an improvement system, not analytics (Phase 4)
 - **Decision (post visual-review refinement):** Improvement Score leads with a verdict + drivers + actionable next-step; Rating trend de-emphasized (smaller value, `subtle` chart) as an outcome companion; weakness cards add *why it matters* + *recommended action*; Improvement Roadmap elevated to hero treatment above Coach; subtle question captions map cards to the improvement narrative (how improving / what's holding me back / what next / what outcome).

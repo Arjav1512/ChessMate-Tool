@@ -84,13 +84,15 @@ constitutes a security bug:
    does it).
 5. **The `chess-mentor` Edge Function is the hardened server surface.** It
    verifies the caller's JWT (`auth.getUser`, plus `verify_jwt = true`),
-   fails **closed** on any rate-limit DB error, enforces a per-user burst
-   **and** daily budget (10/min + 100/day), caps the question length before it
-   reaches Gemini, fences untrusted question/context in the prompt, uses a
-   fail-closed CORS allowlist, and returns a **generic** error to clients (the
-   detail stays in server logs / `api_logs`). Weakening any of these — or
+   enforces a per-user burst **and** daily budget (10/min + 100/day) with a
+   **concurrency-safe reserve-then-count** limiter that fails **closed** on any
+   DB error, caps the question length before it reaches Gemini, fences untrusted
+   question/context in the prompt, uses a fail-closed CORS allowlist, and returns
+   a **generic** error to clients (the detail stays in server logs / `api_logs`).
+   Weakening any of these — reintroducing a count-then-insert (TOCTOU) order, or
    bypassing the limits from the client — should be considered a vulnerability.
-   *(Hardened in PR #49; regression-tested in `src/lib/edgeFunctionSecurity.test.ts`.)*
+   *(Hardened in PR #49; TOCTOU race fixed + regression-pinned in PR #55;
+   tested in `src/lib/edgeFunctionSecurity.test.ts`.)*
 6. **PGN ingestion has a hard 5 MiB cap.** Both the file-upload and
    paste paths must call `checkPgnSize` from `src/lib/pgnLimits.ts`.
    Removing or weakening either check is a regression.

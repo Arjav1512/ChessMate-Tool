@@ -27,7 +27,7 @@ one rollback flag away (`?ff=-ui.newShell`).
   an eval timeline, and turning-point jumps
 - 🧠 **AI chess mentor** (Google Gemini via a hardened Supabase Edge Function)
 - 📊 **Insights dashboard** — usage, accuracy gauge + percentile, strength
-  breakdown, an activity **streak heatmap**, rating progression, and recent
+  breakdown, a 14-day activity **streak strip**, rating progression, and recent
   opponents; every number derives from the same sources the other screens use
 - 🎯 **Dashboard** (momentum + weekly focus) and **Improve** (study plan +
   Review Mistakes) close the improvement loop
@@ -43,7 +43,7 @@ one rollback flag away (`?ff=-ui.newShell`).
 | Layer | Choice |
 |---|---|
 | UI | React 18 + TypeScript 5.5 |
-| Build | Vite 5 (+ vite-plugin-pwa) |
+| Build | Vite 7 (+ vite-plugin-pwa; route-level code splitting) |
 | Styles | Tailwind CSS 3 + a token-driven dark-first design system |
 | Backend | Supabase (PostgreSQL + Auth + Edge Functions) |
 | Chess engine | Stockfish.js (Web Worker, UCI protocol) |
@@ -59,26 +59,37 @@ one rollback flag away (`?ff=-ui.newShell`).
 
 ```text
 src/
+  app/               # Ivory routed shell: AppRouter (lazy routes), AppShell, navigation, PlaceholderPage
+  features/          # Screen features, each with its own hooks + data layer:
+                     #   dashboard/ · insights/ · analysis/ · improve/ (+ mistakes/) · games/
   components/
-    analysis/        # AnalyzeGamesPage, BulkAnalysis, EnginePanel, DisplaySettings
+    analysis/        # legacy AnalyzeGamesPage, BulkAnalysis, EnginePanel, DisplaySettings
     auth/            # AuthForm, PasswordResetRequest, PasswordResetComplete
+    charts/          # EvalBar, LineChart, RadarChart, ScoreRing
     chess/           # ChessBoard, BoardArrows, EvaluationGauge
-    game/            # GameList, GameViewer
+    game/            # GameList, GameViewer (legacy modal app)
     layout/          # ErrorBoundary, ThemeToggle, CompatibilityWarning, ProfileModal
     legal/           # PrivacyPage
+    marketing/       # LandingPage (pre-auth)
+    nav/             # Sidebar, BottomTabBar, CommandMenu, UserMenu (Ivory shell chrome)
     stats/           # StatsDashboard, ProgressBar
-    ui/              # Button, Card, Input, Toast, Toggle, LoadingSpinner, MarkdownRenderer
+    ui/              # legacy primitives + ui/iv/ (Ivory design-system components)
   contexts/          # AuthContext, ToastContext
   hooks/             # useDebounce, useMediaQuery, usePerformance, useResponsive, useRevealAnimations, …
-  lib/               # supabase, stockfish, gemini, pgn, pgnLimits, openings, oauth, userColor, sentry
+  lib/               # supabase, stockfish, gemini, pgn, pgnLimits, openings, oauth, userColor, sentry,
+                     # monitoring, clearUserState, dates, captcha, moveAnalysis, weaknessProfile, mistakeReview
+  services/          # queryClient (TanStack Query)
+  stores/            # Zustand: theme, ui, commandMenu, analysisStepper
+  styles/            # Ivory tokens.css + globals.css
   workers/           # pgnWorker (off-main-thread PGN batch parser)
   utils/             # validation, formatting, error handling, moveClassifier, cache, performance, compatibility
-  App.tsx            # App shell — auth gate, password recovery gate, modal routing
-  main.tsx           # React entry point
+  App.tsx            # App root — auth gate, password recovery gate, legacy modal app vs Ivory shell
+  main.tsx           # React entry — Sentry, global error handlers, sign-out cleanup
 supabase/
   functions/         # Deno Edge Functions (chess-mentor)
   migrations/        # SQL migrations (apply via `npx supabase db push`)
-e2e/                 # Playwright specs (auth, game-import, password-reset, board-and-progress, accessibility, empty-state)
+e2e/                 # Playwright specs (auth, game-import, password-reset, a11y suites, empty-state, …)
+netlify.toml         # Build + SPA-redirect config (headers ship from public/_headers)
 ```
 
 There is **no** `src/i18n/` directory — the i18n scaffolding was removed
@@ -192,8 +203,11 @@ once via the UI, then re-use).
 - `CONTEXT.md` — repository-level context for AI agents
 - `CONTRIBUTING.md` — local setup, testing workflow, PR conventions
 - `SECURITY.md` — how to report a security issue
+- `MONITORING.md` — observability, smoke test, deploy verification runbook
+- `THIRD_PARTY_LICENSES.md` — distributed third-party components (Stockfish GPL-3.0, GSAP)
 - `DESIGN.md` — design tokens & UI patterns
 - `PRODUCT.md` — product vision & roadmap
+- `docs/archive/` — historical phase/audit artifacts (not maintained)
 
 ---
 
