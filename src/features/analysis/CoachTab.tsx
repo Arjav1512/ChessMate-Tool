@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Input, useIvToast } from '../../components/ui/iv';
 import { BoardContainer } from './BoardContainer';
-import { askChessMentor } from '../../lib/gemini';
+import { askChessMentor } from '../../coach';
 import { COACH_STARTER_PROMPTS } from '../../lib/sampleData';
 import type { AnalysisMoveVM, GameVM } from './types';
 
