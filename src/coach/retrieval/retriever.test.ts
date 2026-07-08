@@ -42,6 +42,18 @@ describe('retrieveKnowledge', () => {
     expect(retrieveKnowledge({})).toEqual([]);
     expect(retrieveKnowledge({ opening: 'Orangutan Hyperaccelerated' })).toEqual([]);
   });
+
+  it('matches tags as whole words only — no fragment or needle-in-tag hits', () => {
+    // 'pins' must not fire inside 'Pinsk'; a short term must not match a
+    // longer tag that merely contains it ('material' ⊄ 'missed_material_gain').
+    expect(retrieveKnowledge({ opening: 'Pinsk Variation' })).toEqual([]);
+    expect(retrieveKnowledge({ theme: 'material' })).toEqual([]);
+  });
+
+  it('falls back to general principles for openings literally named "… Opening"', () => {
+    const docs = retrieveKnowledge({ opening: 'English Opening' });
+    expect(docs.map((d) => d.id)).toEqual(['principles/opening_principles']);
+  });
 });
 
 describe('queryFromContext', () => {

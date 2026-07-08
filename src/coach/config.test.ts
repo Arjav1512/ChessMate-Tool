@@ -26,5 +26,7 @@ describe('resolveCoachConfig', () => {
     expect(resolveCoachConfig({ VITE_SUPABASE_URL: 'https://x.supabase.co' }).supabaseUrl).toBe('https://x.supabase.co');
     expect(resolveCoachConfig({}).supabaseUrl).toBeNull();
     expect(resolveCoachConfig({ VITE_SUPABASE_URL: '  ' }).supabaseUrl).toBeNull();
+    // Trailing slashes are stripped so transports can safely append paths.
+    expect(resolveCoachConfig({ VITE_SUPABASE_URL: 'https://x.supabase.co/' }).supabaseUrl).toBe('https://x.supabase.co');
   });
 });

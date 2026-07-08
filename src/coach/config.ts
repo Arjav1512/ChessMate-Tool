@@ -39,6 +39,7 @@ export function resolveCoachConfig(
   }
   return {
     provider,
-    supabaseUrl: env.VITE_SUPABASE_URL?.trim() || null,
+    // Trailing slashes are stripped so transports can safely append paths.
+    supabaseUrl: env.VITE_SUPABASE_URL?.trim().replace(/\/+$/, '') || null,
   };
 }

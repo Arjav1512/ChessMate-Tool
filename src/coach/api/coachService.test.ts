@@ -191,7 +191,8 @@ describe('CoachService.ask — graceful errors (façade guarantee)', () => {
     });
   });
 
-  it('normalizes unexpected provider errors to a safe unknown', async () => {
+  it('normalizes unexpected provider errors to a safe unknown, but reports the original', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const service = makeService({
       provider: new MockProvider({ fail: new Error('ECONNRESET at vendor-sdk.js:42') }),
     });
@@ -204,6 +205,13 @@ describe('CoachService.ask — graceful errors (façade guarantee)', () => {
     expect(err).toBeInstanceOf(CoachUnavailableError);
     expect(err.reason).toBe('unknown');
     expect(err.message).not.toContain('vendor-sdk');
+    // The original error is reported to monitoring, not silently swallowed.
+    expect(consoleError).toHaveBeenCalledWith(
+      'Error:',
+      expect.objectContaining({ message: expect.stringContaining('ECONNRESET') }),
+      expect.objectContaining({ source: 'coach' }),
+    );
+    consoleError.mockRestore();
   });
 
   it('a configured-but-unimplemented provider fails gracefully', async () => {

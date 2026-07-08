@@ -143,8 +143,14 @@ fails with a graceful user-facing error).
 `StructuredRetriever` (the only strategy today) derives a tag query from the
 context — priority `opening → endgame-phase → mistake classification → motifs`
 — and matches it deterministically against `knowledge/index.ts` (25 curated
-markdown docs bundled via `?raw`), deduplicated, capped at 2 docs. Same query,
-same docs, every time: retrieval is unit-testable and prompts reproducible.
+markdown docs bundled via `?raw`), deduplicated, capped at 2 docs. Matching is
+**whole-word tag matching only** (a tag equals the term or appears in it as a
+whole word) — never raw substring in either direction, so fragments ("pins" in
+"Pinsk") and short terms inside long tags can't fire accidentally. Openings
+literally named "… Opening" (English, Reti, …) have no dedicated doc and fall
+back to `principles/opening_principles` via its `opening` tag — deliberate.
+Same query, same docs, every time: retrieval is unit-testable and prompts
+reproducible.
 
 Future strategies implement the same `KnowledgeRetriever` interface:
 `VectorRetriever` (embeddings over the corpus), `HybridRetriever` (structured

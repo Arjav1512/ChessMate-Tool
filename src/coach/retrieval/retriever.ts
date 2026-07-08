@@ -26,12 +26,21 @@ export interface RetrievalQuery {
 /** Default budget: the whole prompt must fit the provider's ~4000-char cap. */
 const DEFAULT_LIMIT = 2;
 
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * A doc matches when one of its tags equals the term or appears in it as a
+ * whole word ("sicilian" in "sicilian defense"). Deliberately NOT raw
+ * substring in either direction: needle-in-tag would let a short term match
+ * unrelated long tags ("material" → "missed_material_gain"), and fragment
+ * matches would fire on accidents ("pins" → "Pinsk"). Whole-word only keeps
+ * retrieval deterministic by design as the corpus grows.
+ */
 function matches(doc: KnowledgeDoc, term: string): boolean {
   const needle = term.trim().toLowerCase();
   if (!needle) return false;
-  return (
-    doc.title.toLowerCase().includes(needle) ||
-    doc.tags.some((tag) => needle.includes(tag) || tag.includes(needle))
+  return doc.tags.some(
+    (tag) => tag === needle || new RegExp(`\\b${escapeRegExp(tag)}\\b`).test(needle),
   );
 }
 

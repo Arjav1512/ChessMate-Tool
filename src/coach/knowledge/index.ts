@@ -85,6 +85,9 @@ export const KNOWLEDGE_BASE: KnowledgeDoc[] = [
   { id: 'motifs/mating_patterns', category: 'motifs', title: 'Mating Patterns', tags: ['missed_mate', 'allowed_mate', 'mate'], content: matingPatterns },
 
   // ── Principles ────────────────────────────────────────────────────────────
+  // The 'opening' tag doubles as a deliberate fallback: openings whose NAME
+  // contains the word "Opening" (English Opening, Reti Opening, …) have no
+  // dedicated doc and retrieve these general principles instead.
   { id: 'principles/opening_principles', category: 'principles', title: 'Opening Principles', tags: ['opening'], content: openingPrinciples },
   { id: 'principles/king_safety', category: 'principles', title: 'King Safety', tags: ['king safety', 'loosened-kingside', 'allowed_mate'], content: kingSafety },
   { id: 'principles/calculation', category: 'principles', title: 'Calculation', tags: ['calculation', 'blunder', 'mistake', 'major_tactical_blunder'], content: calculation },
