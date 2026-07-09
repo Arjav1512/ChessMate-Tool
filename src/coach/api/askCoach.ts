@@ -1,6 +1,7 @@
-import type { CoachContext, CoachMoveContext } from '../context/types';
+import type { CoachContext, CoachGameAnalysis, CoachMoveContext } from '../context/types';
 import type { MoveClassification } from '../../utils/moveClassifier';
 import type { Phase } from '../../lib/moveAnalysis';
+import type { CoachTask } from '../prompts/templates';
 import { getCoachService } from './defaultCoachService';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,10 +53,29 @@ export interface MentorContext {
   moveHistory?: string[];
   evaluation?: MentorEvaluation;
   move?: MentorMoveInfo;
+  /** Whole-game analysis summary (accuracy, turning points, worst moves) —
+   *  already-computed view-model data, threaded so game-scoped questions
+   *  are answerable (Phase 4A / D2). */
+  gameAnalysis?: CoachGameAnalysis;
   /** The user's own rating, when the caller can identify it. */
   playerRating?: number | null;
   /** Compact summary of the player's known weaknesses (lib/weaknessProfile). */
   weaknessSummary?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task routing (Phase 4A / D3) — deterministic keyword rules that pick the
+// matching existing prompt template. Order matters: the most specific intent
+// wins ("opening mistake" is a mistake question). No NLP, no scoring.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function inferTask(question: string): CoachTask {
+  const q = question.toLowerCase();
+  if (/\b(mistake|blunder|went wrong|error)\b/.test(q)) return 'mistake';
+  if (/\b(opening|repertoire)\b/.test(q)) return 'opening';
+  if (/\b(walk me through|review|critical moment|how did i play)\b/.test(q)) return 'review';
+  if (/\b(teach|lesson|typical plan|show me the plan|another example)\b/.test(q)) return 'lesson';
+  return 'coach';
 }
 
 // Both UI taxonomies normalize onto the classifier taxonomy the context
@@ -109,6 +129,7 @@ export function toCoachContext(context: MentorContext): CoachContext {
     fen: context.currentPosition,
     moveHistory: context.moveHistory,
     move: toMoveContext(context),
+    gameAnalysis: context.gameAnalysis,
     player:
       context.weaknessSummary || context.playerRating != null
         ? { weaknessSummary: context.weaknessSummary, rating: context.playerRating }
@@ -117,12 +138,17 @@ export function toCoachContext(context: MentorContext): CoachContext {
 }
 
 /**
- * Ask the coach a question about the current game/position. Throws
- * CoachUnavailableError with a user-safe message on any failure.
+ * Ask the coach a question about the current game/position. The task (and so
+ * the prompt template) is inferred from the question unless the caller sets
+ * one. Throws CoachUnavailableError with a user-safe message on any failure.
  */
-export async function askChessMentor(question: string, context: MentorContext): Promise<string> {
+export async function askChessMentor(
+  question: string,
+  context: MentorContext,
+  task?: CoachTask,
+): Promise<string> {
   const answer = await getCoachService().ask({
-    task: 'coach',
+    task: task ?? inferTask(question),
     question,
     context: toCoachContext(context),
   });

@@ -3,7 +3,7 @@ import { Button, Input, useIvToast } from '../../components/ui/iv';
 import { BoardContainer } from './BoardContainer';
 import { askChessMentor } from '../../coach';
 import { COACH_STARTER_PROMPTS } from '../../lib/sampleData';
-import type { AnalysisMoveVM, GameVM } from './types';
+import type { AnalysisMoveVM, AnalysisVM, GameVM } from './types';
 
 const MOTIF_TEXT: Record<string, string> = {
   'hanging-piece': 'this move leaves a piece undefended — the opponent can win material',
@@ -16,7 +16,19 @@ export interface CoachTabProps {
   game: GameVM;
   move: AnalysisMoveVM | null;
   currentFen: string;
+  /** Whole-game analysis + move list, so game-scoped questions ("walk me
+   *  through the critical moment") reach the coach with real data (4A/D2). */
+  analysis?: AnalysisVM;
+  moves?: AnalysisMoveVM[];
 }
+
+/** "12...Nf6 (blunder, lost 300cp)" — compact line for the coach context. */
+const describeMove = (m: AnalysisMoveVM): string => {
+  const number = `${m.moveNumber}${m.color === 'b' ? '...' : '.'}`;
+  const quality = m.quality ?? 'key moment';
+  const loss = m.cpLoss != null && m.cpLoss > 0 ? `, lost ${m.cpLoss}cp` : '';
+  return `${number}${m.san} (${quality}${loss})`;
+};
 
 /**
  * Coach tab (System Design §4.5/§8/§14.7) — a peer tab (never default). Shows a
@@ -24,7 +36,7 @@ export interface CoachTabProps {
  * constrained prompt. It is a guide, not a generic chatbot: no bubble shell, no
  * AI badge dominance; always tied back to the concrete move.
  */
-export function CoachTab({ game, move, currentFen }: CoachTabProps) {
+export function CoachTab({ game, move, currentFen, analysis, moves }: CoachTabProps) {
   const { toast } = useIvToast();
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
@@ -44,6 +56,22 @@ export function CoachTab({ game, move, currentFen }: CoachTabProps) {
       // opening, ratings, and the move's phase/motifs/quality drive knowledge
       // retrieval; without them the coach answered from the FEN alone.
       const userColor = game.userColor === 'w' ? 'white' : 'black';
+      // Whole-game summary (Phase 4A / D2) from already-computed VM data.
+      const userMoves = (moves ?? []).filter((m) => m.color === game.userColor);
+      const gameAnalysis =
+        analysis?.status === 'analyzed'
+          ? {
+              accuracyUser: analysis.accuracyUser,
+              accuracyOpponent: analysis.accuracyOpponent,
+              turningPoints: analysis.turningPoints
+                .map((ply) => (moves ?? [])[ply - 1])
+                .filter((m): m is AnalysisMoveVM => !!m)
+                .map(describeMove),
+              mistakes: userMoves
+                .filter((m) => m.quality === 'mistake' || m.quality === 'blunder')
+                .map(describeMove),
+            }
+          : undefined;
       const res = await askChessMentor(text, {
         gameInfo: {
           white_player: game.white,
@@ -69,6 +97,7 @@ export function CoachTab({ game, move, currentFen }: CoachTabProps) {
             }
           : undefined,
         evaluation: move?.evalCp != null ? { evaluation: (move.evalCp / 100).toFixed(2), isMate: false, bestMove: move.bestSan ?? '' } : undefined,
+        gameAnalysis,
       });
       setAnswer(res);
       setQuestion('');

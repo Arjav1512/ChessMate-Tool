@@ -15,6 +15,8 @@ const MAX_HISTORY_PLIES = 40;
 const MAX_RECENT_MISTAKES = 5;
 const MAX_RECENT_GAMES = 5;
 const MAX_QUEUE_ITEMS = 5;
+const MAX_TURNING_POINTS = 3;
+const MAX_GAME_MISTAKES = 3;
 
 /**
  * Pipeline-stage abstraction over context assembly. Async because future
@@ -112,6 +114,20 @@ export function renderContext(context: CoachContext): string {
     const recent = context.moveHistory.slice(-MAX_HISTORY_PLIES);
     const prefix = context.moveHistory.length > recent.length ? '… ' : '';
     lines.push(`Moves so far: ${prefix}${recent.join(' ')}`);
+  }
+
+  const analysis = context.gameAnalysis;
+  if (analysis) {
+    if (analysis.accuracyUser != null) {
+      const opp = analysis.accuracyOpponent != null ? ` vs opponent ${analysis.accuracyOpponent}%` : '';
+      lines.push(`Game accuracy: the player ${analysis.accuracyUser}%${opp}`);
+    }
+    if (analysis.turningPoints?.length) {
+      lines.push(`Turning points of the game: ${analysis.turningPoints.slice(0, MAX_TURNING_POINTS).join('; ')}`);
+    }
+    if (analysis.mistakes?.length) {
+      lines.push(`The player's worst moves this game: ${analysis.mistakes.slice(0, MAX_GAME_MISTAKES).join('; ')}`);
+    }
   }
 
   const p = context.player;

@@ -23,6 +23,12 @@ import type { CoachAnswer, CoachRequest } from './types';
 
 const DEFAULT_TASK: CoachTask = 'coach';
 
+/** Turns consulted for follow-up context and repeat detection (D1/D4). */
+const HISTORY_WINDOW = 5;
+
+/** Question identity for repeat detection: case/punctuation/space-insensitive. */
+const normalizeQuestion = (q: string) => q.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
 export interface CoachOrchestratorDeps {
   contextBuilder: ContextBuilder;
   retriever: KnowledgeRetriever;
@@ -50,12 +56,30 @@ export class CoachOrchestrator {
     let context = await this.deps.contextBuilder.build(request.context ?? {});
     context = await this.fillEvaluationGap(context);
 
-    const docs = await this.deps.retriever.retrieve(context, task);
+    // Conversational awareness (Phase 4A): the last exchange resolves
+    // follow-ups; an exact-repeat question rotates the lead knowledge doc and
+    // instructs the model to vary. Session-scoped and deterministic.
+    const turns = this.deps.memory?.conversation.recent(HISTORY_WINDOW) ?? [];
+    const lastTurn = turns[turns.length - 1];
+    const repeatedTurn = [...turns]
+      .reverse()
+      .find((t) => normalizeQuestion(t.question) === normalizeQuestion(question));
+
+    let docs = await this.deps.retriever.retrieve(context, task);
+    if (repeatedTurn?.docIds?.length) {
+      // The lead doc defined the previous answer's lesson — serve the next
+      // best material instead (an empty result is fine: the model expands
+      // from the visible previous answer).
+      docs = docs.filter((d) => d.id !== repeatedTurn.docIds![0]);
+    }
+
     const prompt = this.deps.promptBuilder.build({
       task,
       question,
       context,
       docs,
+      history: lastTurn ? [lastTurn] : undefined,
+      repeat: !!repeatedTurn,
       maxChars: this.deps.provider.maxPromptChars,
     });
 
@@ -66,6 +90,7 @@ export class CoachOrchestrator {
       answer: text,
       task,
       askedAt: new Date().toISOString(),
+      docIds: docs.map((d) => d.id),
     });
 
     return { text, task, providerId: this.deps.provider.id };

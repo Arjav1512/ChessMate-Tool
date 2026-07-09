@@ -15,6 +15,9 @@ export interface ConversationTurn {
   answer: string;
   task: CoachTask;
   askedAt: string; // ISO timestamp
+  /** Knowledge docs retrieved for this turn (docIds[0] led the prompt) —
+   *  lets repetition-awareness rotate material instead of re-serving it. */
+  docIds?: string[];
 }
 
 /** Short-term dialogue memory for one coaching session. */

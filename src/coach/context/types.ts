@@ -64,6 +64,19 @@ export interface CoachQueueItem {
   phase?: Phase;
 }
 
+/** Whole-game analysis summary (Phase 4A / D2) — already-computed view-model
+ *  data threaded through so game-scoped questions ("walk me through the
+ *  critical moment") are answerable. Never computed here. */
+export interface CoachGameAnalysis {
+  /** 0–100 accuracies for this game, when analyzed. */
+  accuracyUser?: number | null;
+  accuracyOpponent?: number | null;
+  /** Compact pre-formatted lines, e.g. "12...Nf6 (blunder, lost 300cp)". */
+  turningPoints?: string[];
+  /** The player's own worst moves this game, same compact format. */
+  mistakes?: string[];
+}
+
 export interface CoachContext {
   game?: CoachGameContext;
   /** FEN of the position the question is about. */
@@ -71,6 +84,7 @@ export interface CoachContext {
   move?: CoachMoveContext;
   /** SAN history up to the current position (capped by the renderer). */
   moveHistory?: string[];
+  gameAnalysis?: CoachGameAnalysis;
   player?: CoachPlayerContext;
   improveQueue?: CoachQueueItem[];
 }

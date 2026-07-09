@@ -201,6 +201,93 @@ describe('Phase 3A — production context activates retrieval (zero-result preve
   });
 });
 
+describe('Phase 4A — conversational coaching', () => {
+  const blunderContext = {
+    game: { white: 'Opp', black: 'You', result: '1-0', userColor: 'black' as const },
+    fen: 'r1bqk2r/1p2bppp/p2p4/4p3/4n3/1NN5/PPP1BPPP/R1BQK2R w KQkq - 0 9',
+    move: { san: 'Nxe4', moveNumber: 8, color: 'black' as const, phase: 'middlegame' as const, motifs: ['hung_piece', 'major_tactical_blunder'], classification: 'blunder' as const, cpLoss: 290 },
+  };
+
+  it('D1: a follow-up question sees the previous exchange', async () => {
+    const provider = new MockProvider();
+    const memory = new SessionMemoryProvider();
+    const service = makeService({ provider, memory });
+
+    await service.ask({ question: 'What was wrong with my knight move?', context: blunderContext });
+    await service.ask({ question: 'Why?', context: blunderContext });
+
+    const followUpPrompt = provider.prompts[1];
+    expect(followUpPrompt).toContain('Earlier in this session:');
+    expect(followUpPrompt).toContain('The player asked: "What was wrong with my knight move?"');
+    expect(followUpPrompt).toContain('You answered: Coach says: develop your pieces.');
+  });
+
+  it('D1: long previous answers are excerpted deterministically', async () => {
+    const provider = new MockProvider();
+    const memory = new SessionMemoryProvider();
+    memory.conversation.record({
+      question: 'First question?',
+      answer: 'x'.repeat(1000),
+      task: 'coach',
+      askedAt: new Date().toISOString(),
+    });
+    const service = makeService({ provider, memory });
+    await service.ask({ question: 'And then?', context: blunderContext });
+    expect(provider.prompts[0]).toContain(`${'x'.repeat(320)}…`);
+    expect(provider.prompts[0]).not.toContain('x'.repeat(321));
+  });
+
+  it('D4: repeating a question rotates the lead doc and instructs variation', async () => {
+    const provider = new MockProvider();
+    const memory = new SessionMemoryProvider();
+    const service = makeService({ provider, memory });
+
+    await service.ask({ question: 'What did I miss here?', context: blunderContext });
+    await service.ask({ question: 'what did i miss here??', context: blunderContext }); // same, renormalized
+
+    const [first, second] = provider.prompts;
+    expect(first).toContain('# Hanging Pieces');
+    // The repeat must not be the same prompt: rotated material + directive.
+    expect(second).not.toEqual(first);
+    expect(second).toContain('has already asked this same question');
+    expect(second).not.toContain('# Hanging Pieces');
+    expect(second).toContain('# Blunder Prevention');
+    // Memory recorded which docs each turn used.
+    expect(memory.conversation.recent()[0].docIds?.[0]).toBe('motifs/hanging_pieces');
+  });
+
+  it('D2: game-level analysis reaches the prompt for game-scoped questions', async () => {
+    const provider = new MockProvider();
+    const service = makeService({ provider });
+    await service.ask({
+      question: 'Walk me through the critical moment of this game.',
+      task: 'review',
+      context: {
+        game: { white: 'You', black: 'Opp', result: '0-1', userColor: 'white' },
+        gameAnalysis: {
+          accuracyUser: 78,
+          accuracyOpponent: 85,
+          turningPoints: ['12...Nf6 (blunder, lost 300cp)', '24.Rxd5 (mistake, lost 180cp)'],
+          mistakes: ['12...Nf6 (blunder, lost 300cp)'],
+        },
+      },
+    });
+    const prompt = provider.prompts[0];
+    expect(prompt).toContain('Game accuracy: the player 78% vs opponent 85%');
+    expect(prompt).toContain('Turning points of the game: 12...Nf6 (blunder, lost 300cp); 24.Rxd5');
+    expect(prompt).toContain("The player's worst moves this game:");
+  });
+
+  it('D3: the task selects the matching existing template', async () => {
+    const provider = new MockProvider();
+    const service = makeService({ provider });
+    await service.ask({ question: 'q', task: 'mistake', context: blunderContext });
+    await service.ask({ question: 'q2', task: 'review', context: blunderContext });
+    expect(provider.prompts[0]).toContain('Explain this mistake to the player');
+    expect(provider.prompts[1]).toContain('Review this game for the player');
+  });
+});
+
 describe('CoachOrchestrator — swappable stages (future-proofing seams)', () => {
   it('uses any KnowledgeRetriever implementation (a future VectorRetriever plugs in here)', async () => {
     const fakeVectorDoc: KnowledgeDoc = {

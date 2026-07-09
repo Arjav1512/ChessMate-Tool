@@ -242,7 +242,7 @@ export function AnalysisPage() {
             "Ask coach" is the single coach entry point (one voice, not two). */}
       </TabPanel>
       <TabPanel active={activeTab === 'coach'}>
-        <CoachTab game={game} move={currentMove} currentFen={displayFen} />
+        <CoachTab game={game} move={currentMove} currentFen={displayFen} analysis={analysis} moves={moves} />
       </TabPanel>
       <TabPanel active={activeTab === 'lines'}>
         <LinesTab move={currentMove} analyzing={analyzing} />

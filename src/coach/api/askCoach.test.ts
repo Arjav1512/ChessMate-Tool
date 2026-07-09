@@ -1,5 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { toCoachContext } from './askCoach';
+import { inferTask, toCoachContext } from './askCoach';
+
+// D3 — every real starter prompt routes to its matching existing template.
+describe('inferTask (task routing)', () => {
+  it('routes the actual COACH_STARTER_PROMPTS deterministically', () => {
+    expect(inferTask('Walk me through the critical moment of this game.')).toBe('review');
+    expect(inferTask("What's the best move in this position, and why?")).toBe('coach');
+    expect(inferTask('Was my opening choice solid? Where could I improve it?')).toBe('opening');
+    expect(inferTask('Show me the typical plan for both sides here.')).toBe('lesson');
+    expect(inferTask('Find my biggest mistake and how I should have played instead.')).toBe('mistake');
+  });
+
+  it('most specific intent wins, default is coach', () => {
+    expect(inferTask('Was this opening mistake really that bad?')).toBe('mistake');
+    expect(inferTask('Why?')).toBe('coach');
+    expect(inferTask('Can you give another example?')).toBe('lesson');
+  });
+});
 
 // R1 regression — the adapter must carry every retrieval-relevant field the
 // call sites thread. Before Phase 3A it dropped all of them, and production
