@@ -141,9 +141,12 @@ fails with a graceful user-facing error).
 ## 6. Retrieval lifecycle (Phase-1 RAG)
 
 `StructuredRetriever` (the only strategy today) derives a tag query from the
-context — priority `opening → endgame-phase → mistake classification → motifs`
-— and matches it deterministically against `knowledge/index.ts` (25 curated
-markdown docs bundled via `?raw`), deduplicated, capped at 2 docs. Matching is
+context — priority `opening → endgame-phase → motifs → mistake classification`
+(motifs outrank the bare classification because they are more specific, and
+the prompt budget often fits only the first doc) — and matches it
+deterministically against `knowledge/index.ts` (63 curated coach-voice
+markdown docs bundled via `?raw`, see KNOWLEDGE_BASE_PLAN.md), deduplicated,
+capped at 2 docs. Matching is
 **whole-word tag matching only** (a tag equals the term or appears in it as a
 whole word) — never raw substring in either direction, so fragments ("pins" in
 "Pinsk") and short terms inside long tags can't fire accidentally. Openings

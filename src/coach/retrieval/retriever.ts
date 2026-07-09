@@ -7,10 +7,13 @@ import type { KnowledgeRetriever } from './types';
 // Structured retrieval (Coach Foundation, Deliverable 6) — Phase-1 RAG.
 //
 // Deterministic tag matching, in a fixed priority order:
-//   opening → theme/phase → mistake classification → motif
-// No embeddings, no vector search, no scoring model — the same query always
-// returns the same documents, which makes retrieval unit-testable and the
-// prompt reproducible.
+//   opening → theme/phase → motif → mistake classification
+// Motifs outrank the bare classification because they are more specific: a
+// hung-piece blunder should surface the hanging-pieces doc before generic
+// calculation advice — with rich Phase-2 docs the prompt budget often fits
+// only the first doc, so priority is selection. No embeddings, no vector
+// search, no scoring model — the same query always returns the same
+// documents, which makes retrieval unit-testable and the prompt reproducible.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface RetrievalQuery {
@@ -64,8 +67,8 @@ export function retrieveKnowledge(
 
   take(query.opening);
   take(query.theme);
-  take(query.mistake);
   for (const motif of query.motifs ?? []) take(motif);
+  take(query.mistake);
 
   return picked;
 }

@@ -18,7 +18,7 @@ describe('retrieveKnowledge', () => {
     expect(docs.map((d) => d.id)).toContain('principles/calculation');
   });
 
-  it('prioritizes opening > theme > mistake > motif and respects the limit', () => {
+  it('prioritizes opening > theme > motif > mistake and respects the limit', () => {
     const docs = retrieveKnowledge({
       opening: 'French Defense',
       theme: 'endgame',
@@ -51,8 +51,13 @@ describe('retrieveKnowledge', () => {
   });
 
   it('falls back to general principles for openings literally named "… Opening"', () => {
-    const docs = retrieveKnowledge({ opening: 'English Opening' });
-    expect(docs.map((d) => d.id)).toEqual(['principles/opening_principles']);
+    // No dedicated doc exists for Van't Kruijs — the 'opening' tag catches it.
+    const fallback = retrieveKnowledge({ opening: "Van't Kruijs Opening" });
+    expect(fallback.map((d) => d.id)).toEqual(['principles/opening_principles']);
+
+    // A covered "… Opening" gets its own doc first, principles alongside.
+    const english = retrieveKnowledge({ opening: 'English Opening' });
+    expect(english.map((d) => d.id)).toEqual(['openings/english', 'principles/opening_principles']);
   });
 });
 
