@@ -38,25 +38,119 @@ export function ratingBandOf(rating: number | null | undefined): string | undefi
   return 'advanced';
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Endgame family detection (Phase 3B / R4).
+//
+// The generic 'endgame' needle was material-blind: a queens-only ending
+// retrieved rook-endgame doctrine (PHASE_3A_VALIDATION_REPORT §1, worst
+// scenario). Classify the FEN's material into a deterministic family — the
+// same cheap placement scan derivePhase uses, no chess engine — and retrieve
+// family-specific doctrine instead.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type EndgameFamily =
+  | 'king-pawn'
+  | 'rook'
+  | 'rook-pawn'
+  | 'queen'
+  | 'queen-pawn'
+  | 'minor-piece'
+  | 'opposite-colored-bishops'
+  | 'same-colored-bishops'
+  | 'mixed';
+
+/** Family → needle matching the existing endgames/ doc tags. Families that
+ *  share doctrine share a doc: ±pawns changes nothing about whose doctrine
+ *  applies, and both bishop endings live in the minor-piece doc today. */
+const ENDGAME_FAMILY_NEEDLE: Record<EndgameFamily, string> = {
+  'king-pawn': 'pawn endgame',
+  rook: 'rook endgame',
+  'rook-pawn': 'rook endgame',
+  queen: 'queen endgame',
+  'queen-pawn': 'queen endgame',
+  'minor-piece': 'minor piece endgame',
+  'opposite-colored-bishops': 'bishop endgame',
+  'same-colored-bishops': 'bishop endgame',
+  mixed: 'endgame',
+};
+
+/** Classify a FEN's combined material into an endgame family. Pure and
+ *  deterministic; returns 'mixed' when the material fits no pure family. */
+export function endgameFamilyOf(fen: string): EndgameFamily {
+  const placement = fen.split(' ')[0] ?? '';
+  let queens = 0;
+  let rooks = 0;
+  let knights = 0;
+  let pawns = 0;
+  const bishopColors: { white: number[]; black: number[] } = { white: [], black: [] };
+
+  let rank = 0;
+  let file = 0;
+  for (const ch of placement) {
+    if (ch === '/') {
+      rank++;
+      file = 0;
+      continue;
+    }
+    if (ch >= '1' && ch <= '8') {
+      file += Number(ch);
+      continue;
+    }
+    const lower = ch.toLowerCase();
+    if (lower === 'q') queens++;
+    else if (lower === 'r') rooks++;
+    else if (lower === 'n') knights++;
+    else if (lower === 'p') pawns++;
+    else if (lower === 'b') bishopColors[ch === 'B' ? 'white' : 'black'].push((rank + file) % 2);
+    file++;
+  }
+  const bishops = bishopColors.white.length + bishopColors.black.length;
+  const minors = bishops + knights;
+
+  if (queens > 0 && rooks === 0 && minors === 0) return pawns > 0 ? 'queen-pawn' : 'queen';
+  if (rooks > 0 && queens === 0 && minors === 0) return pawns > 0 ? 'rook-pawn' : 'rook';
+  if (queens === 0 && rooks === 0 && minors > 0) {
+    if (knights === 0 && bishopColors.white.length === 1 && bishopColors.black.length === 1) {
+      return bishopColors.white[0] === bishopColors.black[0]
+        ? 'same-colored-bishops'
+        : 'opposite-colored-bishops';
+    }
+    return 'minor-piece';
+  }
+  if (queens === 0 && rooks === 0 && minors === 0) return 'king-pawn';
+  return 'mixed';
+}
+
+/** The endgame theme needle: family-specific when the FEN tells us, generic
+ *  'endgame' when there is no FEN or the material is mixed. */
+export function endgameThemeOf(fen: string | undefined): string {
+  return fen ? ENDGAME_FAMILY_NEEDLE[endgameFamilyOf(fen)] : 'endgame';
+}
+
 /** Default budget: the whole prompt must fit the provider's ~4000-char cap. */
 const DEFAULT_LIMIT = 2;
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
- * A doc matches when one of its tags equals the term or appears in it as a
- * whole word ("sicilian" in "sicilian defense"). Deliberately NOT raw
- * substring in either direction: needle-in-tag would let a short term match
- * unrelated long tags ("material" → "missed_material_gain"), and fragment
- * matches would fire on accidents ("pins" → "Pinsk"). Whole-word only keeps
- * retrieval deterministic by design as the corpus grows.
+ * Match strength of a doc for a term: the length of the LONGEST tag that
+ * equals the term or appears in it as a whole word; 0 when nothing matches.
+ * Deliberately NOT raw substring in either direction: needle-in-tag would let
+ * a short term match unrelated long tags ("material" → "missed_material_gain"),
+ * and fragment matches would fire on accidents ("pins" → "Pinsk").
+ *
+ * Length-as-strength makes specific tags beat generic ones within one needle
+ * ('queen endgame' picks the queen doc over docs carrying the bare 'endgame'
+ * tag) while equal-specificity matches keep deterministic array order.
  */
-function matches(doc: KnowledgeDoc, term: string): boolean {
-  const needle = term.trim().toLowerCase();
-  if (!needle) return false;
-  return doc.tags.some(
-    (tag) => tag === needle || new RegExp(`\\b${escapeRegExp(tag)}\\b`).test(needle),
-  );
+function matchStrength(doc: KnowledgeDoc, needle: string): number {
+  let strength = 0;
+  for (const tag of doc.tags) {
+    if (tag.length > strength && (tag === needle || new RegExp(`\\b${escapeRegExp(tag)}\\b`).test(needle))) {
+      strength = tag.length;
+    }
+  }
+  return strength;
 }
 
 /**
@@ -70,10 +164,19 @@ export function retrieveKnowledge(
 ): KnowledgeDoc[] {
   const picked: KnowledgeDoc[] = [];
   const take = (term: string | undefined) => {
-    if (!term) return;
-    for (const doc of docs) {
-      if (picked.length >= limit) return;
-      if (!picked.includes(doc) && matches(doc, term)) picked.push(doc);
+    const needle = term?.trim().toLowerCase();
+    if (!needle) return;
+    const candidates = docs
+      .map((doc, index) => ({ doc, index, strength: matchStrength(doc, needle) }))
+      .filter((c) => c.strength > 0 && !picked.includes(c.doc))
+      .sort((a, b) => b.strength - a.strength || a.index - b.index);
+    // A needle admits only its MOST specific match tier: 'queen endgame' takes
+    // the queen doc alone (not every doc with the bare 'endgame' tag), leaving
+    // the remaining slot for the next signal. Equal-specificity ties keep
+    // array order, so generic needles behave exactly as before.
+    for (const { doc, strength } of candidates) {
+      if (picked.length >= limit || strength < candidates[0].strength) return;
+      picked.push(doc);
     }
   };
 
@@ -123,7 +226,7 @@ export function queryFromContext(context: CoachContext, task: CoachTask): Retrie
     // mistake/motif.
     theme:
       move?.phase === 'endgame'
-        ? 'endgame'
+        ? endgameThemeOf(context.fen)
         : openingRelevant && (context.game?.opening || move?.phase === 'opening')
           ? 'opening'
           : undefined,

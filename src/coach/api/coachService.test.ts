@@ -170,6 +170,22 @@ describe('Phase 3A — production context activates retrieval (zero-result preve
     expect(provider.prompts[0]).toContain('# Opening Principles');
   });
 
+  it('a queen-endgame mistake receives queen-endgame doctrine, not rook advice (R4)', async () => {
+    const provider = new MockProvider();
+    const service = makeService({ provider });
+    // The Phase-3A validation's worst scenario, end to end.
+    await service.ask({
+      question: 'How should I have played this endgame?',
+      context: {
+        game: { white: 'You', black: 'Opp', result: '0-1', userColor: 'white' },
+        fen: '8/5Q2/8/4k3/7q/8/5K2/8 w - - 4 52',
+        move: { san: 'Kf2', moveNumber: 51, color: 'white', phase: 'endgame', classification: 'mistake', cpLoss: 250 },
+      },
+    });
+    expect(provider.prompts[0]).toContain('# Queen Endgames');
+    expect(provider.prompts[0]).not.toContain('# Rook Endgames');
+  });
+
   it('rating-band guidance reaches the prompt via game ratings + user color (R3)', async () => {
     const provider = new MockProvider();
     const service = makeService({ provider });

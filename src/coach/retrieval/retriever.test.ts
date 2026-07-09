@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { KNOWLEDGE_BASE } from '../knowledge';
-import { queryFromContext, ratingBandOf, retrieveKnowledge } from './retriever';
+import { endgameFamilyOf, endgameThemeOf, queryFromContext, ratingBandOf, retrieveKnowledge } from './retriever';
 
 describe('retrieveKnowledge', () => {
   it('matches an opening by name', () => {
@@ -145,6 +145,60 @@ describe('queryFromContext', () => {
       queryFromContext({ game: { opening: { name: 'Sicilian Defense' } }, player: { rating: 1500 } }, 'coach'),
     );
     expect(full.map((d) => d.id)).toEqual(['openings/sicilian', 'principles/opening_principles']);
+  });
+
+  it('R4: classifies endgame material into deterministic families', () => {
+    const cases: Array<[string, string]> = [
+      ['8/5Q2/8/4k3/7q/8/5K2/8 w - - 4 52', 'queen'],
+      ['8/5Q2/8/4k1p1/7q/8/5K2/8 w - - 0 1', 'queen-pawn'],
+      ['8/5r2/8/4k3/8/8/4RK2/8 w - - 0 1', 'rook'],
+      ['8/5r2/8/4kp2/8/8/4RK2/8 w - - 0 1', 'rook-pawn'],
+      ['8/4k3/4p3/8/8/4P3/4K3/8 w - - 0 1', 'king-pawn'],
+      ['8/4k3/3b4/8/8/3B4/4K3/8 w - - 0 1', 'opposite-colored-bishops'],
+      ['8/4k3/8/8/4b3/3B4/4K3/8 w - - 0 1', 'same-colored-bishops'],
+      ['8/4k3/2n5/8/8/3B4/4K3/8 w - - 0 1', 'minor-piece'],
+      ['8/4k2q/8/8/8/8/4RK2/8 w - - 0 1', 'mixed'],
+    ];
+    for (const [fen, family] of cases) expect(endgameFamilyOf(fen), fen).toBe(family);
+    // No FEN → the generic needle, i.e. exactly the pre-R4 behavior.
+    expect(endgameThemeOf(undefined)).toBe('endgame');
+  });
+
+  it('R4: queen / rook / pawn endings retrieve their own doctrine', () => {
+    const retrieve = (fen: string) =>
+      retrieveKnowledge(
+        queryFromContext({ fen, move: { san: 'Kf2', phase: 'endgame' } }, 'coach'),
+      ).map((d) => d.id);
+
+    // The Phase-3A validation's worst scenario: queens-only ending.
+    expect(retrieve('8/5Q2/8/4k3/7q/8/5K2/8 w - - 4 52')[0]).toBe('endgames/queen_endgames');
+    expect(retrieve('8/5r2/8/4kp2/8/8/4RK2/8 w - - 0 1')[0]).toBe('endgames/rook_endgames');
+    expect(retrieve('8/4k3/4p3/8/8/4P3/4K3/8 w - - 0 1')[0]).toBe('endgames/king_and_pawn_endgames');
+    // Both bishop families and knight endings land on the minor-piece doc.
+    expect(retrieve('8/4k3/3b4/8/8/3B4/4K3/8 w - - 0 1')[0]).toBe('endgames/minor_piece_endgames');
+    expect(retrieve('8/4k3/8/8/4b3/3B4/4K3/8 w - - 0 1')[0]).toBe('endgames/minor_piece_endgames');
+    // Mixed heavy material falls back to the generic endgame docs (pre-R4).
+    expect(retrieve('8/4k2q/8/8/8/8/4RK2/8 w - - 0 1')[0]).toBe('endgames/rook_endgames');
+  });
+
+  it('R4: opening and rating retrieval remain unchanged', () => {
+    // An endgame FEN in context must not leak into an opening-phase query.
+    const opening = retrieveKnowledge(
+      queryFromContext(
+        { fen: '8/5Q2/8/4k3/7q/8/5K2/8 w - - 4 52', game: { opening: { name: 'Sicilian Defense' } }, move: { san: 'a6', phase: 'opening' } },
+        'coach',
+      ),
+    );
+    expect(opening.map((d) => d.id)).toEqual(['openings/sicilian', 'principles/opening_principles']);
+
+    // Rating still fills only the spare slot behind the family doc.
+    const rated = retrieveKnowledge(
+      queryFromContext(
+        { fen: '8/5Q2/8/4k3/7q/8/5K2/8 w - - 4 52', move: { san: 'Kf2', phase: 'endgame' }, player: { rating: 1500 } },
+        'coach',
+      ),
+    );
+    expect(rated.map((d) => d.id)).toEqual(['endgames/queen_endgames', 'rating/improving_1200_1800']);
   });
 
   it('carries classification and motifs only for real errors', () => {
