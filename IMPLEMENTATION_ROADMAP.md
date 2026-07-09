@@ -13,7 +13,7 @@
 1. **Migration approach: strangler behind feature flags.** New shell/screens land behind `ui.newShell` / `ui.screen.*`; the current modal app keeps working until each screen is cut over (Architecture §22). Temporary dual code is accepted.
 2. **Analysis stays client-side for v1.** Ship the redesign on the existing client Stockfish worker. The server-owned Edge Function pipeline (Architecture §2/§10) is **deferred** — Phase 11 drops the pipeline build and keeps only additive schema/data work needed by the new screens. This is a conscious, documented deviation from spec §2/§10 for v1.
 3. **Differentiator screens build on typed sample/derived data.** Dashboard/Improve/Progress/Weaknesses render against typed fixtures + values derived from existing aggregates (`move_analysis`, `game_analysis_results`, `user_statistics`), with query hooks shaped for the real data so the swap is mechanical.
-4. **Hosting stays Vercel.** Documented deviation from Architecture §21 (Netlify). CI/preview adapt to Vercel.
+4. **Hosting.** ~~Stays Vercel (documented deviation from Architecture §21).~~ **Superseded (2026-07):** the live deploy target is **Netlify** (`chess-mateapp`), aligning with Architecture §21. Build + SPA redirect are committed in `netlify.toml`; security headers ship from `public/_headers`; `vercel.json` is kept in sync but is not the deploy target.
 
 > Consequence for effort: total drops to **≈ 12–16 weeks** (no server pipeline). Phase 11 is re-scoped to hardening + additive migrations + sample→live data swap, not pipeline construction.
 

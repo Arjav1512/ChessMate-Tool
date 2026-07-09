@@ -1,6 +1,11 @@
 # ChessMate — Project State
 
-> Living snapshot of the ChessMate redesign (Ivory direction). Source of truth for "where are we?" Updated at each phase boundary. Pairs with `IMPLEMENTATION_ROADMAP.md` (plan), `DESIGN_COMPLIANCE_AUDIT.md` (compliance), `DECISION_LOG.md` (why), `LOOP_LOG.md` (chronology).
+> ⚠️ **Superseded (2026-07-08).** The canonical, current state doc is
+> **`CURRENT_PROJECT_STATE.md`**. This file is a phase-boundary snapshot kept for
+> history; its phase table below reflects the state as of 2026-07-05 (pre production-audit
+> remediation, PR #55). Do not rely on it for "where are we?" — read the canonical doc.
+
+> Living snapshot of the ChessMate redesign (Ivory direction). Pairs with `IMPLEMENTATION_ROADMAP.md` (plan), `DECISION_LOG.md` (why). (Referenced compliance/loop docs now live under `docs/archive/`.)
 
 **Last updated:** 2026-07-05 (Ivory cutover shipped as default; Games, Insights, interactive analysis board + live engine merged; Insights data-linkage + security hardening in review)
 
@@ -64,9 +69,10 @@ Command menu (⌘K) is global on every tier. Coach is reached contextually, not 
 
 - Shell audit (`DESIGN_COMPLIANCE_AUDIT.md`): all 10 items ✅ after Phase 3.5. Deferred items are data/feature-phase dependent (Collections→P7, Appearance controls→P10, color-mix fallback→pre-GA).
 
-## Quality gates (as of the Review Mistakes PR — #26)
+## Quality gates (as of the Review Mistakes PR — #26; see `CURRENT_PROJECT_STATE.md` for current)
 
 - typecheck ✅ · lint ✅ (0 errors) · unit/component **225 passing** ✅ · Ivory a11y e2e **24/24** (shell + dashboard + analysis + improve + improve-mistakes + landing) ✅ · build ✅.
+- _As of 2026-07-08 (PR #55): **305 unit tests** pass · **260 e2e** across 5 engines (0 unexpected) · `npm audit` 0 vulnerabilities · Vite 7 / Vitest 4._
 - CI: `.github/workflows/ci.yml` runs lint, type-check+build, unit (w/ coverage), e2e, and a dedicated `accessibility` job (shell + dashboard + analysis + improve + improve-mistakes + landing axe). Playwright runs with `reducedMotion: 'reduce'` so axe measures final opacity (no `.iv-page-enter` mid-fade false positives). Triggers on `main`/`prod/**`/`feature/**` PRs.
 
 ## Not yet done / known deferrals

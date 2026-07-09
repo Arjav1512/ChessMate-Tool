@@ -10,7 +10,7 @@ import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Send, Zap, List, Mess
 import type { Game } from '../../lib/supabase';
 import { parsePGN, PGNData } from '../../lib/pgn';
 import type { StockfishAnalysis } from '../../lib/stockfish';
-import { askChessMentor } from '../../lib/gemini';
+import { askChessMentor } from '../../coach';
 import { COACH_STARTER_PROMPTS } from '../../lib/sampleData';
 import { MoveClassification, CLASSIFICATION } from '../../utils/moveClassifier';
 import { detectOpening } from '../../lib/openings';

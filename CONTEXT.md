@@ -24,15 +24,15 @@ a serious analysis instrument, not a gamified app (see `PRODUCT.md` anti-referen
 | Layer | Choice |
 |---|---|
 | UI | React 18 + TypeScript 5.5 (strict) |
-| Build | Vite 5 + `vite-plugin-pwa` (terser, `drop_console: true` in prod) |
+| Build | Vite 7 + `vite-plugin-pwa` (terser, `drop_console: true` in prod; route-level code splitting via `React.lazy`) |
 | Styles | Tailwind 3 + a CSS-variable token system in `src/style.css` |
 | Backend | Supabase — Postgres (RLS), Auth, Edge Functions (Deno) |
 | Engine | `stockfish.js@10` (asm.js) in a Web Worker, UCI protocol |
 | Chess logic | `chess.js` |
 | AI | Google Gemini (`gemini-2.0-flash`) via the `chess-mentor` Edge Function |
 | Monitoring | Sentry (optional, behind `VITE_SENTRY_DSN`) |
-| Tests | Vitest (jsdom) unit; Playwright + `@axe-core/playwright` e2e |
-| Hosting | Vercel (SPA rewrites + security headers in `vercel.json`) |
+| Tests | Vitest 4 (jsdom) unit; Playwright + `@axe-core/playwright` e2e |
+| Hosting | **Netlify** (live target `chess-mateapp`): `netlify.toml` (build + SPA redirect) + security headers in `public/_headers`. `vercel.json` is kept in sync but the deploy target is Netlify. |
 
 ---
 
@@ -40,34 +40,42 @@ a serious analysis instrument, not a gamified app (see `PRODUCT.md` anti-referen
 
 ```text
 src/
-  App.tsx                 App shell: auth gate → password-recovery gate → main UI + modal routing
-  main.tsx                React entry; initializes Sentry
+  App.tsx                 App root: auth gate → password-recovery gate → legacy modal app OR Ivory shell
+  main.tsx                React entry; Sentry + global error handlers + sign-out state cleanup
+  app/                    Ivory routed shell: AppRouter (lazy routes + Suspense), AppShell, navigation, PlaceholderPage
+  features/               Screen features, each with its own hooks + data layer:
+                          dashboard/, insights/, analysis/, improve/ (+ mistakes/), games/
   components/
-    analysis/             AnalyzeGamesPage, BulkAnalysis, DisplaySettings, engine/ (EvalGraph, InsightCards, EngineSections)
+    analysis/             (legacy) AnalyzeGamesPage, BulkAnalysis, DisplaySettings, EnginePanel
     auth/                 AuthForm, PasswordResetRequest, PasswordResetComplete
+    charts/               EvalBar, LineChart, RadarChart, ScoreRing
     chess/                ChessBoard, BoardArrows, EvaluationGauge
-    game/                 GameList (sidebar + import), GameViewer (board + nav + insights + chat)
+    game/                 GameList, GameViewer (legacy modal app)
     layout/               ErrorBoundary, ThemeToggle, CompatibilityWarning, ProfileModal
     marketing/            LandingPage (pre-auth)
     legal/                PrivacyPage
+    nav/                  Sidebar, BottomTabBar, CommandMenu, UserMenu (Ivory shell chrome)
     stats/                StatsDashboard, ProgressBar
-    ui/                   Design-system primitives: Button, Card, Input, Modal, Toast, Toggle,
-                          Badge, Chip, Drawer, SegmentedControl, LoadingSpinner, MarkdownRenderer
+    ui/                   legacy primitives + ui/iv/ (Ivory design-system components)
   contexts/               AuthContext (session/OAuth/recovery/profile), ToastContext
-  hooks/                  useAsync, useDebounce, useLocalStorage, useModalA11y, usePerformance,
-                          useResponsive, useStockfishAnalysis
+  hooks/                  useDebounce, useMediaQuery, useModalA11y, usePerformance, useResponsive,
+                          useRevealAnimations, useWeaknessProfile, useMistakeReview
   lib/                    supabase, gemini, stockfish, oauth, oauthProviders, openings, userColor,
-                          pgn, pgnLimits, dbErrors, sentry, sampleData
+                          pgn, pgnLimits, dbErrors, sentry, monitoring, sampleData, moveAnalysis,
+                          weaknessProfile, mistakeReview, motifs, clearUserState, dates, captcha, flags
+  services/               queryClient (TanStack Query)
+  stores/                 Zustand: themeStore, uiStore, commandMenuStore, analysisStepperStore
+  styles/                 Ivory tokens.css + globals.css
   workers/                pgnWorker (off-main-thread PGN batch parser)
-  utils/                  validation, format, errorHandling, moveClassifier, gameInsights, cache,
+  utils/                  validation, format, errorHandling, moveClassifier, cache,
                           performance, compatibility
 supabase/
   config.toml             Pins verify_jwt=true for chess-mentor (project ref is public)
-  functions/chess-mentor/ Deno Edge Function: verifies JWT, rate-limits, proxies Gemini
-  migrations/             7 SQL migrations (schema, RLS, stats trigger, user_color)
-e2e/                      Playwright specs (auth, game-import, password-reset, board-and-progress,
-                          accessibility, empty-state)
-ChessMate-Autonomous-OS/  Engineering operating-system docs (vision, state, backlog, scorecard, protocols)
+  functions/chess-mentor/ Deno Edge Function: verifies JWT, reserve-then-count rate limit, proxies Gemini
+  migrations/             8 SQL migrations (schema, RLS, stats trigger, user_color, move_analysis)
+e2e/                      Playwright specs (auth, game-import, password-reset, a11y suites, empty-state, …)
+netlify.toml              Build + SPA-redirect config (live deploy target; headers in public/_headers)
+docs/archive/             Historical phase/audit artifacts + ChessMate-Autonomous-OS/ (frozen, unmaintained)
 ```
 
 There is **no** `src/i18n/` — i18n scaffolding was removed; the UI is English-only.
@@ -121,13 +129,17 @@ the trigger never guesses. See migration `20260615030000_rewrite_stats_trigger_o
    as the rate-limit key; `config.toml` also pins `verify_jwt=true`. Do not reintroduce an
    unverified base64 decode of the token.
 4. **CORS fails closed.** With no `ALLOWED_ORIGINS`, only localhost is allowed; production must set it.
-5. **Rate limit** is DB-backed (10 req/min/user via `api_logs`). Bypassing it is a vuln.
+5. **Rate limit** is DB-backed and **concurrency-safe** — the edge function *reserves* an `api_logs`
+   row before counting the window (reserve-then-count), enforcing 10/min **and** 100/day per user and
+   failing **closed** on a DB error. Reintroducing a count-then-insert order (TOCTOU) or bypassing the
+   limits is a vuln.
 6. **PGN cap** is a hard 5 MiB on both upload and paste paths (`checkPgnSize`).
 7. **MarkdownRenderer is XSS-safe** — React elements only, never `dangerouslySetInnerHTML`.
 8. **Password recovery** locks the UI until the new password is set (see `App.tsx` + `AuthContext`).
 9. **CSP/HSTS** are set in `public/_headers` (Netlify — the live deploy target) **and** `vercel.json`
-   (Vercel). CSP is `script-src 'self'` (no eval — Stockfish is asm.js). Adding an inline script or an
-   `eval`-dependent dependency requires updating **both** header configs.
+   (Vercel). `netlify.toml` carries the build config + SPA redirect only (not headers). CSP is
+   `script-src 'self'` (no eval — Stockfish is asm.js). Adding an inline script or an `eval`-dependent
+   dependency requires updating **both** header configs.
 
 ---
 
@@ -151,7 +163,10 @@ Run before any PR: `npm run typecheck && npm run lint && npm test && npm run bui
 - Coverage: `npm run test:coverage` (v8 provider; no failing threshold yet — Sprint-2 follow-up).
 - E2E: `npm run test:e2e`. Auth-gated specs (`game-import`, `board-and-progress`) auto-skip unless
   `PLAYWRIGHT_TEST_USER` / `PLAYWRIGHT_TEST_PASSWORD` are set for a real Supabase user.
-- CI (`.github/workflows/ci.yml`): lint → typecheck+build → unit(+coverage) → e2e(chromium).
+- CI (`.github/workflows/ci.yml`): lint → typecheck+build → unit(+coverage) → e2e **matrix**
+  (chromium, firefox, webkit, Mobile Chrome, Mobile Safari) → accessibility (chromium + Mobile Chrome).
+  A separate `deploy-verify.yml` smoke-tests the live site and, on push, asserts the deployed bundle's
+  release identity (`chessmate@<version>+<commit>`) matches the pushed commit.
 
 ---
 
@@ -177,8 +192,8 @@ Run before any PR: `npm run typecheck && npm run lint && npm test && npm run bui
 
 ## 10. The operating system
 
-`ChessMate-Autonomous-OS/` holds the engineering OS: `PRODUCT_VISION`, `PROJECT_STATE`,
-`SPRINT_BACKLOG`, `PRODUCTION_SCORECARD`, `DECISION_LOG`, and the workflow protocols
-(`PR_PROTOCOL`, `MERGE_CHECKLIST`, `RELEASE_PROTOCOL`, `ESCALATION_PROTOCOL`,
-`CODERABBIT_PROTOCOL`). Check `PROJECT_STATE.md` for the current sprint and open risks before
-starting work.
+`docs/archive/ChessMate-Autonomous-OS/` holds the (now-archived) engineering OS: `PRODUCT_VISION`,
+`PROJECT_STATE`, `SPRINT_BACKLOG`, `PRODUCTION_SCORECARD`, `DECISION_LOG`, and the workflow protocols
+(`PR_PROTOCOL`, `MERGE_CHECKLIST`, `RELEASE_PROTOCOL`, `ESCALATION_PROTOCOL`, `CODERABBIT_PROTOCOL`).
+It was moved out of the repo root on 2026-07-08 (see `DOCUMENT_INDEX.md`); for current project state
+read the root `CURRENT_PROJECT_STATE.md` and `DECISION_LOG.md`.

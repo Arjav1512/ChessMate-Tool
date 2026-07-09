@@ -16,6 +16,21 @@ Chromium, desktop + mobile) + full E2E audit + security audit + `tsc`/unit/build
 > the state has moved on substantially. See **§0. Current state** immediately below
 > for what is true today.
 
+> **Update (2026-07-08) — production-audit remediation (PR #55, open):** a repo-only
+> pass addressed the production-readiness audit while preserving behavior. Highlights:
+> deployment made reproducible/verifiable (committed `netlify.toml` + SPA redirect;
+> smoke test now verifies the deployed **release identity**); the `chess-mentor` rate
+> limiter is now **concurrency-safe** (reserve-then-count, fixing a TOCTOU race);
+> **route-level code splitting** (entry chunk 670 kB → 434 kB); the CI e2e suite runs
+> the **full 5-engine matrix**; the toolchain was upgraded (**Vite 7 / Vitest 4**,
+> `npm audit` 27 → **0**); demo analysis is now explicitly labeled and never shown as
+> the user's own data; sign-out clears all client state; dashboard sample data is
+> DEV-gated; licensing (`LICENSE` + `THIRD_PARTY_LICENSES.md`), privacy/GDPR, timezone-safe
+> dates, SEO, and a disabled CAPTCHA seam landed. 305 unit tests + 260 e2e pass.
+> Manual (dashboard/secrets) follow-ups remain: deploy the merge, redeploy the edge
+> function + set `ALLOWED_ORIGINS`, set `VITE_SENTRY_DSN`. Historical process docs moved
+> to `docs/archive/`.
+
 ---
 
 ## 0. Current state (2026-07-05)
@@ -79,7 +94,7 @@ Chromium, desktop + mobile) + full E2E audit + security audit + `tsc`/unit/build
 
 | Concern | Implementation |
 |---|---|
-| **Frontend** | React 18.3 + TypeScript 5.5, Vite 5.4. Entry `src/main.tsx` → `src/App.tsx`. |
+| **Frontend** | React 18.3 + TypeScript 5.5, Vite 7 (route-level code splitting via `React.lazy`). Entry `src/main.tsx` → `src/App.tsx`. |
 | **Routing** | `react-router-dom` 6.30, single `BrowserRouter` in `src/app/AppRouter.tsx`. Only active in the Ivory shell. The legacy app has **no router** (modal state in `MainApp`). |
 | **Authentication** | Supabase auth via `src/contexts/AuthContext`. `supabaseConfigured` gates the app; `.env.local` has real URL + anon key. Password reset/recovery handled; recovery takes precedence over the whole UI (`App.tsx:134`). |
 | **Feature flags** | `src/lib/flags.ts` (Zustand). 10 keys. Resolution: defaults ← `localStorage('cm.flags')` ← URL `?ff=`. Defaults **ON**: `ui.newShell`, `ui.screen.{dashboard,games,analysis,improve}`. Defaults **OFF**: `coach,weaknesses,progress,settings,profile`. Server-side flag source (`profiles.prefs.flags`) **not implemented**. |
