@@ -18,12 +18,24 @@ import type { KnowledgeRetriever } from './types';
 
 export interface RetrievalQuery {
   opening?: string;
-  /** Free-form theme or game phase ('endgame', 'initiative', 'pin', …). */
+  /** Free-form theme or game phase ('endgame', 'opening', …). */
   theme?: string;
   /** Move classification ('mistake' | 'blunder' | …). */
   mistake?: string;
   /** Motif ids from lib/motifs (e.g. 'hung_piece'). */
   motifs?: string[];
+  /** Rating-band needle ('under 1200' | 'intermediate' | 'advanced') — taken
+   *  LAST so personalized guidance fills a spare slot, never displaces a
+   *  position-specific doc (R3). */
+  ratingBand?: string;
+}
+
+/** Deterministic rating → band needle (matches the rating/ doc tags). */
+export function ratingBandOf(rating: number | null | undefined): string | undefined {
+  if (rating == null || rating <= 0) return undefined;
+  if (rating < 1200) return 'under 1200';
+  if (rating <= 1800) return 'intermediate';
+  return 'advanced';
 }
 
 /** Default budget: the whole prompt must fit the provider's ~4000-char cap. */
@@ -69,6 +81,7 @@ export function retrieveKnowledge(
   take(query.theme);
   for (const motif of query.motifs ?? []) take(motif);
   take(query.mistake);
+  take(query.ratingBand);
 
   return picked;
 }
@@ -98,17 +111,24 @@ export class StructuredRetriever implements KnowledgeRetriever {
 export function queryFromContext(context: CoachContext, task: CoachTask): RetrievalQuery {
   const move = context.move;
   const isError = move?.classification === 'mistake' || move?.classification === 'blunder';
+  // For an opening lesson the opening doc is the strongest signal; otherwise
+  // it still leads when the position is IN the opening phase.
+  const openingRelevant = task === 'opening' || move?.phase === 'opening' || !move?.phase;
   return {
-    // For an opening lesson the opening doc is the strongest signal; otherwise
-    // it still leads when the position is IN the opening phase.
-    opening:
-      task === 'opening' || move?.phase === 'opening' || !move?.phase
-        ? context.game?.opening?.name
-        : undefined,
-    // Only the endgame is specific enough to retrieve by phase; "middlegame"
-    // would match generic strategy docs ahead of the concrete mistake/motif.
-    theme: move?.phase === 'endgame' ? 'endgame' : undefined,
+    opening: openingRelevant ? context.game?.opening?.name : undefined,
+    // Theme by phase: 'endgame' as before; 'opening' is the R2 fallback so
+    // openings WITHOUT a dedicated doc (Philidor, Petrov, Dutch, …) still
+    // retrieve general opening principles instead of nothing. "middlegame"
+    // stays excluded — it would match generic docs ahead of the concrete
+    // mistake/motif.
+    theme:
+      move?.phase === 'endgame'
+        ? 'endgame'
+        : openingRelevant && (context.game?.opening || move?.phase === 'opening')
+          ? 'opening'
+          : undefined,
     mistake: isError ? move?.classification : undefined,
     motifs: (move?.motifs ?? []).map(String),
+    ratingBand: ratingBandOf(context.player?.rating),
   };
 }

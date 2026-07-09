@@ -97,6 +97,8 @@ export function GameViewer({ game }: GameViewerProps) {
     setCoachLoading(true);
     setCoachAnswer(null);
     try {
+      // Index of the move that produced the current position (moves[0] = ply 0).
+      const lastPly = currentMoveIndex - 1;
       const answer = await askChessMentor(text, {
         gameInfo: {
           white_player: game.white_player,
@@ -104,9 +106,23 @@ export function GameViewer({ game }: GameViewerProps) {
           result: game.result,
           event: game.event,
           date: game.date,
+          // Thread the context this viewer already holds (Phase 3A / R1):
+          // the PGN drives opening detection + retrieval; user_color lets the
+          // coach know whose side it is coaching.
+          pgn: game.pgn,
+          userColor: game.user_color,
         },
         currentPosition: currentFen,
         moveHistory: pgnData.moves.slice(0, currentMoveIndex),
+        move:
+          lastPly >= 0
+            ? {
+                san: pgnData.moves[lastPly],
+                moveNumber: Math.floor(lastPly / 2) + 1,
+                color: lastPly % 2 === 0 ? 'white' : 'black',
+                classification: classifications.get(lastPly),
+              }
+            : undefined,
         evaluation: engineAnalysis
           ? { evaluation: engineAnalysis.evaluation, isMate: engineAnalysis.isMate, bestMove: engineAnalysis.bestMove }
           : undefined,
@@ -129,7 +145,7 @@ export function GameViewer({ game }: GameViewerProps) {
     } finally {
       setCoachLoading(false);
     }
-  }, [pgnData, game, currentFen, currentMoveIndex, engineAnalysis, showToast, weakness.profile?.summaryLine]);
+  }, [pgnData, game, currentFen, currentMoveIndex, classifications, engineAnalysis, showToast, weakness.profile?.summaryLine]);
 
   const handleAskCoach = useCallback(() => {
     askCoach(coachQuestion);

@@ -46,6 +46,13 @@ export function buildCoachContext(input: CoachContext): CoachContext {
       if (detected) game.opening = { eco: detected.eco, name: detected.name };
     }
     context.game = game;
+
+    // Derive the player's own rating from the game header when the caller
+    // knows their color but didn't set player.rating explicitly (R3).
+    if (context.player?.rating == null && game.userColor) {
+      const rating = game.userColor === 'white' ? game.whiteRating : game.blackRating;
+      if (rating != null) context.player = { ...context.player, rating };
+    }
   }
 
   return context;

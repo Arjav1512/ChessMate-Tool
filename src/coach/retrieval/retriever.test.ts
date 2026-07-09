@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { KNOWLEDGE_BASE } from '../knowledge';
-import { queryFromContext, retrieveKnowledge } from './retriever';
+import { queryFromContext, ratingBandOf, retrieveKnowledge } from './retriever';
 
 describe('retrieveKnowledge', () => {
   it('matches an opening by name', () => {
@@ -78,6 +78,73 @@ describe('queryFromContext', () => {
     );
     expect(query.opening).toBeUndefined();
     expect(query.theme).toBe('endgame');
+  });
+
+  it('R2: adds the opening fallback theme for opening-phase questions', () => {
+    // Known opening, whole-game question → name + fallback.
+    const known = queryFromContext({ game: { opening: { name: 'Sicilian Defense' } } }, 'coach');
+    expect(known.opening).toBe('Sicilian Defense');
+    expect(known.theme).toBe('opening');
+
+    // Opening phase without a recognized opening → fallback still fires.
+    const unnamed = queryFromContext({ move: { san: 'e4', phase: 'opening' } }, 'coach');
+    expect(unnamed.theme).toBe('opening');
+
+    // Middlegame questions must not drag opening docs in.
+    const middlegame = queryFromContext(
+      { game: { opening: { name: 'Sicilian Defense' } }, move: { san: 'Nf6', phase: 'middlegame' } },
+      'coach',
+    );
+    expect(middlegame.opening).toBeUndefined();
+    expect(middlegame.theme).toBeUndefined();
+
+    // No context at all → no needless principles spam.
+    expect(queryFromContext({}, 'coach').theme).toBeUndefined();
+  });
+
+  it('R2: closes the Defense-name gap — uncovered openings retrieve principles, never nothing', () => {
+    const uncovered = ['Philidor Defense', 'Petrov Defense', 'Dutch Defense', 'Benoni Defense', 'Grünfeld Defense', 'Vienna Game', 'Scotch Game'];
+    for (const name of uncovered) {
+      const docs = retrieveKnowledge(queryFromContext({ game: { opening: { name } } }, 'coach'));
+      expect(docs.map((d) => d.id), name).toEqual(['principles/opening_principles']);
+    }
+    // Covered openings keep their dedicated doc first, principles alongside.
+    const covered = retrieveKnowledge(
+      queryFromContext({ game: { opening: { name: 'Sicilian Defense' } } }, 'coach'),
+    );
+    expect(covered.map((d) => d.id)).toEqual(['openings/sicilian', 'principles/opening_principles']);
+  });
+
+  it('R3: maps ratings to deterministic bands', () => {
+    expect(ratingBandOf(null)).toBeUndefined();
+    expect(ratingBandOf(undefined)).toBeUndefined();
+    expect(ratingBandOf(0)).toBeUndefined();
+    expect(ratingBandOf(800)).toBe('under 1200');
+    expect(ratingBandOf(1199)).toBe('under 1200');
+    expect(ratingBandOf(1200)).toBe('intermediate');
+    expect(ratingBandOf(1800)).toBe('intermediate');
+    expect(ratingBandOf(1801)).toBe('advanced');
+    expect(ratingBandOf(2400)).toBe('advanced');
+  });
+
+  it('R3: retrieves the band doc, but only into a spare slot', () => {
+    // Rating alone (e.g. a general question): the band doc is the answer.
+    const bands: Array<[number, string]> = [
+      [900, 'rating/improving_under_1200'],
+      [1500, 'rating/improving_1200_1800'],
+      [2000, 'rating/improving_above_1800'],
+    ];
+    for (const [rating, docId] of bands) {
+      const docs = retrieveKnowledge(
+        queryFromContext({ player: { rating }, move: { san: 'Nf3', phase: 'middlegame' } }, 'coach'),
+      );
+      expect(docs.map((d) => d.id)).toEqual([docId]);
+    }
+    // With two position-specific matches, the band doc is displaced.
+    const full = retrieveKnowledge(
+      queryFromContext({ game: { opening: { name: 'Sicilian Defense' } }, player: { rating: 1500 } }, 'coach'),
+    );
+    expect(full.map((d) => d.id)).toEqual(['openings/sicilian', 'principles/opening_principles']);
   });
 
   it('carries classification and motifs only for real errors', () => {

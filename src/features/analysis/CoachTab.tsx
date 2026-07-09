@@ -40,10 +40,34 @@ export function CoachTab({ game, move, currentFen }: CoachTabProps) {
     setLoading(true);
     setAnswer(null);
     try {
+      // Thread the analysis context this tab already holds (Phase 3A / R1) —
+      // opening, ratings, and the move's phase/motifs/quality drive knowledge
+      // retrieval; without them the coach answered from the FEN alone.
+      const userColor = game.userColor === 'w' ? 'white' : 'black';
       const res = await askChessMentor(text, {
-        gameInfo: { white_player: game.white, black_player: game.black, result: game.result, event: '', date: '' },
+        gameInfo: {
+          white_player: game.white,
+          black_player: game.black,
+          result: game.result,
+          pgn: game.pgn,
+          opening: game.opening ? { eco: game.eco || undefined, name: game.opening } : undefined,
+          whiteRating: game.whiteRating,
+          blackRating: game.blackRating,
+          userColor,
+        },
         currentPosition: currentFen,
-        moveHistory: [],
+        move: move
+          ? {
+              san: move.san,
+              moveNumber: move.moveNumber,
+              color: move.color === 'w' ? 'white' : 'black',
+              phase: move.phase,
+              motifs: move.motifs,
+              classification: move.quality,
+              cpLoss: move.cpLoss,
+              bestMove: move.bestSan,
+            }
+          : undefined,
         evaluation: move?.evalCp != null ? { evaluation: (move.evalCp / 100).toFixed(2), isMate: false, bestMove: move.bestSan ?? '' } : undefined,
       });
       setAnswer(res);

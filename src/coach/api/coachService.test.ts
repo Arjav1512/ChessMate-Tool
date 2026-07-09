@@ -129,6 +129,62 @@ describe('CoachService.ask — pipeline', () => {
   });
 });
 
+describe('Phase 3A — production context activates retrieval (zero-result prevention)', () => {
+  it('a normal analysis-flow question retrieves knowledge into the prompt', async () => {
+    const provider = new MockProvider();
+    const service = makeService({ provider });
+
+    // Exactly what CoachTab sends after R1 (via the askChessMentor adapter):
+    // pgn + opening + ratings + userColor + the move's phase/motifs/quality.
+    await service.ask({
+      question: 'What should I have played here?',
+      context: {
+        game: {
+          white: 'Alice',
+          black: 'Bob',
+          result: '*',
+          pgn: SICILIAN_PGN,
+          whiteRating: 1600,
+          blackRating: 1450,
+          userColor: 'black',
+        },
+        fen: 'r1bqkb1r/pp2pppp/2np1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6',
+        move: { san: 'Nf6', moveNumber: 5, color: 'black', phase: 'opening' },
+      },
+    });
+
+    const prompt = provider.prompts[0];
+    // Before Phase 3A this prompt carried ZERO knowledge (RETRIEVAL_AUDIT §0).
+    expect(prompt).toContain("Reference notes from ChessMate's coaching library");
+    // Opening derived from the PGN → the Sicilian doc.
+    expect(prompt).toContain('Sicilian Defense (1.e4 c5)');
+  });
+
+  it('an uncovered opening falls back to principles instead of nothing (R2)', async () => {
+    const provider = new MockProvider();
+    const service = makeService({ provider });
+    await service.ask({
+      question: 'How did my opening go?',
+      context: { game: { opening: { name: 'Philidor Defense' }, userColor: 'white' } },
+    });
+    expect(provider.prompts[0]).toContain('# Opening Principles');
+  });
+
+  it('rating-band guidance reaches the prompt via game ratings + user color (R3)', async () => {
+    const provider = new MockProvider();
+    const service = makeService({ provider });
+    // No explicit player.rating — the context builder derives it (1450, black).
+    await service.ask({
+      question: 'How do I get better?',
+      context: {
+        game: { whiteRating: 1900, blackRating: 1450, userColor: 'black' },
+        move: { san: 'Nf6', phase: 'middlegame' },
+      },
+    });
+    expect(provider.prompts[0]).toContain('# Improving 1200–1800');
+  });
+});
+
 describe('CoachOrchestrator — swappable stages (future-proofing seams)', () => {
   it('uses any KnowledgeRetriever implementation (a future VectorRetriever plugs in here)', async () => {
     const fakeVectorDoc: KnowledgeDoc = {
