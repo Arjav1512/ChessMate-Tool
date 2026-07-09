@@ -13,7 +13,7 @@ A pin is a line attack that freezes a piece because something more valuable stan
 
 **How to think:** When you spot a pin, don't rush to cash it — ask "how do I add an attacker?" Pins grow stronger with pressure (pawn storms against a pinned knight are the classic). When YOU are pinned, break it early: block with a lesser piece, unpin with tempo (a check or counter-threat), or challenge the pinning piece.
 
-**Example:** After 1.e4 e5 2.Nf3 d6 3.Bc4 Bg4? 4.Nxe5! wins a pawn: 4...Bxd1?? 5.Bxf7+ Ke7 6.Nd5# (Légal's mate) — the "pinned" f3-knight moved anyway because the punishment for taking the queen was mate. Always verify a pin is real.
+**Example:** Légal's mate: 1.e4 e5 2.Nf3 d6 3.Bc4 Bg4 4.Nc3 g6? 5.Nxe5! — the "pinned" knight moves anyway: 5...Bxd1?? 6.Bxf7+ Ke7 7.Nd5# (both knights and the bishop deliver mate), while 5...dxe5 6.Qxg4 simply wins a pawn. Always verify a pin is real before trusting it.
 
 **Coach's tip:** Count the value stack: attacker < pinned piece < piece behind is the profitable pattern. If the geometry is right but the values aren't, look for a way to add force first.
 

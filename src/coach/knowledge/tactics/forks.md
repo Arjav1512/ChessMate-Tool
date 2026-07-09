@@ -13,7 +13,7 @@ A fork is one piece attacking two or more targets at once. The opponent saves on
 
 **How to think:** Forks are built, not found: first ask "which two enemy pieces stand fork-compatible?", then "what forcing move (check, capture, threat) drives them there or clears my path?" Luring a king or queen onto the fork square with a sacrifice is the standard two-move recipe.
 
-**Example:** The royal family fork: 1.e4 e5 2.Nf3 Nf6 3.Nxe5 Nxe4? 4.Qe2 Nf6?? 5.Nc6+! — discovered check, and the c6-knight hits the d8-queen next move. Black's fifth move had to be 4...Qe7 returning the piece.
+**Example:** The eternal club classic: an enemy king still on e8, a rook stranded on a8, and your knight arriving on c7 — Nc7+ forks them the moment the d8-queen no longer guards c7. This is exactly why Nb5 punishes early queen sorties like the Sicilian's ...Qb6xb2: the queen leaves home, and c7 stops being defended.
 
 **Coach's tip:** Before every move, glance at each enemy knight and ask: "if it moved twice, could it hit two of my pieces?" That single habit deletes a class of losses.
 

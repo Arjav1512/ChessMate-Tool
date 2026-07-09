@@ -13,7 +13,7 @@ A discovered attack unleashes a hidden line piece by moving the piece in front o
 
 **How to think:** When you have a potential discovery, ask two questions: what is the BEST square for the front piece (maximum threat), and must the rear piece's target stay put? Sequence matters: often you first force the enemy king or queen onto the discovery line, then release the spring.
 
-**Example:** 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nd4? 4.Nxe5! — if 4...Qg5 5.Nxf7! forking queen and rook, but the deeper point: 4...Nxe5?? never happens because after 5.Qh5! threats crash through on f7/e5. The e5-knight capture worked because the f3-knight's move opened the queen's diagonal — a discovery in disguise.
+**Example:** Petrov's trap: 1.e4 e5 2.Nf3 Nf6 3.Nxe5 Nxe4? 4.Qe2! Nf6?? 5.Nc6+! — the knight steps off the e-file, DISCOVERING the queen's check on the e8-king, while itself attacking the d8-queen. Black must answer the check and loses the queen. Black's only save was 4...Qe7 5.Qxe4 d6, returning the piece a pawn down.
 
 **Coach's tip:** Every time one of your minor pieces stands in front of your queen, rook, or bishop, ask "what happens if it jumps?" You own more discoveries than you play.
 

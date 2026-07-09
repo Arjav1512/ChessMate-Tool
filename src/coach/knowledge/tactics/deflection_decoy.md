@@ -13,7 +13,7 @@ Deflection drags a piece AWAY from a duty; a decoy lures a piece TO a fatal squa
 
 **How to think:** Start from the dream position ("if the queen weren't on d8, Re8 would mate"), then ask what forcing move makes the dream real: a capture the queen must answer, a check the king must walk into. Verify both branches: acceptance AND the best decline.
 
-**Example:** Classic back-rank deflection: White Qe3, Re1 versus Black Qd8, Re8 on a weak back rank. 1.Qxe8+!! Qxe8 2.Rxe8# — wait, that's just a trade... the real pattern: Black queen guards e8; 1.Qa7! attacks it while keeping Re1 loaded; if the queen leaves the back rank's defense (1...Qxa7??), 2.Re8#. The threat deflects; the queen is trapped between two duties.
+**Example:** Classic back-rank deflection: your rook on e1 stares at e8, and only Black's queen on d8 prevents Re8#. Attack her with 1.Qa5! — a piece she cannot capture (1...Qxa5?? 2.Re8#) and cannot ignore. Whatever she does, she remains chained to e8's defense while you collect on the other wing. One overloaded piece, two duties, zero good moves.
 
 **Coach's tip:** When a combination almost works, don't discard it — write down WHICH enemy piece refutes it. That piece is your deflection target; the tactic is one preparatory move away.
 

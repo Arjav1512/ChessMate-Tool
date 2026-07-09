@@ -13,7 +13,7 @@ A zwischenzug interrupts an "obvious" forced sequence with a stronger intermedia
 
 **How to think:** Adopt the rule: in every forcing line, before writing the opponent's "forced" reply, list their checks and captures instead. If any of them creates a bigger problem than the material they left hanging, your line is broken. Do the same for yourself — free zwischenzugs are lying around in your own games.
 
-**Example:** 1.d4 Nf6 2.Bg5 Ne4?! 3.Bf4 c5 4.dxc5?? — White assumes ...Nxc5 or ...e6 next. Instead 4...Qa5+! (zwischenzug) picks up the c5-pawn AND keeps the monster e4-knight: 5.c3 Qxc5. The check outranked every "expected" move.
+**Example:** 1.d4 Nf6 2.Bg5 Ne4?! 3.Bf4 c5 4.dxc5?! — White assumes ...Nxc5 or ...e6 next. Instead 4...Qa5+! (zwischenzug) picks up the c5-pawn AND keeps the monster e4-knight: 5.c3 Qxc5. The check outranked every "expected" move.
 
 **Coach's tip:** The three most profitable words in calculation: "instead of retaking." Say them once per forcing line and your rating will thank you.
 
